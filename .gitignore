@@ -1,0 +1,39 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Odoo
+*.pyc
+*.pyo
+filestore/
+sessions/
+*.log
+
+# Database backups
+*.dump
+*.sql
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Odoo core (if you want to exclude the official Odoo repo)
+# Uncomment the next line if you don't want to track odoo core changes
+# odoo/
+
+# Data directory
+c:\users\nour\appdata\local\openerp s.a\odoo/
