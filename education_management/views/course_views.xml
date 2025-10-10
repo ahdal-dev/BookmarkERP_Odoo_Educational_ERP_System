@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Course Tree View -->
+    <record id="view_education_course_tree" model="ir.ui.view">
+        <field name="name">education.course.tree</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="course_code"/>
+                <field name="name"/>
+                <field name="teacher_id"/>
+                <field name="credits"/>
+                <field name="semester"/>
+                <field name="student_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Course Form View -->
+    <record id="view_education_course_form" model="ir.ui.view">
+        <field name="name">education.course.form</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="course_code"/>
+                            <field name="name"/>
+                            <field name="teacher_id"/>
+                        </group>
+                        <group>
+                            <field name="credits"/>
+                            <field name="duration_hours"/>
+                            <field name="semester"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    <group>
+                        <field name="student_ids"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Course Search View -->
+    <record id="view_education_course_search" model="ir.ui.view">
+        <field name="name">education.course.search</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="course_code"/>
+                <field name="name"/>
+                <field name="teacher_id"/>
+                <field name="semester"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Course Actions -->
+    <record id="action_education_course" model="ir.actions.act_window">
+        <field name="name">Courses</field>
+        <field name="res_model">education.course</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_education_course_tree')}),
+                                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_education_course_form')})]"/>
+    </record>
+</odoo>

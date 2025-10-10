@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Student Tree View -->
+    <record id="view_education_student_tree" model="ir.ui.view">
+        <field name="name">education.student.tree</field>
+        <field name="model">education.student</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="student_id"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="current_semester"/>
+                <field name="gpa"/>
+                <field name="enrollment_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Student Form View -->
+    <record id="view_education_student_form" model="ir.ui.view">
+        <field name="name">education.student.form</field>
+        <field name="model">education.student</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="student_id"/>
+                            <field name="name"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                        </group>
+                        <group>
+                            <field name="date_of_birth"/>
+                            <field name="address"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="enrollment_date"/>
+                            <field name="current_semester"/>
+                            <field name="gpa"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="course_ids"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Student Search View -->
+    <record id="view_education_student_search" model="ir.ui.view">
+        <field name="name">education.student.search</field>
+        <field name="model">education.student</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="student_id"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="current_semester"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Student Actions -->
+    <record id="action_education_student" model="ir.actions.act_window">
+        <field name="name">Students</field>
+        <field name="res_model">education.student</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_education_student_tree')}),
+                                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_education_student_form')})]"/>
+    </record>
+</odoo>

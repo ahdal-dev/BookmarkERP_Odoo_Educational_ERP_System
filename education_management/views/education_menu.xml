@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Main Education Menu -->
+    <menuitem id="education_root" name="Education" sequence="10"/>
+
+    <!-- Students Menu -->
+    <menuitem id="education_students" name="Students"
+              parent="education_root" sequence="10"/>
+
+    <menuitem id="education_students_list" name="Students"
+              parent="education_students" action="action_education_student" sequence="10"/>
+
+    <!-- Teachers Menu -->
+    <menuitem id="education_teachers" name="Teachers"
+              parent="education_root" sequence="20"/>
+
+    <menuitem id="education_teachers_list" name="Teachers"
+              parent="education_teachers" action="action_education_teacher" sequence="10"/>
+
+    <!-- Courses Menu -->
+    <menuitem id="education_courses" name="Courses"
+              parent="education_root" sequence="30"/>
+
+    <menuitem id="education_courses_list" name="Courses"
+              parent="education_courses" action="action_education_course" sequence="10"/>
+
+    <!-- Enrollments Menu -->
+    <menuitem id="education_enrollments" name="Enrollments"
+              parent="education_root" sequence="40"/>
+
+    <menuitem id="education_enrollments_list" name="Enrollments"
+              parent="education_enrollments" action="action_education_enrollment" sequence="10"/>
+</odoo>
