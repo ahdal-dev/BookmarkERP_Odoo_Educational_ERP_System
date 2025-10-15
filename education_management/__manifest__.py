@@ -14,11 +14,11 @@
     'depends': ['base', 'mail'],
     'data': [
         'security/ir.model.access.csv',
-        'views/education_menu.xml',
         'views/student_views.xml',
         'views/teacher_views.xml',
         'views/course_views.xml',
         'views/enrollment_views.xml',
+        'views/education_menu.xml',
     ],
     'demo': [
         'demo/education_demo.xml',

@@ -1,1 +1,1 @@
-education_management
+from . import models

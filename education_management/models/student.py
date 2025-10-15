@@ -32,7 +32,7 @@ class Student(models.Model):
             new_id = last_id + 1
         else:
             new_id = 1001
-        return f'STU{new_id"04d"}'
+        return f'STU{new_id:04d}'
 
     def name_get(self):
         return [(student.id, f'{student.student_id} - {student.name}') for student in self]
