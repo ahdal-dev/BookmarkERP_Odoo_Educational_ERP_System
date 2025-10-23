@@ -48,7 +48,7 @@ This ensures:
 
 ### Windows
 
-#### Option 1: Using Chocolatey (Recommended)
+#### Option 1: Using Chocolatey (What i used)
 ```bash
 choco install make
 ```
@@ -64,23 +64,7 @@ winget install GnuWin32.Make
 
 ### Linux
 
-Make is usually pre-installed. If not:
-
-#### Ubuntu/Debian
-```bash
-sudo apt update
-sudo apt install make
-```
-
-#### Fedora/RHEL
-```bash
-sudo dnf install make
-```
-
-#### Arch Linux
-```bash
-sudo pacman -S make
-```
+Make is usually pre-installed. 
 
 ### macOS
 
@@ -299,127 +283,3 @@ make run
 ```
 
 ---
-
-## Troubleshooting
-
-### Issue: `'make' is not recognized`
-
-**Problem:** Make is not installed or not in PATH
-
-**Solution:**
-1. Install Make using one of the methods above
-2. **Restart your terminal** after installation
-3. Verify with `make --version`
-4. If still not working, manually add Make to PATH
-
----
-
-### Issue: `No targets specified and no makefile found`
-
-**Problem:** You're not in the correct directory
-
-**Solution:**
-```bash
-# Navigate to project root
-cd C:\Odoo
-
-# Verify Makefile exists
-dir Makefile
-
-# Try again
-make help
-```
-
----
-
-### Issue: `MODULE variable not set`
-
-**Problem:** Trying to run `make update-module` without specifying MODULE
-
-**Solution:**
-```bash
-# Correct usage
-make update-module MODULE=education_management
-```
-
----
-
-### Issue: Database connection errors
-
-**Problem:** Cannot connect to PostgreSQL database
-
-**Solution:**
-1. Ensure PostgreSQL is running
-2. Check `odoo.conf` for correct database credentials
-3. Verify database `edu_demo_new` exists or can be created
-4. Check PostgreSQL user permissions
-
----
-
-### Issue: Python module not found
-
-**Problem:** Missing Python dependencies
-
-**Solution:**
-```bash
-# Activate virtual environment
-venv\Scripts\activate
-
-# Install dependencies
-make install
-```
-
----
-
-## Alternative: Direct Python Commands
-
-If you prefer not to use Make, you can still run commands directly:
-
-```bash
-# Configure module/database
-python odoo/odoo-bin -c odoo.conf -d edu_demo_new -u base --stop-after-init
-
-# Run Odoo server
-python odoo/odoo-bin -c odoo.conf
-
-# Install dependencies
-pip install -r odoo/requirements.txt
-```
-
----
-
-## Project Structure
-
-```
-C:\Odoo\
-├── Makefile                # Make configuration (defines targets)
-├── odoo.conf               # Odoo configuration file
-├── odoo/                   # Odoo core framework
-│   └── odoo-bin            # Odoo executable
-│   └── requirements.txt    # Python dependencies
-├── education_management/   # Custom Odoo module
-└── venv/                   # Python virtual environment
-```
-
----
-
-## Additional Resources
-
-- **GNU Make Documentation:** https://www.gnu.org/software/make/manual/
-- **Odoo Documentation:** https://www.odoo.com/documentation/
-- **Project ADR:** See `Docs/ADR/Makefile/001-add-makefile.md` for architectural decision details
-
----
-
-## Need Help?
-
-If you encounter issues not covered here:
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Run `make help` to see available commands
-3. Review the `Makefile` to understand what each target does
-4. Consult the ADR document for context on why Make was chosen
-5. Fall back to direct Python commands if needed
-
----
-
-**Last Updated:** 2025-10-24

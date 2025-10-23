@@ -82,21 +82,12 @@ make update-module MODULE=education_management
    - ❌ Compiler detection issues on Windows
    - ✅ Strong IDE integration
 
-2. **Shell scripts (bash/PowerShell)**
-   - ❌ Platform-specific (need separate scripts for Windows/Unix)
-   - ❌ No standardized interface
-   - ✅ More flexible for complex logic
-
-3. **Python scripts (invoke/fabric)**
+2. **Python scripts (invoke/fabric)**
    - ✅ Native to Python ecosystem
    - ❌ Additional dependency to manage
    - ❌ Less standardized across projects
 
-4. **npm scripts (package.json)**
-   - ❌ Requires Node.js (unnecessary dependency)
-   - ❌ Not idiomatic for Python projects
-
-5. **Just (command runner)**
+3. **Just (command runner)**
    - ✅ Modern and simple
    - ❌ Less widespread adoption
    - ❌ Additional tool to install
@@ -132,24 +123,3 @@ make update-module MODULE=education_management
 - Database name and configuration file are parameterized for easy modification
 - `.PHONY` targets ensure commands run even if files with those names exist
 - Help target provides self-documentation
-
-## Future Considerations
-
-1. Add targets for:
-   - Running tests
-   - Creating database backups
-   - Generating documentation
-   - Deployment tasks
-   - Database migrations
-
-2. Create environment-specific targets (dev, staging, production)
-
-3. Integrate with CI/CD pipelines using Make targets
-
-4. Add Linux/macOS compatibility adjustments if needed
-
-## References
-
-- [GNU Make Documentation](https://www.gnu.org/software/make/manual/)
-- [Odoo Documentation](https://www.odoo.com/documentation/)
-- Project Makefile: `c:\Odoo\Makefile`
