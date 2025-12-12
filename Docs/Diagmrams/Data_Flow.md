@@ -1,10 +1,11 @@
+```mermaid
 graph TD
     %% --- LEGEND & STYLING ---
-    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef it fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
-    classDef swd fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef dsai fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
-    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef client fill:#ffccff,stroke:#990099,stroke-width:2px,color:#000000;
+    classDef it fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
+    classDef swd fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    classDef dsai fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000000;
+    classDef storage fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000000;
 
     %% --- CLIENT LAYER ---
     subgraph ClientLayer [Clients]
@@ -82,3 +83,4 @@ graph TD
     SciKit -- "4. Return Prediction" --> API
     API -- "5. Commit Reg" --> Odoo
     Odoo --> PG
+```
