@@ -2,7 +2,7 @@
 graph TD
     %% Define Styles
     classDef storage fill:#ffccff,stroke:#990099,stroke-width:2px,color:#000000;
-    classDef process:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
+    classDef process fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
     classDef ai fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000000;
     classDef user fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000000;
 
