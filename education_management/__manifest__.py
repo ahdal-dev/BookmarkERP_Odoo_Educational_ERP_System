@@ -1,7 +1,8 @@
 {
     'name': 'Education Management System',
-    'version': '1.0',
+    'version': '19.0.1.0.0',
     'category': 'Education',
+    'license': 'LGPL-3',
     'summary': 'Manage educational institutions, students, and courses',
     'description': """
         A comprehensive education management system for Odoo that allows you to:
