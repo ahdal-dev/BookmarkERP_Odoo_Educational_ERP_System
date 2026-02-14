@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="apply_online_form" name="Apply for Admission">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-8 offset-lg-2">
+                            <div class="text-center mb-4">
+                                <h1 class="display-4">Apply for Admission</h1>
+                                <p class="lead text-muted">
+                                    Fill out the form below to submit your admission application.
+                                </p>
+                            </div>
+                            
+                            <t t-if="errors">
+                                <div class="alert alert-danger" role="alert">
+                                    <h5 class="alert-heading">Please correct the following errors:</h5>
+                                    <ul class="mb-0">
+                                        <t t-foreach="errors" t-as="error">
+                                            <li><t t-esc="error"/></li>
+                                        </t>
+                                    </ul>
+                                </div>
+                            </t>
+                            
+                            <div class="card shadow-sm">
+                                <div class="card-body p-4">
+                                    <form action="/admission/submit" method="post" 
+                                          enctype="multipart/form-data">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        
+                                        <h4 class="mb-3 text-primary">
+                                            <i class="fa fa-user me-2"></i>Personal Information
+                                        </h4>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="name" class="form-label">
+                                                    Full Name <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="name" 
+                                                       name="name" 
+                                                       placeholder="Enter your full name"
+                                                       required="required"
+                                                       t-att-value="form_data.get('name', '') if form_data else ''"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="email" class="form-label">
+                                                    Email Address <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="email" 
+                                                       class="form-control" 
+                                                       id="email" 
+                                                       name="email" 
+                                                       placeholder="your.email@example.com"
+                                                       required="required"
+                                                       t-att-value="form_data.get('email', '') if form_data else ''"/>
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="phone" class="form-label">
+                                                    Phone Number <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="tel" 
+                                                       class="form-control" 
+                                                       id="phone" 
+                                                       name="phone" 
+                                                       placeholder="+1234567890"
+                                                       required="required"
+                                                       t-att-value="form_data.get('phone', '') if form_data else ''"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="national_id" class="form-label">
+                                                    National ID Number <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="national_id" 
+                                                       name="national_id" 
+                                                       placeholder="Enter your national ID number"
+                                                       required="required"
+                                                       t-att-value="form_data.get('national_id', '') if form_data else ''"/>
+                                                <small class="form-text text-muted">
+                                                    This will be used for identity verification
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4"/>
+                                        
+                                        <h4 class="mb-3 text-primary">
+                                            <i class="fa fa-graduation-cap me-2"></i>Academic Information
+                                        </h4>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="program_id" class="form-label">
+                                                    Select Program <span class="text-danger">*</span>
+                                                </label>
+                                                <select class="form-control form-select" 
+                                                        id="program_id" 
+                                                        name="program_id" 
+                                                        required="required">
+                                                    <option value="">-- Choose a Program --</option>
+                                                    <t t-foreach="programs" t-as="program">
+                                                        <option t-att-value="program.id"
+                                                                t-att-selected="'selected' if form_data and str(program.id) == form_data.get('program_id', '') else None">
+                                                            <t t-esc="program.name"/>
+                                                            <t t-if="program.code">
+                                                                (<t t-esc="program.code"/>)
+                                                            </t>
+                                                        </option>
+                                                    </t>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label for="previous_school" class="form-label">
+                                                    Previous School
+                                                </label>
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="previous_school" 
+                                                       name="previous_school" 
+                                                       placeholder="Name of your previous school"
+                                                       t-att-value="form_data.get('previous_school', '') if form_data else ''"/>
+                                            </div>
+                                            
+                                            <div class="col-md-4 mb-3">
+                                                <label for="gpa" class="form-label">
+                                                    GPA (0.0 - 4.0)
+                                                </label>
+                                                <input type="number" 
+                                                       class="form-control" 
+                                                       id="gpa" 
+                                                       name="gpa" 
+                                                       step="0.01" 
+                                                       min="0" 
+                                                       max="4" 
+                                                       placeholder="3.50"
+                                                       t-att-value="form_data.get('gpa', '') if form_data else ''"/>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4"/>
+                                        
+                                        <h4 class="mb-3 text-primary">
+                                            <i class="fa fa-file-upload me-2"></i>Documents
+                                        </h4>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="transcript_document" class="form-label">
+                                                    Upload Transcript / Supporting Documents
+                                                </label>
+                                                <input type="file" 
+                                                       class="form-control" 
+                                                       id="transcript_document" 
+                                                       name="transcript_document"
+                                                       accept=".pdf,.jpg,.jpeg,.png"/>
+                                                <small class="form-text text-muted">
+                                                    Accepted formats: PDF, JPG, PNG (Max 10MB)
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4"/>
+                                        
+                                        <h4 class="mb-3 text-primary">
+                                            <i class="fa fa-comment me-2"></i>Additional Information
+                                        </h4>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="notes" class="form-label">
+                                                    Additional Notes (Optional)
+                                                </label>
+                                                <textarea class="form-control" 
+                                                          id="notes" 
+                                                          name="notes" 
+                                                          rows="4" 
+                                                          placeholder="Any additional information you'd like to share...">
+                                                    <t t-if="form_data" t-esc="form_data.get('notes', '')"/>
+                                                </textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4"/>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12 text-center">
+                                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                                    <i class="fa fa-paper-plane me-2"></i>Submit Application
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-12 text-center">
+                                                <small class="text-muted">
+                                                    <span class="text-danger">*</span> Required fields
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Check Status Link -->
+                            <div class="text-center mt-4">
+                                <p>
+                                    Already applied? 
+                                    <a href="/admission/check_status" class="text-primary">
+                                        Check your application status
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <template id="admission_success" name="Application Submitted">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <div class="card shadow-sm border-success">
+                                <div class="card-body p-5 text-center">
+                                    
+                                    <div class="mb-4">
+                                        <i class="fa fa-check-circle text-success" style="font-size: 80px;"></i>
+                                    </div>
+                                    
+                                    <h1 class="display-5 text-success mb-3">
+                                        Application Submitted Successfully!
+                                    </h1>
+                                    
+                                    <p class="lead mb-4">
+                                        Thank you for your interest in our programs. 
+                                        Your application has been received and is under review.
+                                    </p>
+                                    
+                                    <div class="alert alert-info mb-4" role="alert">
+                                        <h5 class="alert-heading">Your Application Reference</h5>
+                                        <p class="mb-0">
+                                            <strong class="fs-4"><t t-esc="reference"/></strong>
+                                        </p>
+                                        <small class="text-muted">
+                                            Please save this reference number for tracking your application
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="text-start mb-4">
+                                        <h5>What's Next?</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2">
+                                                <i class="fa fa-check text-success me-2"></i>
+                                                You will receive a confirmation email shortly
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fa fa-check text-success me-2"></i>
+                                                Our admissions team will review your application
+                                            </li>
+                                            <li class="mb-2">
+                                                <i class="fa fa-check text-success me-2"></i>
+                                                We'll contact you within 5-7 business days
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                        <a href="/" class="btn btn-primary">
+                                            <i class="fa fa-home me-2"></i>Back to Home
+                                        </a>
+                                        <a href="/admission/check_status" class="btn btn-outline-primary">
+                                            <i class="fa fa-search me-2"></i>Check Status
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <template id="check_status_form" name="Check Application Status">
+        <t t-call="website.layout">
+            <div id="wrap" class="oe_structure">
+                <div class="container mt-5 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            
+                            <div class="text-center mb-4">
+                                <h1 class="display-5">Check Application Status</h1>
+                                <p class="lead text-muted">
+                                    Enter your reference number to view your application status
+                                </p>
+                            </div>
+                            
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-body p-4">
+                                    <form action="/admission/check_status" method="get">
+                                        <div class="mb-3">
+                                            <label for="reference" class="form-label">
+                                                Application Reference Number
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control form-control-lg" 
+                                                   id="reference" 
+                                                   name="reference" 
+                                                   placeholder="ADM00001"
+                                                   t-att-value="reference"
+                                                   required="required"/>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fa fa-search me-2"></i>Check Status
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <t t-if="error">
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fa fa-exclamation-triangle me-2"></i>
+                                    <t t-esc="error"/>
+                                </div>
+                            </t>
+                            
+                            <t t-if="admission">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Application Details</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <strong>Reference:</strong><br/>
+                                                <t t-esc="admission.reference"/>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Status:</strong><br/>
+                                                <t t-if="admission.state == 'draft'">
+                                                    <span class="badge bg-secondary">Draft</span>
+                                                </t>
+                                                <t t-if="admission.state == 'submitted'">
+                                                    <span class="badge bg-primary">Submitted</span>
+                                                </t>
+                                                <t t-if="admission.state == 'under_review'">
+                                                    <span class="badge bg-warning">Under Review</span>
+                                                </t>
+                                                <t t-if="admission.state == 'accepted'">
+                                                    <span class="badge bg-success">Accepted</span>
+                                                </t>
+                                                <t t-if="admission.state == 'rejected'">
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <strong>Name:</strong><br/>
+                                                <t t-esc="admission.name"/>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Email:</strong><br/>
+                                                <t t-esc="admission.email"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <strong>Program:</strong><br/>
+                                                <t t-esc="admission.program_id.name"/>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Application Date:</strong><br/>
+                                                <t t-esc="admission.application_date" t-options="{'widget': 'date'}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+    
+    <record id="menu_apply_admission" model="website.menu">
+                                <field name="name">Apply for Admission</field>
+                                <field name="url">/admission/apply</field>
+                                <field name="parent_id" ref="website.main_menu"/>
+                                <field name="sequence">50</field>
+                            </record>
+                            
+                        </odoo>

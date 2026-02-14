@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_school_admission_public,access.school.admission.public,model_school_admission,base.group_public,1,0,1,0
+access_school_admission_portal,access.school.admission.portal,model_school_admission,base.group_portal,1,0,1,0
+access_school_admission_user,access.school.admission.user,model_school_admission,base.group_user,1,1,1,0
+access_school_admission_manager,access.school.admission.manager,model_school_admission,base.group_system,1,1,1,1
+access_school_program_public,access.school.program.public,model_school_program,base.group_public,1,0,0,0
+access_school_program_portal,access.school.program.portal,model_school_program,base.group_portal,1,0,0,0
+access_school_program_user,access.school.program.user,model_school_program,base.group_user,1,1,1,0
+access_school_program_manager,access.school.program.manager,model_school_program,base.group_system,1,1,1,1
