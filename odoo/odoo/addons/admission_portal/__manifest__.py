@@ -6,7 +6,7 @@
     'description': 'Admission Portal Module - Online admission applications with document upload, program selection, and status tracking',
     'author': 'Educational ERP Team',
     'website': 'https://www.example.com',
-    'depends': ['base', 'web', 'website', 'education_management', 'theme_web_openeducat'],
+    'depends': ['base', 'web', 'website', 'theme_web_openeducat'],
     'data': [
         'security/ir.model.access.csv',
         'views/admission_views.xml',
@@ -14,7 +14,7 @@
     ],
     'demo': [],
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
     'license': 'LGPL-3',
 }
