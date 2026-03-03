@@ -1,0 +1,8 @@
+Flask>=2.3.0,<2.4
+opencv-python-headless==4.8.1.78
+pytesseract>=0.3.10,<0.4
+easyocr>=1.7.0
+ultralytics==8.1.47
+numpy==1.26.0
+torch==2.5.1
+torchvision==0.20.1

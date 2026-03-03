@@ -17,6 +17,7 @@ help:
 	@echo   make run            - Start Odoo server
 	@echo   make install        - Install Python dependencies
 	@echo   make update-module  - Update specific module (set MODULE=name)
+	@echo   make remove-module  - Remove/uninstall module (set MODULE=name)
 	@echo   make clean          - Clean Python cache files
 	@echo   make help           - Show this help message
 	@echo.
@@ -24,6 +25,7 @@ help:
 	@echo   make config
 	@echo   make run
 	@echo   make update-module MODULE=education_management
+	@echo   make remove-module MODULE=my_module
 	@echo ============================================
 
 # Configure module or database
@@ -52,6 +54,19 @@ ifndef MODULE
 endif
 	@echo Updating module: $(MODULE)
 	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u $(MODULE) --stop-after-init
+
+# Remove/uninstall specific module
+# Usage: make remove-module MODULE=module_name
+remove-module:
+ifndef MODULE
+	@echo Error: MODULE variable not set
+	@echo Usage: make remove-module MODULE=module_name
+	@exit 1
+endif
+	@echo Removing module: $(MODULE)
+	@echo env['ir.module.module'].search([('name', '=', '$(MODULE)')]).button_immediate_uninstall() > _uninstall_temp.py
+	cmd /c "$(PYTHON) $(ODOO_BIN) shell -c $(ODOO_CONF) -d $(DB_NAME) --no-http < _uninstall_temp.py"
+	@del _uninstall_temp.py 2>nul
 
 # Clean Python cache files
 clean:

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Demo Programs -->
+    <record id="program_computer_science" model="school.program">
+        <field name="name">Bachelor of Science in Computer Science</field>
+        <field name="code">BSCS</field>
+        <field name="duration">4</field>
+        <field name="description">A comprehensive program covering software development, algorithms, data structures, and computer systems.</field>
+        <field name="active">True</field>
+    </record>
+    
+    <record id="program_business_admin" model="school.program">
+        <field name="name">Bachelor of Business Administration</field>
+        <field name="code">BBA</field>
+        <field name="duration">4</field>
+        <field name="description">Focuses on business management, marketing, finance, and organizational leadership.</field>
+        <field name="active">True</field>
+    </record>
+    
+    <record id="program_engineering" model="school.program">
+        <field name="name">Bachelor of Engineering</field>
+        <field name="code">BE</field>
+        <field name="duration">4</field>
+        <field name="description">Engineering program with specializations in mechanical, electrical, and civil engineering.</field>
+        <field name="active">True</field>
+    </record>
+    
+    <record id="program_medicine" model="school.program">
+        <field name="name">Doctor of Medicine</field>
+        <field name="code">MD</field>
+        <field name="duration">6</field>
+        <field name="description">Medical degree program for aspiring physicians and healthcare professionals.</field>
+        <field name="active">True</field>
+    </record>
+    
+    <!-- Demo Admission Applications -->
+    <record id="admission_demo_1" model="school.admission">
+        <field name="name">John Smith</field>
+        <field name="email">john.smith@example.com</field>
+        <field name="phone">+1234567890</field>
+        <field name="national_id">ABC123456</field>
+        <field name="previous_school">Lincoln High School</field>
+        <field name="gpa">3.75</field>
+        <field name="program_id" ref="program_computer_science"/>
+        <field name="state">submitted</field>
+        <field name="notes">I have strong programming skills and experience with Python and Java.</field>
+    </record>
+    
+    <record id="admission_demo_2" model="school.admission">
+        <field name="name">Emily Johnson</field>
+        <field name="email">emily.j@example.com</field>
+        <field name="phone">+1234567891</field>
+        <field name="national_id">DEF789012</field>
+        <field name="previous_school">Washington Academy</field>
+        <field name="gpa">3.92</field>
+        <field name="program_id" ref="program_business_admin"/>
+        <field name="state">under_review</field>
+        <field name="notes">Leadership experience as student council president.</field>
+    </record>
+    
+    <record id="admission_demo_3" model="school.admission">
+        <field name="name">Michael Chen</field>
+        <field name="email">m.chen@example.com</field>
+        <field name="phone">+1234567892</field>
+        <field name="national_id">GHI345678</field>
+        <field name="previous_school">Roosevelt High School</field>
+        <field name="gpa">3.85</field>
+        <field name="program_id" ref="program_engineering"/>
+        <field name="state">accepted</field>
+        <field name="notes">Won first place in state science fair for robotics project.</field>
+    </record>
+    
+    <record id="admission_demo_4" model="school.admission">
+        <field name="name">Sarah Williams</field>
+        <field name="email">s.williams@example.com</field>
+        <field name="phone">+1234567893</field>
+        <field name="national_id">JKL901234</field>
+        <field name="previous_school">Jefferson Preparatory</field>
+        <field name="gpa">3.95</field>
+        <field name="program_id" ref="program_medicine"/>
+        <field name="state">submitted</field>
+        <field name="notes">Volunteer experience at community hospital for 2 years.</field>
+    </record>
+    
+    <record id="admission_demo_5" model="school.admission">
+        <field name="name">David Martinez</field>
+        <field name="email">d.martinez@example.com</field>
+        <field name="phone">+1234567894</field>
+        <field name="national_id">MNO567890</field>
+        <field name="previous_school">Madison High School</field>
+        <field name="gpa">3.45</field>
+        <field name="program_id" ref="program_computer_science"/>
+        <field name="state">draft</field>
+        <field name="notes">Interested in cybersecurity and ethical hacking.</field>
+    </record>
+</odoo>
