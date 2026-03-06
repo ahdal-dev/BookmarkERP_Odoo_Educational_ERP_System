@@ -5,13 +5,18 @@
     'summary': 'Online admission application portal for prospective students',
     'description': 'Admission Portal Module - Online admission applications with document upload, program selection, and status tracking',
     'author': 'Educational ERP Team',
-    'website': 'https://www.example.com',
+    'website': 'https://www.TEAM.com',
     'depends': ['base', 'web', 'website', 'theme_web_openeducat'],
     'data': [
         'security/ir.model.access.csv',
         'views/admission_views.xml',
         'views/website_templates.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'admission_portal/static/src/js/process_ocr.js',
+        ],
+    },
     'demo': [],
     'installable': True,
     'application': True,

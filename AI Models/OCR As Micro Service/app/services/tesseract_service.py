@@ -1,8 +1,12 @@
+import os
+
 import cv2
 import pytesseract
 
-pytesseract.pytesseract.tesseract_cmd = r"Tesseract-OCR/tesseract.exe"
-
+if os.name == 'nt':
+    pytesseract.pytesseract.tesseract_cmd = r"Tesseract-OCR/tesseract.exe"
+else:  # Linux/Mac
+    pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 def extract_text(image, bbox, lang='ara'):
 
     x1, y1, x2, y2 = bbox

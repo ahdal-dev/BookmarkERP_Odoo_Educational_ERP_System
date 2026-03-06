@@ -1,0 +1,37 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Logs and runtime files
+*.log
+*.sqlite
+*.db
+*.pid
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+
+# Data / large files
+data/
+*.h5
+*.pkl
+*.npz
+*.csv
+
+# Docker files themselves (optional)
+Dockerfile
+docker-compose.yml
