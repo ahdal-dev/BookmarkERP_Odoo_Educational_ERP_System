@@ -1,31 +1,38 @@
 import os
-from flask import Blueprint, request, render_template
+from fastapi import APIRouter, UploadFile, File, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 
 from app.controllers.ocr_controller import process_uploaded_image
 
-main = Blueprint("main", __name__)
+router = APIRouter()
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@main.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
+templates = Jinja2Templates(directory=os.path.join("app", "templates"))
 
-@main.route("/ocr", methods=["POST"])
-def ocr():
-    file = request.files["file"]
+
+@router.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request}
+    )
+
+
+@router.post("/ocr", response_class=HTMLResponse)
+async def ocr(request: Request, file: UploadFile = File(...)):
+
     path = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(path)
 
-    # Process image (YOLO + OCR)
+    with open(path, "wb") as buffer:
+        buffer.write(await file.read())
+
     result = process_uploaded_image(path)
 
-    # --- DELETE TEMPORARY IMAGES ---
-    
     for filename in os.listdir(UPLOAD_FOLDER):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        if filename.lower().endswith((".png", ".jpg", ".jpeg")):
             os.remove(os.path.join(UPLOAD_FOLDER, filename))
-    # ------------------------------
-
-    return render_template("index.html", result=result)
+    
+    return JSONResponse(content={"result": result})
