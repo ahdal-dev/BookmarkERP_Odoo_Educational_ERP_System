@@ -1,7 +1,12 @@
 import cv2
 import pytesseract
+import os
+import platform
 
-pytesseract.pytesseract.tesseract_cmd = r"Tesseract-OCR/tesseract.exe"
+# Only set tesseract path on Windows
+if platform.system() == 'Windows':
+    pytesseract.pytesseract.tesseract_cmd = r"Tesseract-OCR/tesseract.exe"
+# On Linux (Docker), tesseract is installed via apt and is in PATH
 
 def extract_text(image, bbox, lang='ara'):
 
