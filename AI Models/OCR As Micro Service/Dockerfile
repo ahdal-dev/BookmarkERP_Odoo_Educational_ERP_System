@@ -16,17 +16,19 @@ WORKDIR /app
 ENV TESSERACT_PATH=/usr/bin/tesseract
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install PyTorch CPU-only first with correct index
+RUN pip install --default-timeout=1000 --retries 5 --no-cache-dir \
+    torch==2.5.1+cpu torchvision==0.20.1+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining dependencies
+RUN pip install --default-timeout=1000 --retries 5 --no-cache-dir -r requirements.txt
 
 COPY run.py .
 COPY app/ ./app/
 COPY models/ ./models/
 
-
 EXPOSE 5000
 
-ENV FLASK_APP=run.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_ENV=production
-
-CMD ["flask", "run"]
+CMD ["uvicorn", "run:app", "--host", "0.0.0.0", "--port", "5000"]

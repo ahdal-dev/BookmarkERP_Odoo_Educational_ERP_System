@@ -33,6 +33,7 @@ class AdmissionController(http.Controller):
             email = request.params.get('email', '').strip()
             phone = request.params.get('phone', '').strip()
             national_id = request.params.get('national_id', '').strip()
+            address = request.params.get('address', '').strip()
             previous_school = request.params.get('previous_school', '').strip()
             gpa = request.params.get('gpa', 0.0)
             program_id = request.params.get('program_id')
@@ -59,6 +60,7 @@ class AdmissionController(http.Controller):
                     'email': email,
                     'phone': phone,
                     'national_id': national_id,
+                    'address': address,
                     'previous_school': previous_school,
                     'gpa': gpa,
                     'program_id': program_id,
@@ -88,6 +90,7 @@ class AdmissionController(http.Controller):
                 'name': name,
                 'email': email,
                 'phone': phone,
+                'address': address,
                 'national_id': national_id,
                 'previous_school': previous_school,
                 'gpa': gpa,

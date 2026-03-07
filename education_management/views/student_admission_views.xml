@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Student Admission Form View with OCR -->
+    <record id="view_education_student_admission_form" model="ir.ui.view">
+        <field name="name">education.student.admission.form</field>
+        <field name="model">education.student</field>
+        <field name="arch" type="xml">
+            <form string="Student Admission">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="student_id" readonly="1" class="oe_inline"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Quick Upload - Auto Fill with OCR" class="ocr_upload_section">
+                            <field name="id_document" widget="binary" filename="id_document_filename"/>
+                            <field name="id_document_filename" invisible="1"/>
+                            <div class="alert alert-info" role="alert">
+                                <i class="fa fa-info-circle"/> Upload a clear image of the national ID card.
+                                The system will use OCR to automatically extract and fill in the information below.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Personal Information">
+                            <field name="name" placeholder="Full Name (will be auto-filled from ID)"/>
+                            <field name="national_id" placeholder="National ID Number (will be auto-filled from ID)"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="date_of_birth"/>
+                        </group>
+                        <group string="Contact Information">
+                            <field name="address" placeholder="Address (will be auto-filled from ID)"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Academic Information">
+                        <group>
+                            <field name="enrollment_date"/>
+                            <field name="current_semester"/>
+                            <field name="gpa"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Enrolled Courses">
+                            <field name="course_ids">
+                                <list>
+                                    <field name="course_code"/>
+                                    <field name="name"/>
+                                    <field name="credits"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Student Admission Action -->
+    <record id="action_education_student_admission" model="ir.actions.act_window">
+        <field name="name">Student Admission</field>
+        <field name="res_model">education.student</field>
+        <field name="view_mode">form,list</field>
+        <field name="view_id" ref="view_education_student_admission_form"/>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Menu Item for Student Admission -->
+    <menuitem id="menu_education_student_admission"
+              name="Student Admission"
+              parent="education_students"
+              action="action_education_student_admission"
+              sequence="5"/>
+</odoo>
