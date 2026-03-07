@@ -95,6 +95,22 @@
                                             </div>
                                         </div>
                                         
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="address" class="form-label">
+                                                    Address
+                                                </label>
+                                                <textarea class="form-control" 
+                                                       id="address" 
+                                                       name="address" 
+                                                       rows="2"
+                                                       placeholder="Enter your full address"><t t-if="form_data" t-esc="form_data.get('address', '')"/></textarea>
+                                                <small class="form-text text-muted">
+                                                    Can be auto-filled from ID document
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
                                         <hr class="my-4"/>
                                         
                                         <h4 class="mb-3 text-primary">

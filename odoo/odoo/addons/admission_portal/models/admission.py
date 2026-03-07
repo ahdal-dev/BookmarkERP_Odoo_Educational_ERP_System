@@ -33,6 +33,11 @@ class SchoolAdmission(models.Model):
         tracking=True
     )
     
+    address = fields.Text(
+        string='Address',
+        tracking=True
+    )
+    
     previous_school = fields.Char(
         string='Previous School',
         tracking=True

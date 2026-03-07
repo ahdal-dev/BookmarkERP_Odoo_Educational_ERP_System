@@ -30,10 +30,55 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(data => {
                     console.log('OCR Response:', data);
-                    alert('Document processed successfully!');
-                    // You can use the OCR response here
-                    // For example: populate form fields with extracted data
-                    console.log('Extracted data:', data);
+                    
+                    if (data.error) {
+                        alert('OCR Error: ' + data.error);
+                        return;
+                    }
+                    
+                    // Extract data from OCR result
+                    const result = data.result || {};
+                    
+                    // Auto-fill National ID
+                    if (result.nid || result.back_nid) {
+                        const nationalIdField = document.getElementById('national_id');
+                        if (nationalIdField) {
+                            nationalIdField.value = result.nid || result.back_nid || '';
+                            nationalIdField.classList.add('bg-success', 'bg-opacity-10');
+                        }
+                    }
+                    
+                    // Auto-fill Name
+                    if (result.name) {
+                        const nameField = document.getElementById('name');
+                        if (nameField) {
+                            nameField.value = result.name;
+                            nameField.classList.add('bg-success', 'bg-opacity-10');
+                        }
+                    }
+                    
+                    // Auto-fill Address if field exists
+                    if (result.address) {
+                        const addressField = document.getElementById('address');
+                        if (addressField) {
+                            addressField.value = result.address;
+                            addressField.classList.add('bg-success', 'bg-opacity-10');
+                        }
+                    }
+                    
+                    // Show success message with extracted fields
+                    let extractedFields = [];
+                    if (result.nid || result.back_nid) extractedFields.push('National ID');
+                    if (result.name) extractedFields.push('Name');
+                    if (result.address) extractedFields.push('Address');
+                    
+                    if (extractedFields.length > 0) {
+                        alert('Document processed successfully!\n\nAuto-filled fields: ' + extractedFields.join(', '));
+                    } else {
+                        alert('Document processed but no data could be extracted. Please fill the fields manually.');
+                    }
+                    
+                    console.log('Extracted data:', result);
                 })
                 .catch(error => {
                     console.error('Error:', error);
