@@ -24,7 +24,8 @@ from fastapi import (
     Header,
     status,
     Request,
-    BackgroundTasks
+    BackgroundTasks,
+    Form
 )
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -613,10 +614,10 @@ async def submit_admission_application(
 )
 async def submit_with_document(
     file: UploadFile = File(..., description="National ID or certificate"),
-    email: EmailStr = Field(..., description="Applicant email"),
-    phone: str = Field(..., description="Applicant phone number"),
-    desired_program: str = Field(..., description="Desired academic program"),
-    application_type: str = Field("regular", description="Application type"),
+    email: EmailStr = Form(..., description="Applicant email"),
+    phone: str = Form(..., description="Applicant phone number"),
+    desired_program: str = Form(..., description="Desired academic program"),
+    application_type: str = Form("regular", description="Application type"),
     user: TokenData = Depends(
         RBACChecker([
             UserRole.PROSPECTIVE_STUDENT,
