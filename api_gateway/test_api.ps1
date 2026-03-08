@@ -1,5 +1,5 @@
 # ============================================================================
-# API Testing Script (PowerShell)
+# API Testing Script (PowerShell) - FIXED VERSION
 # ============================================================================
 # Tests all API endpoints with sample data
 # ============================================================================
@@ -13,21 +13,44 @@ Write-Host "API Gateway Testing Script" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Ignore SSL certificate errors for development
-add-type @"
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    public class TrustAllCertsPolicy : ICertificatePolicy {
-        public bool CheckValidationResult(
-            ServicePoint srvPoint, X509Certificate certificate,
-            WebRequest request, int certificateProblem) {
-            return true;
-        }
+# ============================================================================
+# Ignore SSL certificate errors for development (FIXED)
+# ============================================================================
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    # PowerShell Core/7+ 
+    $PSDefaultParameterValues = @{
+        'Invoke-RestMethod:SkipCertificateCheck' = $true
+        'Invoke-WebRequest:SkipCertificateCheck' = $true
     }
+} else {
+    # Windows PowerShell 5.1
+    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
+        Add-Type @"
+            using System;
+            using System.Net;
+            using System.Net.Security;
+            using System.Security.Cryptography.X509Certificates;
+            public class ServerCertificateValidationCallback {
+                public static void Ignore() {
+                    ServicePointManager.ServerCertificateValidationCallback += 
+                        delegate(
+                            Object obj, 
+                            X509Certificate certificate, 
+                            X509Chain chain, 
+                            SslPolicyErrors errors
+                        ) {
+                            return true;
+                        };
+                }
+            }
 "@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    }
+    [ServerCertificateValidationCallback]::Ignore()
+}
 
+# ============================================================================
 # Test 1: Health Check
+# ============================================================================
 Write-Host "Test 1: Health Check" -ForegroundColor Yellow
 try {
     $response = Invoke-RestMethod -Uri "$API_BASE/health" -Method Get
@@ -38,7 +61,9 @@ try {
 }
 Write-Host ""
 
+# ============================================================================
 # Test 2: Generate JWT Token
+# ============================================================================
 Write-Host "Test 2: Generate JWT Token" -ForegroundColor Yellow
 try {
     $tokenBody = @{
@@ -56,11 +81,16 @@ try {
     Write-Host "Token: $($token.Substring(0, 50))..." -ForegroundColor Gray
 } catch {
     Write-Host "✗ Token generation failed: $_" -ForegroundColor Red
+    if ($_.ErrorDetails) {
+        Write-Host $_.ErrorDetails.Message -ForegroundColor Red
+    }
     exit 1
 }
 Write-Host ""
 
+# ============================================================================
 # Test 3: Submit Admission Application
+# ============================================================================
 Write-Host "Test 3: Submit Admission Application" -ForegroundColor Yellow
 try {
     $applicationData = @{
@@ -99,7 +129,9 @@ try {
 }
 Write-Host ""
 
+# ============================================================================
 # Test 4: Extract Document (requires image file)
+# ============================================================================
 Write-Host "Test 4: Extract Document (OCR)" -ForegroundColor Yellow
 if (Test-Path "test_document.jpg") {
     try {
@@ -110,7 +142,7 @@ if (Test-Path "test_document.jpg") {
         # PowerShell doesn't have native multipart/form-data support
         # Using System.Net.Http for proper file upload
         Write-Host "⚠ File upload test requires curl or Invoke-WebRequest with file" -ForegroundColor Yellow
-        Write-Host "Example: curl -X POST https://localhost/api/v1/extract-document -H 'Authorization: Bearer $token' -F 'file=@test_document.jpg'" -ForegroundColor Gray
+        Write-Host "Example: curl -k -X POST https://localhost/api/v1/extract-document -H 'Authorization: Bearer $token' -F 'file=@test_document.jpg'" -ForegroundColor Gray
     } catch {
         Write-Host "✗ Document extraction failed: $_" -ForegroundColor Red
     }
@@ -119,7 +151,9 @@ if (Test-Path "test_document.jpg") {
 }
 Write-Host ""
 
+# ============================================================================
 # Test 5: Check Rate Limiting
+# ============================================================================
 Write-Host "Test 5: Rate Limiting Test" -ForegroundColor Yellow
 Write-Host "Sending 15 requests rapidly..." -ForegroundColor Gray
 $rateLimitHit = $false
@@ -143,8 +177,12 @@ if ($rateLimitHit) {
 }
 Write-Host ""
 
+# ============================================================================
+# Summary
+# ============================================================================
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "Testing Complete!" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "For full API documentation, visit: https://localhost/docs" -ForegroundColor Green
+Write-Host ""
