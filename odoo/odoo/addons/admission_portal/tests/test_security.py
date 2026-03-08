@@ -24,21 +24,21 @@ class TestAdmissionSecurity(TransactionCase):
             'name': 'Portal User',
             'login': 'portal_user',
             'email': 'portal@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('base.group_portal').id])]
+            'group_ids': [(6, 0, [cls.env.ref('base.group_portal').id])]
         })
         
         cls.internal_user = cls.env['res.users'].create({
             'name': 'Internal User',
             'login': 'internal_user',
             'email': 'internal@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('base.group_user').id])]
+            'group_ids': [(6, 0, [cls.env.ref('base.group_user').id])]
         })
         
         cls.manager_user = cls.env['res.users'].create({
             'name': 'Manager User',
             'login': 'manager_user',
             'email': 'manager@example.com',
-            'groups_id': [(6, 0, [cls.env.ref('base.group_system').id])]
+            'group_ids': [(6, 0, [cls.env.ref('base.group_system').id])]
         })
         
         # Create a test admission record

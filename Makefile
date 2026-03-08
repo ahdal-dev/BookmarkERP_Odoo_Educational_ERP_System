@@ -1,4 +1,4 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
@@ -29,14 +29,21 @@ help:
 	@echo   make ocr-test       - Test OCR service health endpoint
 	@echo   make ocr-stop       - Stop OCR microservice
 	@echo.
-	@echo   make help           - Show this help message
+	@echo TESTING COMMANDS:
+	@echo   make test-admission - Run all admission_portal module tests
+	@echo   make test-all       - Run tests for all installed modules
+	@echo   make test-module    - Run tests for specific module (set MODULE=name)
 	@echo.
-	@echo Examples:
+	@echo EXAMPLES:
 	@echo   make config
 	@echo   make run
 	@echo   make ocr-run
+	@echo   make test-admission
 	@echo   make update-module MODULE=education_management
+	@echo   make test-module MODULE=education_management
 	@echo   make remove-module MODULE=my_module
+	@echo.
+	@echo   make help           - Show this help message
 	@echo ============================================
 
 # Configure module or database
@@ -75,7 +82,8 @@ ifndef MODULE
 	@exit 1
 endif
 	@echo Removing module: $(MODULE)
-	@echo env['
+	@echo Note: This command requires Odoo shell access
+	@echo Run manually: python odoo-bin shell -c odoo.conf -d $(DB_NAME)
 
 # ============================================================================
 # OCR Microservice Commands
@@ -103,9 +111,37 @@ ocr-test:
 # Stop OCR microservice (kills all python processes on port 5000)
 ocr-stop:
 	@echo Stopping OCR microservice...
-	@powershell -Command "$$processes = Get-NetTCPConnection -LocalPort $(OCR_PORT) -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($$processes) { $$processes | ForEach-Object { Stop-Process -Id $$_ -Force -ErrorAction SilentlyContinue }; Write-Host 'OCR service stopped' -ForegroundColor Green } else { Write-Host 'No OCR service running on port $(OCR_PORT)' -ForegroundColor Yellow }"ir.module.module'].search([('name', '=', '$(MODULE)')]).button_immediate_uninstall() > _uninstall_temp.py
-	cmd /c "$(PYTHON) $(ODOO_BIN) shell -c $(ODOO_CONF) -d $(DB_NAME) --no-http < _uninstall_temp.py"
-	@del _uninstall_temp.py 2>nul
+
+# ============================================================================
+# Testing Commands
+# ============================================================================
+
+# Run admission_portal module tests
+test-admission:
+	@echo ============================================
+	@echo Running admission_portal module tests
+	@echo ============================================
+	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u admission_portal --test-enable --stop-after-init --log-level=test
+
+# Run all tests for all modules
+test-all:
+	@echo ============================================
+	@echo Running all module tests
+	@echo ============================================
+	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) --test-enable --stop-after-init --log-level=test
+
+# Run tests for a specific module
+# Usage: make test-module MODULE=education_management
+test-module:
+ifndef MODULE
+	@echo Error: MODULE variable not set
+	@echo Usage: make test-module MODULE=education_management
+	@exit 1
+endif
+	@echo ============================================
+	@echo Running tests for module: $(MODULE)
+	@echo ============================================
+	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u $(MODULE) --test-enable --stop-after-init --log-level=test
 
 # Clean Python cache files
 clean:
