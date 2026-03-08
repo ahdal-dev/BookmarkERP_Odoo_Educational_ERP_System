@@ -348,33 +348,3 @@ Increase timeout in FastAPI (`main.py`):
 ```python
 async with httpx.AsyncClient(timeout=120.0) as client:
 ```
-
-## 📚 Additional Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [NGINX Documentation](https://nginx.org/en/docs/)
-- [Odoo Documentation](https://www.odoo.com/documentation/)
-- [Docker Compose Guide](https://docs.docker.com/compose/)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
-## 👥 Support
-
-For support and questions:
-- Email: support@edu-erp.local
-- Issues: GitHub Issues
-- Documentation: `/docs` endpoint
-
----
-
-**Built with ❤️ for Educational Excellence**
