@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Petition Tree View -->
+    <record id="view_petetion_tree" model="ir.ui.view">
+        <field name="name">petetion.list</field>
+        <field name="model">petetion.petetion</field>
+        <field name="arch" type="xml">
+            <list string="Petitions">
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="program_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Petition Form View -->
+    <record id="view_petetion_form" model="ir.ui.view">
+        <field name="name">petetion.form</field>
+        <field name="model">petetion.petetion</field>
+        <field name="arch" type="xml">
+            <form string="Petition">
+                <header>
+                    <button name="action_submit" string="Submit Petition" 
+                            type="object" class="oe_highlight" 
+                            invisible="state != 'draft'"/>
+                    <button name="action_under_review" string="Move to Review" 
+                            type="object" class="oe_highlight" 
+                            invisible="state != 'submitted'"/>
+                    <button name="action_accept" string="Accept" 
+                            type="object" class="oe_highlight" 
+                            invisible="state != 'under_review'"/>
+                    <button name="action_reject" string="Reject" 
+                            type="object" 
+                            invisible="state != 'under_review'"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" 
+                            type="object" 
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" 
+                           statusbar_visible="draft,submitted,under_review,accepted,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <div class="oe_title">
+                            <h1>
+                                <field name="reference" readonly="1"/>
+                            </h1>
+                        </div>
+                    </div>
+                    
+                    <group>
+                        <group string="Petitioner Information">
+                            <field name="name" placeholder="Full Name"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="gpa"/>
+                        </group>
+                        <group string="Petition Details">
+                            <field name="program_id"/>
+                            <field name="application_date" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Documents">
+                        <field name="transcript_filename" invisible="1"/>
+                        <field name="transcript_document" filename="transcript_filename"/>
+                    </group>
+
+                    <group string="Additional Notes">
+                        <field name="notes" nolabel="1" placeholder="Enter any additional information..."/>
+                    </group>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Petition Search View -->
+    <record id="view_petetion_search" model="ir.ui.view">
+        <field name="name">petetion.search</field>
+        <field name="model">petetion.petetion</field>
+        <field name="arch" type="xml">
+            <search string="Search Petitions">
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="email"/>
+                <field name="program_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Submitted" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Under Review" name="under_review" domain="[('state', '=', 'under_review')]"/>
+                <filter string="Accepted" name="accepted" domain="[('state', '=', 'accepted')]"/>
+                <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Petition Action -->
+    <record id="action_petetion" model="ir.actions.act_window">
+        <field name="name">Petitions</field>
+        <field name="res_model">petetion.petetion</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_submitted': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first petition
+            </p>
+            <p>
+                Track and manage student or staff petitions efficiently.
+            </p>
+        </field>
+    </record>
+
+    <!-- Petition Menu -->
+    <menuitem id="menu_petetion_root" 
+              name="Petitions" 
+              sequence="40"
+              web_icon="petition_portal,static/description/icon.png"/>
+
+    <menuitem id="menu_petetion_petitions" 
+              name="Petitions" 
+              parent="menu_petetion_root" 
+              action="action_petetion" 
+              sequence="10"/>
+
+    <!-- Petition Sequence -->
+    <record id="seq_petetion" model="ir.sequence">
+        <field name="name">Petition</field>
+        <field name="code">petetion.petetion</field>
+        <field name="prefix">PET</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+</odoo>

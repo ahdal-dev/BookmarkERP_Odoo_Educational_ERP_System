@@ -1,0 +1,337 @@
+# ============================================================================
+# Docker Compose Configuration for Educational ERP API Gateway
+# ============================================================================
+# Purpose: Orchestrates NGINX reverse proxy, FastAPI Gateway, OCR service,
+#          and Odoo ERP system in a microservices architecture
+# ============================================================================
+
+# ============================================================================
+# Networks Configuration
+# ============================================================================
+networks:
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+
+# ============================================================================
+# Volumes Configuration
+# ============================================================================
+volumes:
+  nginx_logs:
+    driver: local
+  odoo_data:
+    driver: local
+  odoo_filestore:
+    driver: local
+  postgres_data:
+    driver: local
+  ssl_certificates:
+    driver: local
+
+# ============================================================================
+# Services Configuration
+# ============================================================================
+services:
+
+  # ==========================================================================
+  # NGINX - Reverse Proxy & API Gateway Entry Point
+  # ==========================================================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: edu_erp_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    volumes:
+      # NGINX Configuration
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      
+      # SSL Certificates (generate or mount real certs in production)
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      
+      # Logs
+      - nginx_logs:/var/log/nginx
+      
+      # Custom error pages (optional)
+      # - ./nginx/error_pages:/usr/share/nginx/error_pages:ro
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - fastapi_gateway
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.edu-erp.service=nginx"
+      - "com.edu-erp.layer=gateway"
+
+  # ==========================================================================
+  # FastAPI Gateway - Internal API Gateway & Orchestration Layer
+  # ==========================================================================
+  fastapi_gateway:
+    build:
+      context: ./fastapi_app
+      dockerfile: Dockerfile
+    container_name: edu_erp_fastapi_gateway
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      # Service URLs
+      - OCR_SERVICE_URL=http://ocr_microservice:5000
+      - ODOO_URL=http://odoo:8069
+      
+      # Odoo Configuration
+      - ODOO_DB=edu_demo_new
+      - ODOO_USERNAME=admin
+      - ODOO_PASSWORD=${ODOO_PASSWORD:-admin}
+      
+      # JWT Configuration
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-key-in-production}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION_HOURS=24
+      
+      # Python Environment
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    volumes:
+      # Mount application code for development (comment out in production)
+      - ./fastapi_app:/app
+      
+      # Logs
+      - ./logs/fastapi:/app/logs
+    networks:
+      - backend
+    depends_on:
+      - ocr_microservice
+      - odoo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.edu-erp.service=fastapi-gateway"
+      - "com.edu-erp.layer=gateway"
+
+  # ==========================================================================
+  # OCR Microservice - AI-Based Document Processing
+  # ==========================================================================
+  ocr_microservice:
+    build:
+      context: ../AI Models/OCR As Micro Service
+      dockerfile: Dockerfile
+    container_name: edu_erp_ocr_service
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      - TZ=Africa/Cairo
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Model files
+      - ../AI Models/OCR As Micro Service/models:/app/models:ro
+      
+      # Temporary upload directory
+      - ./temp/ocr_uploads:/app/uploads
+      
+      # Logs
+      - ./logs/ocr:/app/logs
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--timeout=5", "-O", "/dev/null", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.edu-erp.service=ocr-microservice"
+      - "com.edu-erp.layer=ai-services"
+
+  # ==========================================================================
+  # PostgreSQL Database - Odoo Database
+  # ==========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: edu_erp_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-Admin123}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+      # Custom PostgreSQL configuration (optional)
+      # - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - backend
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "com.edu-erp.service=postgresql"
+      - "com.edu-erp.layer=database"
+
+  # ==========================================================================
+  # Odoo ERP System - Core Educational Management
+  # ==========================================================================
+  odoo:
+    image: odoo:19.0
+    container_name: edu_erp_odoo
+    restart: unless-stopped
+    expose:
+      - "8069"
+      - "8072"  # Longpolling
+    environment:
+      - HOST=postgres
+      - PORT=5432
+      - USER=odoo
+      - PASSWORD=${POSTGRES_PASSWORD:-Admin123}
+      - TZ=Africa/Cairo
+    volumes:
+      # Odoo configuration
+      - ../odoo.conf:/etc/odoo/odoo.conf:ro
+      
+      # Custom addons
+      - ../education_management:/mnt/extra-addons/education_management:ro
+      - ../odoo/addons:/mnt/extra-addons/odoo_addons:ro
+      
+      # Data persistence
+      - odoo_data:/var/lib/odoo
+      - odoo_filestore:/var/lib/odoo/filestore
+      
+      # Logs
+      - ./logs/odoo:/var/log/odoo
+    networks:
+      - backend
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    labels:
+      - "com.edu-erp.service=odoo"
+      - "com.edu-erp.layer=erp-core"
+
+  # ==========================================================================
+  # Redis - Caching & Session Storage (Optional but Recommended)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: edu_erp_redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - ./redis/data:/data
+    networks:
+      - backend
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "com.edu-erp.service=redis"
+      - "com.edu-erp.layer=cache"
+
+  # ==========================================================================
+  # Prometheus - Metrics Collection (Optional)
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: edu_erp_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/data:/prometheus
+    networks:
+      - backend
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    labels:
+      - "com.edu-erp.service=prometheus"
+      - "com.edu-erp.layer=monitoring"
+
+  # ==========================================================================
+  # Grafana - Metrics Visualization (Optional)
+  # ==========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: edu_erp_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - backend
+    depends_on:
+      - prometheus
+    labels:
+      - "com.edu-erp.service=grafana"
+      - "com.edu-erp.layer=monitoring"
+
+# ============================================================================
+# Additional Configuration Notes
+# ============================================================================
+# 
+# Production Deployment Checklist:
+# --------------------------------
+# 1. Generate real SSL certificates (Let's Encrypt recommended)
+# 2. Update environment variables in .env file
+# 3. Configure proper database backups
+# 4. Set up log rotation
+# 5. Enable monitoring and alerting
+# 6. Review and harden security settings
+# 7. Scale services as needed (use docker-compose scale)
+# 8. Configure external load balancer if running multiple instances
+#
+# Scaling Example:
+# ---------------
+# docker-compose up -d --scale fastapi_gateway=3
+#
+# This will create 3 instances of the FastAPI gateway for load distribution
+# ============================================================================
