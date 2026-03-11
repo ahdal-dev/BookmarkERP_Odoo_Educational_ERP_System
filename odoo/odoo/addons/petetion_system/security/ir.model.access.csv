@@ -1,7 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_petetion_petetion_public,access.petetion.petetion.public,model_petetion_petetion,base.group_public,1,0,1,0
-access_petetion_petetion_portal,access.petetion.petetion.portal,model_petetion_petetion,base.group_portal,1,0,1,0
-access_petetion_petetion_user,access.petetion.petetion.user,model_petetion_petetion,base.group_user,1,1,1,0
-access_petetion_petetion_manager,access.petetion.petetion.manager,model_petetion_petetion,base.group_system,1,1,1,1
-access_petetion_program_user,access.petetion.program.user,model_petetion_program,base.group_user,1,1,1,0
-access_petetion_program_manager,access.petetion.program.manager,model_petetion_program,base.group_system,1,1,1,1
