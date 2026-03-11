@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_petition_type_student,petition.type.student,model_petition_type,petition_system.group_petition_student,1,0,0,0
+access_petition_type_admin,petition.type.admin,model_petition_type,petition_system.group_petition_admin,1,1,1,1
+access_petition_type_manager,petition.type.manager,model_petition_type,petition_system.group_petition_manager,1,1,1,1
+access_petition_student,student.petition.student,model_student_petition,petition_system.group_petition_student,1,1,1,0
+access_petition_admin,student.petition.admin,model_student_petition,petition_system.group_petition_admin,1,1,1,1
+access_petition_manager,student.petition.manager,model_student_petition,petition_system.group_petition_manager,1,1,1,1
