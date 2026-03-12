@@ -133,7 +133,7 @@ services:
   # ==========================================================================
   ocr_microservice:
     build:
-      context: ../AI Models/OCR As Micro Service
+      context: ../services/ocr
       dockerfile: Dockerfile
     container_name: edu_erp_ocr_service
     restart: unless-stopped
@@ -144,7 +144,7 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       # Model files
-      - ../AI Models/OCR As Micro Service/models:/app/models:ro
+      - ../services/ocr/models:/app/models:ro
       
       # Temporary upload directory
       - ./temp/ocr_uploads:/app/uploads
@@ -219,10 +219,10 @@ services:
       - TZ=Africa/Cairo
     volumes:
       # Odoo configuration
-      - ../odoo.conf:/etc/odoo/odoo.conf:ro
+      - ../config/odoo.conf:/etc/odoo/odoo.conf:ro
       
       # Custom addons
-      - ../education_management:/mnt/extra-addons/education_management:ro
+      - ../addons:/mnt/extra-addons/custom_addons:ro
       - ../odoo/addons:/mnt/extra-addons/odoo_addons:ro
       
       # Data persistence

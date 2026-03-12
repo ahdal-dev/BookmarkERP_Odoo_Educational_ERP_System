@@ -1,6 +1,7 @@
 # Virtual environment
 venv/
 env/
+.venv/
 
 # Python cache
 __pycache__/
@@ -14,6 +15,13 @@ __pycache__/
 filestore/
 sessions/
 *.log
+
+# Odoo runtime data
+odoo_data/
+odoo_screenshots/
+
+# Config (use config/odoo.conf.example as template)
+config/odoo.conf
 
 # Database backups
 *.dump
@@ -31,9 +39,26 @@ sessions/
 .DS_Store
 Thumbs.db
 
-# Odoo core (if you want to exclude the official Odoo repo)
-# Uncomment the next line if you don't want to track odoo core changes
+# Environment files
+.env
+!.env.example
+!api_gateway/.env.example
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Service artifacts
+services/ocr/uploads/
+services/ocr/Tesseract-OCR/
+api_gateway/logs/
+api_gateway/temp/
+api_gateway/redis/data/
+api_gateway/prometheus/data/
+api_gateway/grafana/data/
+api_gateway/nginx/ssl/*.pem
+
+# Odoo core (uncomment to exclude the official Odoo repo)
 # odoo/
 
-# Data directory
-c:\users\nour\appdata\local\openerp s.a\odoo/
+

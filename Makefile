@@ -1,13 +1,16 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module grade-run grade-install gateway-up gateway-down clean-ghosts
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
 PIP = venv/Scripts/pip.exe
 ODOO_BIN = odoo/odoo-bin
-ODOO_CONF = odoo.conf
+ODOO_CONF = config/odoo.conf
 DB_NAME = edu_demo_new
-OCR_DIR = AI Models/OCR As Micro Service
+OCR_DIR = services/ocr
+GRADE_DIR = services/grade_predector
+GATEWAY_DIR = api_gateway
 OCR_PORT = 5000
+GRADE_PORT = 5001
 
 # Default target
 help:
@@ -34,10 +37,20 @@ help:
 	@echo   make test-all       - Run tests for all installed modules
 	@echo   make test-module    - Run tests for specific module (set MODULE=name)
 	@echo.
+	@echo GRADE PREDICTOR COMMANDS:
+	@echo   make grade-install  - Install Grade Predictor dependencies
+	@echo   make grade-run      - Start Grade Predictor on port $(GRADE_PORT)
+	@echo.
+	@echo API GATEWAY COMMANDS:
+	@echo   make gateway-up     - Start API gateway services (Docker)
+	@echo   make gateway-down   - Stop API gateway services (Docker)
+	@echo.
 	@echo EXAMPLES:
 	@echo   make config
 	@echo   make run
 	@echo   make ocr-run
+	@echo   make grade-run
+	@echo   make gateway-up
 	@echo   make test-admission
 	@echo   make update-module MODULE=education_management
 	@echo   make test-module MODULE=education_management
@@ -81,9 +94,8 @@ ifndef MODULE
 	@echo Usage: make remove-module MODULE=module_name
 	@exit 1
 endif
-	@echo Removing module: $(MODULE)
-	@echo Note: This command requires Odoo shell access
-	@echo Run manually: python odoo-bin shell -c odoo.conf -d $(DB_NAME)
+	@echo Uninstalling module: $(MODULE)
+	$(PYTHON) scripts/remove_module.py $(MODULE) $(ODOO_CONF) $(DB_NAME)
 
 # ============================================================================
 # OCR Microservice Commands
@@ -111,6 +123,49 @@ ocr-test:
 # Stop OCR microservice (kills all python processes on port 5000)
 ocr-stop:
 	@echo Stopping OCR microservice...
+
+# ============================================================================
+# Grade Predictor Microservice Commands
+# ============================================================================
+
+# Install Grade Predictor dependencies
+grade-install:
+	@echo Installing Grade Predictor dependencies...
+	@cd "$(GRADE_DIR)" && python -m pip install -r requirements.txt
+	@echo Grade Predictor dependencies installed!
+
+# Start Grade Predictor microservice
+grade-run:
+	@echo Starting Grade Predictor on port $(GRADE_PORT)...
+	@echo.
+	@echo Press Ctrl+C to stop the service
+	@echo ============================================
+	@cd "$(GRADE_DIR)" && python run.py
+
+# ============================================================================
+# API Gateway Commands
+# ============================================================================
+
+# Start API gateway services
+gateway-up:
+	@echo Starting API Gateway services...
+	@cd "$(GATEWAY_DIR)" && docker-compose up -d
+	@echo API Gateway started!
+
+# Stop API gateway services
+gateway-down:
+	@echo Stopping API Gateway services...
+	@cd "$(GATEWAY_DIR)" && docker-compose down
+	@echo API Gateway stopped!
+
+# ============================================================================
+# Database Cleanup Commands
+# ============================================================================
+
+# Clean ghost modules and orphaned models from the database
+clean-ghosts:
+	@echo Cleaning ghost modules and orphaned models from database...
+	$(PYTHON) scripts/clean_ghost_modules.py $(ODOO_CONF) $(DB_NAME)
 
 # ============================================================================
 # Testing Commands
