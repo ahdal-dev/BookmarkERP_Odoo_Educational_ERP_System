@@ -1,0 +1,94 @@
+[options]
+# ============================================================================
+# Odoo Configuration Template
+# ============================================================================
+# Instructions: Copy this file to config/odoo.conf and update the paths
+# to match your local environment.
+#   cp config/odoo.conf.example config/odoo.conf
+# ============================================================================
+
+# --- Database ---
+db_name = edu_demo_new
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = CHANGE_ME
+db_template = template0
+db_sslmode = prefer
+db_maxconn = 64
+db_maxconn_gevent = None
+db_replica_host = None
+db_replica_port = None
+db_app_name = odoo-{pid}
+
+# --- Addons Path ---
+# Update these paths to match your local clone location
+# Format: /path/to/odoo/odoo/addons,/path/to/odoo/addons,/path/to/custom/addons
+addons_path = ./odoo/odoo/addons,./odoo/addons,./addons
+
+# --- Admin ---
+admin_passwd = admin
+
+# --- Paths ---
+# Update these to your local PostgreSQL bin directory
+pg_path = C:/Program Files/PostgreSQL/18/bin
+# data_dir = C:/Users/YOUR_USER/AppData/Local/OpenERP S.A/Odoo
+bin_path = ./odoo/odoo-bin
+
+# --- HTTP ---
+http_enable = True
+http_interface = 0.0.0.0
+http_port = 8081
+gevent_port = 8072
+
+# --- Performance ---
+limit_memory_soft = 2147483648
+limit_time_real = 120
+limit_time_real_cron = -1
+limit_time_worker_cron = 0
+max_cron_threads = 2
+
+# --- Logging ---
+log_db = 
+log_db_level = warning
+log_handler = :INFO
+log_level = info
+logfile = 
+
+# --- Email ---
+email_from = 
+from_filter = 
+smtp_password = 
+smtp_port = 25
+smtp_server = localhost
+smtp_ssl = False
+smtp_ssl_certificate_filename = 
+smtp_ssl_private_key_filename = 
+smtp_user = 
+
+# --- Misc ---
+csv_internal_sep = ,
+dbfilter = 
+list_db = True
+load_language = en_US
+osv_memory_count_limit = 0
+pidfile = 
+pre_upgrade_scripts = 
+proxy_mode = False
+reportgz = False
+screencasts = 
+screenshots = 
+server_wide_modules = base,rpc,web
+syslog = False
+transient_age_limit = 1.0
+unaccent = False
+upgrade_path = 
+websocket_keep_alive_timeout = 3600
+websocket_rate_limit_burst = 10
+websocket_rate_limit_delay = 0.2
+with_demo = False
+x_sendfile = False
+
+# --- GeoIP (optional) ---
+geoip_city_db = 
+geoip_country_db = 
