@@ -24,7 +24,7 @@ db_app_name = odoo-{pid}
 # --- Addons Path ---
 # Update these paths to match your local clone location
 # Format: /path/to/odoo/odoo/addons,/path/to/odoo/addons,/path/to/custom/addons
-addons_path = ./odoo/odoo/addons,./odoo/addons,./addons
+addons_path = ./odoo/odoo/addons,./odoo/addons,./addons/open_edu_cat,./addons/edu_mangment
 
 # --- Admin ---
 admin_passwd = admin

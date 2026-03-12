@@ -1,4 +1,4 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module grade-run grade-install gateway-up gateway-down
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module grade-run grade-install gateway-up gateway-down clean-ghosts
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
@@ -94,9 +94,8 @@ ifndef MODULE
 	@echo Usage: make remove-module MODULE=module_name
 	@exit 1
 endif
-	@echo Removing module: $(MODULE)
-	@echo Note: This command requires Odoo shell access
-	@echo Run manually: python odoo-bin shell -c odoo.conf -d $(DB_NAME)
+	@echo Uninstalling module: $(MODULE)
+	$(PYTHON) scripts/remove_module.py $(MODULE) $(ODOO_CONF) $(DB_NAME)
 
 # ============================================================================
 # OCR Microservice Commands
@@ -158,6 +157,15 @@ gateway-down:
 	@echo Stopping API Gateway services...
 	@cd "$(GATEWAY_DIR)" && docker-compose down
 	@echo API Gateway stopped!
+
+# ============================================================================
+# Database Cleanup Commands
+# ============================================================================
+
+# Clean ghost modules and orphaned models from the database
+clean-ghosts:
+	@echo Cleaning ghost modules and orphaned models from database...
+	$(PYTHON) scripts/clean_ghost_modules.py $(ODOO_CONF) $(DB_NAME)
 
 # ============================================================================
 # Testing Commands
