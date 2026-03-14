@@ -14,7 +14,7 @@
     ],
     'assets': {
         'web.assets_frontend': [
-            'admission_portal/static/src/js/process_ocr.js',
+            'edu_mang_admission/static/src/js/process_ocr.js',
         ],
     },
     'demo': [],

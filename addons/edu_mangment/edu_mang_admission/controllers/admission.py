@@ -20,7 +20,7 @@ class AdmissionController(http.Controller):
                 'programs': programs,
                 'page_name': 'Apply for Admission',
             }
-            return request.render('admission_portal.apply_online_form', values)
+            return request.render('edu_mang_admission.apply_online_form', values)
         except Exception as e:
             _logger.error(f"Error rendering admission form: {str(e)}")
             return request.render('website.404')
@@ -66,7 +66,7 @@ class AdmissionController(http.Controller):
                     'program_id': program_id,
                     'notes': notes,
                 }
-                return request.render('admission_portal.apply_online_form', {
+                return request.render('edu_mang_admission.apply_online_form', {
                     'programs': programs,
                     'errors': errors,
                     'form_data': form_data,
@@ -116,7 +116,7 @@ class AdmissionController(http.Controller):
             'reference': reference,
             'page_name': 'Application Submitted',
         }
-        return request.render('admission_portal.admission_success', values)
+        return request.render('edu_mang_admission.admission_success', values)
     
     @http.route('/admission/check_status', type='http', auth='public', website=True, sitemap=True)
     def check_admission_status(self, **kwargs):
@@ -138,4 +138,4 @@ class AdmissionController(http.Controller):
             'reference': reference,
             'page_name': 'Check Application Status',
         }
-        return request.render('admission_portal.check_status_form', values)
+        return request.render('edu_mang_admission.check_status_form', values)
