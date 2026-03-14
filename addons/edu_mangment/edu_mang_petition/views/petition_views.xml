@@ -46,19 +46,19 @@
     <field name="arch" type="xml">
         <form string="Petition" create="1" edit="1" delete="1">
             <header>
-                <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'" groups="petition_system.group_petition_student"/>
-                <button name="action_review" string="Start Review" type="object" class="btn-warning" invisible="state != 'submitted'" groups="petition_system.group_petition_admin"/>
-                <button name="action_approve" string="Approve" type="object" class="btn-success" invisible="state != 'under_review'" groups="petition_system.group_petition_admin"/>
-                <button name="action_reject" string="Reject" type="object" class="btn-danger" invisible="state != 'under_review'" groups="petition_system.group_petition_admin"/>
-                <button name="action_draft" string="Reset to Draft" type="object" groups="petition_system.group_petition_manager"/>
-                <button name="action_cancel" string="Cancel" type="object" groups="petition_system.group_petition_student"/>
+                <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'" groups="edu_mang_petition.group_petition_student"/>
+                <button name="action_review" string="Start Review" type="object" class="btn-warning" invisible="state != 'submitted'" groups="edu_mang_petition.group_petition_admin"/>
+                <button name="action_approve" string="Approve" type="object" class="btn-success" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
+                <button name="action_reject" string="Reject" type="object" class="btn-danger" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
+                <button name="action_draft" string="Reset to Draft" type="object" groups="edu_mang_petition.group_petition_manager"/>
+                <button name="action_cancel" string="Cancel" type="object" groups="edu_mang_petition.group_petition_student"/>
                 <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved,rejected"/>
             </header>
             <sheet>
                 <group>
                     <group>
                         <field name="name"/>
-                        <field name="student_id" options="{'create': false}" groups="petition_system.group_petition_admin"/>
+                        <field name="student_id" options="{'create': false}" groups="edu_mang_petition.group_petition_admin"/>
                         <field name="petition_type_id" options="{'create': false}"/>
                         <field name="subject"/>
                     </group>
