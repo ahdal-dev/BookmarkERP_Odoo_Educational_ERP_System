@@ -292,16 +292,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('OCR Response:', data);
 
-                alert('Document processed successfully!');
+                alert('Document processed successfully!, Reviewing data is user responsibility!');
 
                 /* Example auto-fill fields */
-                if (data.name) {
-                    document.getElementById('name').value = data.name;
+                if (data.result.firstName) {
+                    document.getElementById('name').value = data.result.firstName + ' ' + data.result.lastName;
                 }
 
-                if (data.national_id) {
-                    document.getElementById('national_id').value = data.national_id;
+                if (data.result.nid) {
+                    document.getElementById('national_id').value = data.result.nid;
                 }
+                if (data.result.address) {
+                    document.getElementById('address').value = data.result.address;
+                }
+                
 
             })
             .catch(error => {
@@ -488,6 +492,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                             <div class="col-md-6">
                                                 <strong>Application Date:</strong><br/>
                                                 <t t-esc="admission.application_date" t-options="{'widget': 'date'}"/>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Reason:</strong><br/>
+                                                <t t-esc="admission.notes"/>
                                             </div>
                                         </div>
                                     </div>

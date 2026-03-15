@@ -20,7 +20,7 @@ class AdmissionController(http.Controller):
                 'programs': programs,
                 'page_name': 'Apply for Admission',
             }
-            return request.render('admission_portal.apply_online_form', values)
+            return request.render('edu_mang_admission.apply_online_form', values)
         except Exception as e:
             _logger.error(f"Error rendering admission form: {str(e)}")
             return request.render('website.404')
@@ -66,7 +66,7 @@ class AdmissionController(http.Controller):
                     'program_id': program_id,
                     'notes': notes,
                 }
-                return request.render('admission_portal.apply_online_form', {
+                return request.render('edu_mang_admission.apply_online_form', {
                     'programs': programs,
                     'errors': errors,
                     'form_data': form_data,
@@ -103,7 +103,13 @@ class AdmissionController(http.Controller):
             }
             
             admission = request.env['school.admission'].sudo().create(admission_vals)
-            _logger.info(f"Admission application created: {admission.reference} for {name}")
+            template = request.env.ref('edu_mang_admission.email_template_admission_success').sudo()
+
+            try:
+                mail_id = template.send_mail(admission.id, force_send=True)
+                _logger.info(f"Mail sent with ID: {mail_id}")
+            except Exception as e:
+                _logger.error(f"Failed to send mail: {str(e)}", exc_info=True)
             return request.redirect(f'/admission/thank_you?ref={admission.reference}')
         except Exception as e:
             _logger.error(f"Error submitting admission: {str(e)}", exc_info=True)
@@ -116,7 +122,7 @@ class AdmissionController(http.Controller):
             'reference': reference,
             'page_name': 'Application Submitted',
         }
-        return request.render('admission_portal.admission_success', values)
+        return request.render('edu_mang_admission.admission_success', values)
     
     @http.route('/admission/check_status', type='http', auth='public', website=True, sitemap=True)
     def check_admission_status(self, **kwargs):
@@ -138,4 +144,4 @@ class AdmissionController(http.Controller):
             'reference': reference,
             'page_name': 'Check Application Status',
         }
-        return request.render('admission_portal.check_status_form', values)
+        return request.render('edu_mang_admission.check_status_form', values)
