@@ -9,7 +9,20 @@
             <div>
                 <p>Dear <t t-out="object.name"/>,</p>
                 <p>Your admission application has been received.</p>
-                <p>Reference: <t t-out="object.notes or ''"/></p>
+                <p>Notes: <t t-out="object.notes or ''"/></p>
+            </div>
+        </field>
+    </record>
+    <record id="email_template_admission_status" model="mail.template">
+        <field name="name">Admission Status Update</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="subject">Status Update - {{ object.reference }}</field>
+        <field name="email_to">${object.email}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.name"/>,</p>
+                <p>Your admission application status has been <b><t t-out="object.state"/></b>.</p>
+                <p>Notes: <t t-out="object.notes or ''"/></p>
             </div>
         </field>
     </record>

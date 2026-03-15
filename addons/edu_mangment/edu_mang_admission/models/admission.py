@@ -1,7 +1,8 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 import re
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class SchoolAdmission(models.Model):
     _name = 'school.admission'
@@ -122,10 +123,19 @@ class SchoolAdmission(models.Model):
     
     def action_accept(self):
         self.write({'state': 'accepted'})
+        template = self.env.ref('edu_mang_admission.email_template_admission_status')
+        if template:
+            mail_id = template.sudo().send_mail(self.id, force_send=True)
+            _logger.info("Mail queued: %s", mail_id)
         return True
     
     def action_reject(self):
         self.write({'state': 'rejected'})
+        template = self.env.ref('edu_mang_admission.email_template_admission_status')
+        if template:
+            mail_id = template.sudo().send_mail(self.id, force_send=True)
+            _logger.info("Mail queued: %s", mail_id)
+
         return True
     
     def action_reset_to_draft(self):
