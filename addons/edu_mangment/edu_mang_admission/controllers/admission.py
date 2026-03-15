@@ -103,7 +103,13 @@ class AdmissionController(http.Controller):
             }
             
             admission = request.env['school.admission'].sudo().create(admission_vals)
-            _logger.info(f"Admission application created: {admission.reference} for {name}")
+            template = request.env.ref('edu_mang_admission.email_template_admission_success').sudo()
+
+            try:
+                mail_id = template.send_mail(admission.id, force_send=True)
+                _logger.info(f"Mail sent with ID: {mail_id}")
+            except Exception as e:
+                _logger.error(f"Failed to send mail: {str(e)}", exc_info=True)
             return request.redirect(f'/admission/thank_you?ref={admission.reference}')
         except Exception as e:
             _logger.error(f"Error submitting admission: {str(e)}", exc_info=True)

@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="email_template_admission_success" model="mail.template">
+        <field name="name">Admission Received</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="subject">Application Received - {{ object.reference }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div>
+                <p>Dear <t t-out="object.name"/>,</p>
+                <p>Your admission application has been received.</p>
+                <p>Reference: <t t-out="object.notes or ''"/></p>
+            </div>
+        </field>
+    </record>
     
     <record id="view_school_admission_tree" model="ir.ui.view">
         <field name="name">school.admission.list</field>
@@ -72,11 +85,12 @@
                         <field name="notes" nolabel="1" placeholder="Enter any additional information..."/>
                     </group>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
+                <chatter/>
+                <!-- <div class="oe_chatter"> -->
+                    <!-- <field name="message_follower_ids"/>
                     <field name="activity_ids"/>
                     <field name="message_ids"/>
-                </div>
+                </div> -->
             </form>
         </field>
     </record>
