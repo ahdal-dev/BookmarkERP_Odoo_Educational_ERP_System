@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu for Petition System -->
+    <menuitem id="menu_petition_root" 
+              name="Petitions" 
+              sequence="10"
+              web_icon="petition_system,static/description/icon.png"/>
+    
+    <!-- Student Menu -->
+    <!-- Student Menu - Now visible to both Student and Admin -->
+<menuitem id="menu_petition_my_petitions" 
+          name="My Petitions" 
+          parent="menu_petition_root" 
+          action="action_petition_student" 
+          sequence="10" 
+          groups="edu_mang_petition.group_petition_student,edu_mang_petition.group_petition_admin"/>
+    
+    <!-- Admin Menu -->
+    <menuitem id="menu_petition_all_petitions" 
+              name="All Petitions" 
+              parent="menu_petition_root" 
+              action="edu_mang_petition.action_petition_admin" 
+              sequence="20" 
+              groups="edu_mang_petition.group_petition_admin"/>
+    
+    <menuitem id="menu_petition_types" 
+              name="Petition Types" 
+              parent="menu_petition_root" 
+              action="edu_mang_petition.action_petition_type" 
+              sequence="30" 
+              groups="edu_mang_petition.group_petition_admin"/>
+</odoo>

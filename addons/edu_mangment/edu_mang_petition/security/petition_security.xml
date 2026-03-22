@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Create the groups - NO category_id field -->
+    <record id="group_petition_student" model="res.groups">
+        <field name="name">Student</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Students can create and view their own petitions</field>
+    </record>
+
+    <record id="group_petition_admin" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="implied_ids" eval="[(4, ref('group_petition_student'))]"/>
+        <field name="comment">Administrators can manage all petitions and petition types</field>
+    </record>
+
+    <record id="group_petition_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="implied_ids" eval="[(4, ref('group_petition_admin'))]"/>
+        <field name="comment">Managers have full access to petition system</field>
+    </record>
+
+    <!-- Record Rules for Student Access -->
+    <record id="student_petition_rule" model="ir.rule">
+        <field name="name">Student: Can only access own petitions</field>
+        <field name="model_id" ref="model_student_petition"/>
+        <field name="domain_force">[('student_id.user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('group_petition_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Admin Rule - Overrides all other rules for Admin -->
+    <record id="admin_petition_rule" model="ir.rule">
+        <field name="name">Admin: Full access to all petitions</field>
+        <field name="model_id" ref="model_student_petition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_petition_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Manager Rule - Full access like Admin -->
+    <record id="manager_petition_rule" model="ir.rule">
+        <field name="name">Manager: Full access to all petitions</field>
+        <field name="model_id" ref="model_student_petition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_petition_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- PETITION TYPE RULES -->
+
+    <!-- Student: Read-only for petition types -->
+    <record id="student_petition_type_rule" model="ir.rule">
+        <field name="name">Student: Can only read petition types</field>
+        <field name="model_id" ref="model_petition_type"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_petition_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Admin: Full access to petition types -->
+    <record id="admin_petition_type_rule" model="ir.rule">
+        <field name="name">Admin: Full access to petition types</field>
+        <field name="model_id" ref="model_petition_type"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_petition_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Manager: Full access to petition types -->
+    <record id="manager_petition_type_rule" model="ir.rule">
+        <field name="name">Manager: Full access to petition types</field>
+        <field name="model_id" ref="model_petition_type"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_petition_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>
