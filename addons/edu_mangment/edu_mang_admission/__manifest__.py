@@ -10,6 +10,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/mail_template_acceptance.xml',
+        'data/mail_template_rejection.xml',
         'views/admission_views.xml',
         'views/website_templates.xml',
     ],

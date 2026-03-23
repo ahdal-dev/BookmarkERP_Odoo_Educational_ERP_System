@@ -32,7 +32,41 @@ admin_passwd = admin
 # --- Paths ---
 # Update these to your local PostgreSQL bin directory
 pg_path = C:/Program Files/PostgreSQL/18/bin
-# data_dir = C:/Users/YOUR_USER/AppData/Local/OpenERP S.A/Odoo
+
+# ============================================================================
+# CRITICAL: Data Directory Configuration
+# ============================================================================
+# The data_dir is where Odoo stores:
+#   - filestore/ - Binary files, images, documents uploaded by users
+#   - sessions/  - User session data
+#   - addons_assets/ - Compiled frontend assets
+#
+# ⚠️  IMPORTANT FOR TEAM MEMBERS:
+# 1. This directory is NOT in Git (excluded by .gitignore)
+# 2. You MUST create this directory on your machine
+# 3. You MUST obtain the filestore from a team member (see SETUP.md)
+# 4. Missing filestore will cause FileNotFoundError when loading images/files
+#
+# ============================================================================
+# Choose ONE of these options and uncomment it:
+# ============================================================================
+#
+# Option 1: Standard Odoo location (Recommended for Windows)
+# data_dir = C:/Users/YOUR_USERNAME/AppData/Local/OpenERP S.A/Odoo
+#
+# Option 2: Project-relative location (Easier for team collaboration)
+# data_dir = C:/YOUR_PROJECT_PATH/odoo_data
+# Example: data_dir = D:/graduation project/grade/odoo_educational_erp_system/odoo_data
+#
+# Option 3: Linux/Mac standard location
+# data_dir = /home/YOUR_USERNAME/.local/share/Odoo
+# data_dir = /Users/YOUR_USERNAME/Library/Application Support/Odoo
+#
+# ============================================================================
+# Replace YOUR_USERNAME and YOUR_PROJECT_PATH with your actual values!
+# See SETUP.md for complete instructions on obtaining and setting up filestore
+# ============================================================================
+
 bin_path = ./odoo/odoo-bin
 
 # --- HTTP ---

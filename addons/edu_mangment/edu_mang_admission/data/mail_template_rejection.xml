@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Rejection notification email sent to the applicant's personal email address
+        after action_reject() runs.
+
+        Variables available via Jinja2:
+          object  – school.admission record
+          user    – current user
+    -->
+    <record id="email_template_admission_rejected" model="mail.template">
+        <field name="name">Admission Rejected – Notification</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="subject">Application Update – {{ object.reference }}</field>
+        <!-- Send to the applicant's personal email -->
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                <div style="background-color: #6c757d; padding: 24px 32px; border-radius: 6px 6px 0 0;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 22px;">
+                        Application Update
+                    </h1>
+                </div>
+                <div style="background-color: #f8f9fa; padding: 32px; border-radius: 0 0 6px 6px;">
+                    <p>Dear <t t-out="object.name"/>,</p>
+
+                    <p>
+                        Thank you for your interest in our institution and for taking the time
+                        to submit your application (<strong><t t-out="object.reference"/></strong>)
+                        for the <strong><t t-out="object.program_id.name"/></strong> program.
+                    </p>
+
+                    <p>
+                        After careful review of your application, we regret to inform you that
+                        we are unable to offer you admission at this time.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 24px 0;"/>
+
+                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 16px;">
+                        <tr style="background-color: #e9ecef;">
+                            <td style="padding: 10px 14px; font-weight: bold; width: 35%;">Application Ref.</td>
+                            <td style="padding: 10px 14px;"><t t-out="object.reference"/></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 14px; font-weight: bold;">Program</td>
+                            <td style="padding: 10px 14px;"><t t-out="object.program_id.name"/></td>
+                        </tr>
+                    </table>
+
+                    <p>
+                        We encourage you to explore other opportunities that may be a better fit
+                        for your academic goals. You are welcome to apply again in future admission cycles.
+                    </p>
+
+                    <p>
+                        If you have any questions regarding this decision, please contact the
+                        Admissions Office and quote your reference number
+                        <strong><t t-out="object.reference"/></strong>.
+                    </p>
+
+                    <p>We wish you the best in your future academic endeavors.</p>
+
+                    <p style="color: #6c757d; font-size: 12px; margin-top: 32px; border-top: 1px solid #dee2e6; padding-top: 16px;">
+                        This is an automated message. Please do not reply directly to this email.
+                    </p>
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>

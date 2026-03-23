@@ -256,7 +256,24 @@ class SchoolAdmission(models.Model):
         return True
     
     def action_reject(self):
-        self.write({'state': 'rejected'})
+        """Reject admission(s) and send rejection notification email."""
+        for record in self:
+            record.write({'state': 'rejected'})
+
+            # Send rejection notification email
+            template = self.env.ref(
+                'edu_mang_admission.email_template_admission_rejected',
+                raise_if_not_found=False,
+            )
+            if template:
+                try:
+                    template.send_mail(record.id, force_send=True)
+                except Exception as exc:
+                    _logger.error(
+                        'Failed to send rejection email for admission %s: %s',
+                        record.reference, exc, exc_info=True,
+                    )
+
         return True
     
     def action_reset_to_draft(self):
