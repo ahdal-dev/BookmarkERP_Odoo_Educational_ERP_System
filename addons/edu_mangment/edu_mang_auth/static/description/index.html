@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #667eea; }
+        h2 { color: #764ba2; border-bottom: 2px solid #764ba2; padding-bottom: 10px; }
+        .feature { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .feature h3 { color: #667eea; margin-top: 0; }
+        code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Educational ERP Authentication & Authorization</h1>
+    <p>A comprehensive authentication module for the Educational ERP system with role-based access control (RBAC) and custom dashboards.</p>
+
+    <h2>Key Features</h2>
+
+    <div class="feature">
+        <h3>Role-Based Access Control</h3>
+        <ul>
+            <li><strong>Student Group:</strong> Portal-based access to student dashboard</li>
+            <li><strong>Admission Officer Group:</strong> Internal user with admission management access</li>
+            <li><strong>ERP Admin Group:</strong> Full administrative access</li>
+        </ul>
+    </div>
+
+    <div class="feature">
+        <h3>Custom Login Experience</h3>
+        <ul>
+            <li>Student-friendly login page at <code>/edu/login</code></li>
+            <li>Automatic post-login routing based on user role</li>
+            <li>Password visibility toggle</li>
+            <li>Links to admission application</li>
+        </ul>
+    </div>
+
+    <div class="feature">
+        <h3>Role-Specific Dashboards</h3>
+        <ul>
+            <li><strong>/student/dashboard:</strong> Student portal with quick actions</li>
+            <li><strong>/admission/dashboard:</strong> Admission statistics and management</li>
+            <li><strong>/admin/dashboard:</strong> System overview and administration</li>
+        </ul>
+    </div>
+
+    <div class="feature">
+        <h3>Security Features</h3>
+        <ul>
+            <li>Route-level access control verification</li>
+            <li>Record rules for data access control</li>
+            <li>Session validation</li>
+            <li>403 Forbidden handling for unauthorized access</li>
+        </ul>
+    </div>
+
+    <h2>Routes</h2>
+    <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+        <tr style="background: #667eea; color: white;">
+            <th>Route</th>
+            <th>Access</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><code>/edu/login</code></td>
+            <td>Public</td>
+            <td>Custom login page</td>
+        </tr>
+        <tr>
+            <td><code>/student/dashboard</code></td>
+            <td>Students</td>
+            <td>Student portal dashboard</td>
+        </tr>
+        <tr>
+            <td><code>/admission/dashboard</code></td>
+            <td>Admission Officers</td>
+            <td>Admission management dashboard</td>
+        </tr>
+        <tr>
+            <td><code>/admin/dashboard</code></td>
+            <td>ERP Admins</td>
+            <td>System administration dashboard</td>
+        </tr>
+    </table>
+
+    <h2>Technical Details</h2>
+    <ul>
+        <li><strong>Dependencies:</strong> base, web, website, portal, mail</li>
+        <li><strong>License:</strong> LGPL-3</li>
+        <li><strong>Version:</strong> 1.0.0</li>
+    </ul>
+</body>
+</html>
