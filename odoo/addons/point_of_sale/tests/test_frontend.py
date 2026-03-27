@@ -127,7 +127,7 @@ class TestPointOfSaleHttpCommon(AccountTestInvoicingHttpCommon):
         })
 
         env['res.partner'].create({
-            'name': 'Deco Addict',
+            'name': 'Acme Corporation',
         })
 
         cash_journal = journal_obj.create({
@@ -1525,6 +1525,9 @@ class TestUi(TestPointOfSaleHttpCommon):
         setup_product_combo_items(self)
         self.printer.write({
             'product_categories_ids': [Command.set(self.env['pos.category'].search([('name', '=', 'Category 2')]).ids)],
+        })
+        self.office_combo.write({
+            'pos_categ_ids': [Command.set(self.env['pos.category'].search([('name', '=', 'Category 1')]).ids)],
         })
         self.main_pos_config.write({
             'is_order_printer': True,
@@ -3566,10 +3569,6 @@ class MobileTestUi(TestUi):
     browser_size = '375x667'
     touch_enabled = True
     allow_inherited_tests_method = True
-
-    # Skip customer display web tests on mobile
-    def test_customer_display_popup(self):
-        return
 
 
 class TestTaxCommonPOS(TestPointOfSaleHttpCommon, TestTaxCommon):

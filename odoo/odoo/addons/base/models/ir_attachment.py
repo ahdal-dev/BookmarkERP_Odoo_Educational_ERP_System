@@ -910,9 +910,21 @@ class IrAttachment(models.Model):
                 os.path.abspath(config.filestore(request.db)),
                 self.store_fname
             )
-            stat = os.stat(stream.path)
-            stream.last_modified = stat.st_mtime
-            stream.size = stat.st_size
+            if os.path.exists(stream.path):
+                stat = os.stat(stream.path)
+                stream.last_modified = stat.st_mtime
+                stream.size = stat.st_size
+            else:
+                # File missing, fall back to db_datas or empty
+                if self.db_datas:
+                    stream.type = 'data'
+                    stream.data = self.raw
+                    stream.last_modified = self.write_date
+                    stream.size = len(stream.data)
+                else:
+                    stream.type = 'data'
+                    stream.data = b''
+                    stream.size = 0
 
         elif self.db_datas:
             stream.type = 'data'
