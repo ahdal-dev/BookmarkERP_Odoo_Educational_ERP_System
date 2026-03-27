@@ -1,16 +1,3 @@
-"""
-Dashboard Controllers for Educational ERP
-==========================================
-
-This module provides secure dashboard endpoints for different user roles:
-- Student Dashboard: /student/dashboard
-- Admission Officer Dashboard: /admission/dashboard
-- Admin Dashboard: /admin/dashboard
-
-Each dashboard route includes access control verification to ensure
-only authorized users can access their respective interfaces.
-"""
-
 from odoo import http
 from odoo.http import request
 from odoo.exceptions import AccessDenied
@@ -67,9 +54,6 @@ class DashboardController(http.Controller):
             'error_message': message,
         })
 
-    # =========================================
-    # STUDENT DASHBOARD
-    # =========================================
 
     @http.route('/student/dashboard', type='http', auth='user', website=True)
     def student_dashboard(self, **kw):
@@ -140,9 +124,6 @@ class DashboardController(http.Controller):
 
         return request.render('edu_mang_auth.student_registration', values)
 
-    # =========================================
-    # ADMISSION OFFICER DASHBOARD
-    # =========================================
 
     @http.route('/admission/dashboard', type='http', auth='user', website=True)
     def admission_dashboard(self, **kw):
