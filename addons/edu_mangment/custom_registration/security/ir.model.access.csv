@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_education_course_student,education.course.student,model_education_course,edu_mang_auth.group_erp_student,1,0,0,0
+access_education_course_officer,education.course.officer,model_education_course,edu_mang_auth.group_erp_admission_officer,1,1,1,1
+access_education_course_admin,education.course.admin,model_education_course,edu_mang_auth.group_erp_admin,1,1,1,1
+access_education_cart_student,education.cart.student,model_education_cart,edu_mang_auth.group_erp_student,1,1,1,1
+access_education_cart_officer,education.cart.officer,model_education_cart,edu_mang_auth.group_erp_admission_officer,1,1,0,0
+access_education_cart_admin,education.cart.admin,model_education_cart,edu_mang_auth.group_erp_admin,1,1,1,1
+access_education_registration_student,education.registration.student,model_education_registration,edu_mang_auth.group_erp_student,1,0,1,0
+access_education_registration_officer,education.registration.officer,model_education_registration,edu_mang_auth.group_erp_admission_officer,1,1,1,1
+access_education_registration_admin,education.registration.admin,model_education_registration,edu_mang_auth.group_erp_admin,1,1,1,1
