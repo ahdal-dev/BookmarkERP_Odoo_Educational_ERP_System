@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_users_student,res.users.student,base.model_res_users,group_erp_student,1,0,0,0
+access_res_partner_student,res.partner.student,base.model_res_partner,group_erp_student,1,0,0,0
+access_res_users_admission,res.users.admission,base.model_res_users,group_erp_admission_officer,1,1,0,0
+access_res_partner_admission,res.partner.admission,base.model_res_partner,group_erp_admission_officer,1,1,1,0
+access_res_users_admin,res.users.admin,base.model_res_users,group_erp_admin,1,1,1,1
+access_res_partner_admin,res.partner.admin,base.model_res_partner,group_erp_admin,1,1,1,1

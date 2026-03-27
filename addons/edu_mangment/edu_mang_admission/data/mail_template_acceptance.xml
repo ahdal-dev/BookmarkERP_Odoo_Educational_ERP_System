@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Acceptance welcome email sent to the applicant's personal email address
+        after action_accept() runs successfully.
+
+        Variables available via Jinja2:
+          object  – school.admission record
+          user    – current user
+    -->
+    <record id="email_template_admission_accepted" model="mail.template">
+        <field name="name">Admission Accepted – Welcome</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="subject">Congratulations! Your Admission is Accepted – {{ object.reference }}</field>
+        <!-- Send to the applicant's personal email, not the generated login email -->
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                <div style="background-color: #2c7be5; padding: 24px 32px; border-radius: 6px 6px 0 0;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 22px;">
+                        Congratulations, <t t-out="object.name"/>!
+                    </h1>
+                </div>
+                <div style="background-color: #f8f9fa; padding: 32px; border-radius: 0 0 6px 6px;">
+                    <p>
+                        We are delighted to inform you that your admission application
+                        (<strong><t t-out="object.reference"/></strong>) for
+                        <strong><t t-out="object.program_id.name"/></strong>
+                        has been <strong style="color: #28a745;">accepted</strong>.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 24px 0;"/>
+
+                    <h2 style="font-size: 16px; color: #2c7be5;">Your Student Portal Account</h2>
+                    <p>A student portal account has been created for you with the following credentials:</p>
+                    <table style="border-collapse: collapse; width: 100%; margin-bottom: 16px;">
+                        <tr style="background-color: #e9ecef;">
+                            <td style="padding: 10px 14px; font-weight: bold; width: 35%;">Login Email</td>
+                            <td style="padding: 10px 14px;">
+                                <strong><t t-out="object.generated_login_email"/></strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 14px; font-weight: bold;">Program</td>
+                            <td style="padding: 10px 14px;"><t t-out="object.program_id.name"/></td>
+                        </tr>
+                        <tr style="background-color: #e9ecef;">
+                            <td style="padding: 10px 14px; font-weight: bold;">Application Ref.</td>
+                            <td style="padding: 10px 14px;"><t t-out="object.reference"/></td>
+                        </tr>
+                    </table>
+
+                    <h2 style="font-size: 16px; color: #2c7be5;">How to Access the Portal</h2>
+                    <ol style="padding-left: 20px; line-height: 1.8;">
+                        <li>
+                            Visit the student portal:
+                            <a t-att-href="object.env['ir.config_parameter'].sudo().get_param('web.base.url') + '/web#action=login'"
+                               style="color: #2c7be5;">
+                                <t t-out="object.env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                            </a>
+                        </li>
+                        <li>
+                            Enter your login email:
+                            <strong><t t-out="object.generated_login_email"/></strong>
+                        </li>
+                        <li>
+                            Click <strong>"Forgot Password"</strong> (or <strong>"Reset Password"</strong>)
+                            to set up your account password securely.
+                        </li>
+                        <li>You will receive a password-setup link at this login email address.</li>
+                    </ol>
+
+                    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107;
+                                padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+                        <strong>Security reminder:</strong> Never share your password with anyone.
+                        Our staff will never ask you for your password.
+                    </div>
+
+                    <p style="margin-top: 24px;">
+                        If you have any questions, please contact the Admissions Office and
+                        quote your reference number <strong><t t-out="object.reference"/></strong>.
+                    </p>
+
+                    <p>We look forward to welcoming you to our institution!</p>
+
+                    <p style="color: #6c757d; font-size: 12px; margin-top: 32px; border-top: 1px solid #dee2e6; padding-top: 16px;">
+                        This is an automated message. Please do not reply directly to this email.
+                    </p>
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>
