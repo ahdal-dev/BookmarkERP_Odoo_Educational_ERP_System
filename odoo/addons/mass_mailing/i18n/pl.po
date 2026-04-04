@@ -40,8 +40,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-30 18:36+0000\n"
-"PO-Revision-Date: 2026-01-15 14:29+0000\n"
+"POT-Creation-Date: 2026-01-25 18:35+0000\n"
+"PO-Revision-Date: 2026-01-23 07:32+0000\n"
 "Last-Translator: \"Marta (wacm)\" <wacm@odoo.com>\n"
 "Language-Team: Polish <https://translate.odoo.com/projects/odoo-19/"
 "mass_mailing/pl/>\n"
@@ -50,8 +50,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && "
-"(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || "
-"(n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
+"n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 "X-Generator: Weblate 5.14.3\n"
 
 #. module: mass_mailing
@@ -198,7 +198,7 @@ msgstr "% Kliknięć (łącznie)"
 #. odoo-python
 #: code:addons/mass_mailing/models/mailing_list.py:0
 msgid "%s (copy)"
-msgstr "%s (kopiuj)"
+msgstr "%s (kopia)"
 
 #. module: mass_mailing
 #. odoo-python
@@ -313,8 +313,8 @@ msgid ""
 "<a href=\"https://www.example.com\" class=\"btn btn-secondary "
 "o_translate_inline\">Learn more</a>"
 msgstr ""
-"<a href=\"https://www.example.com\" class="
-"\"btn btn-secondary o_translate_inline\">Dowiedz się więcej</a>"
+"<a href=\"https://www.example.com\" class=\"btn btn-secondary "
+"o_translate_inline\">Dowiedz się więcej</a>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.mailing_list_view_kanban
@@ -494,8 +494,8 @@ msgid ""
 "<font style=\"color:white;\"><span class=\"h3-fs\">Another color block</"
 "span></font>"
 msgstr ""
-"<font style=\"color:white;\"><span class=\"h3-fs\">Kolejny blok "
-"kolorów</span></font>"
+"<font style=\"color:white;\"><span class=\"h3-fs\">Kolejny blok kolorów</"
+"span></font>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_color_blocks_2
@@ -694,7 +694,7 @@ msgid ""
 "label=\"Scheduled date\"/>"
 msgstr ""
 "<span class=\"fa fa-hourglass-half me-2 small my-auto\" aria-"
-"label=\"Scheduled date\"/>"
+"label=\"Zaplanowana data\"/>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.view_mail_mass_mailing_kanban
@@ -817,8 +817,8 @@ msgid ""
 "<span class=\"o_small-fs\"><font style=\"color: rgb(99, 99, 99);\">Enjoy "
 "fast, free shipping on all orders, no minimum, no hidden fees.</font></span>"
 msgstr ""
-"<span class=\"o_small-fs\"><font style=\"color: rgb(99, 99, 99);\""
-">Skorzystaj z szybkiej, bezpłatnej wysyłki wszystkich zamówień, bez "
+"<span class=\"o_small-fs\"><font style=\"color: rgb(99, 99, 99);"
+"\">Skorzystaj z szybkiej, bezpłatnej wysyłki wszystkich zamówień, bez "
 "minimalnej wartości zamówienia i ukrytych opłat.</font></span>"
 
 #. module: mass_mailing
@@ -828,8 +828,8 @@ msgid ""
 "day returns with quick refunds or easy exchanges and no stress.</font></span>"
 msgstr ""
 "<span class=\"o_small-fs\"><font style=\"color: rgb(99, 99, 99);\">Bezpłatne "
-"zwroty w ciągu 30 dni z szybkimi refundacjami lub łatwą wymianą i bez "
-"stresu.</font></span>"
+"zwroty w ciągu 30 dni z szybkimi refundacjami lub łatwą wymianą i bez stresu."
+"</font></span>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_attributes_horizontal
@@ -839,8 +839,8 @@ msgid ""
 "</font></span>"
 msgstr ""
 "<span class=\"o_small-fs\"><font style=\"color: rgb(99, 99, 99);\">Twoje "
-"dane są chronione dzięki szyfrowanej płatności i zaufanym metodom "
-"płatności.</font></span>"
+"dane są chronione dzięki szyfrowanej płatności i zaufanym metodom płatności."
+"</font></span>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_comparisons
@@ -955,8 +955,8 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_coupon_code
 msgid "<span><font style=\"font-weight: bolder;\">GET $20 OFF</font></span>"
 msgstr ""
-"<span><font style=\"font-weight: bolder;\">Zdobądź 20 dolarów "
-"zniżki</font></span>"
+"<span><font style=\"font-weight: bolder;\">Zdobądź 20 dolarów zniżki</font></"
+"span>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.ab_testing_description
@@ -1008,8 +1008,8 @@ msgid ""
 "class=\"text-600\">CEO of MyCompany</font></span>"
 msgstr ""
 "<strong><span class=\"h6-fs\">John DOE</span></strong><br/>\n"
-"                                <span class=\"h6-fs\"> <font class="
-"\"text-600\"> CEO w MyCompany</font></span>"
+"                                <span class=\"h6-fs\"> <font "
+"class=\"text-600\"> CEO w MyCompany</font></span>"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_reviews_wall
@@ -2185,7 +2185,8 @@ msgstr "Tło treści"
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_media_list
 msgid ""
 "Continue reading <span class=\"fa fa-long-arrow-right align-middle ms-1\"/>"
-msgstr "Czytaj dalej <span class=\"fa fa-long-arrow-right align-middle ms-1\"/>"
+msgstr ""
+"Czytaj dalej <span class=\"fa fa-long-arrow-right align-middle ms-1\"/>"
 
 #. module: mass_mailing
 #. odoo-python
@@ -3007,7 +3008,7 @@ msgstr "Nagłówki"
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_coupon_code
 msgid "Here's your coupon code - but hurry! Ends 9/28"
-msgstr "Oto kod kuponu - ale pospiesz się! Koniec 9/28"
+msgstr "Oto kod zniżkowy - ale pospiesz się! Kończy się 28. września"
 
 #. module: mass_mailing
 #: model:ir.model.fields.selection,name:mass_mailing.selection__utm_campaign__ab_testing_winner_selection__clicks_ratio
@@ -6011,18 +6012,18 @@ msgstr ""
 #. odoo-python
 #: code:addons/mass_mailing/controllers/main.py:0
 msgid "You are no longer part of the %(mailing_name)s mailing list."
-msgstr "Nie jesteś już członkiem listy mailingowej%(mailing_name)s."
+msgstr "Nie jesteś już członkiem listy mailingowej %(mailing_name)s."
 
 #. module: mass_mailing
 #. odoo-python
 #: code:addons/mass_mailing/controllers/main.py:0
 msgid "You are no longer part of the %(mailing_names)s mailing list."
-msgstr "Nie jesteś już członkiem listy mailingowej%(mailing_names)s."
+msgstr "Nie jesteś już członkiem listy mailingowej %(mailing_names)s."
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.unsubscribe_form
 msgid "You are not subscribed to any of our mailing list."
-msgstr "Nie subskrybujesz żadnej z naszej listy mailingowej."
+msgstr "Nie subskrybujesz żadnej z naszych list mailingowych."
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_features_grid

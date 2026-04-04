@@ -1,0 +1,8 @@
+opencv-python-headless==4.8.1.78
+pytesseract>=0.3.10,<0.4
+easyocr>=1.7.0
+ultralytics==8.1.47
+numpy==1.26.4
+fastapi==0.135.1
+uvicorn==0.41.0
+python-multipart==0.0.9

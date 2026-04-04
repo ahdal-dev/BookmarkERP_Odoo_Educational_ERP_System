@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ============================================== -->
+        <!-- Demo Users for Testing Authentication         -->
+        <!-- ============================================== -->
+
+        <!-- Admin Test User -->
+        <record id="demo_user_admin" model="res.users">
+            <field name="name">Admin Test</field>
+            <field name="login">admin@test.com</field>
+            <field name="password">admin123</field>
+            <field name="email">admin@test.com</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_admin')])]"/>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Student Test User -->
+        <record id="demo_user_student" model="res.users">
+            <field name="name">Student Test</field>
+            <field name="login">student@test.com</field>
+            <field name="password">student123</field>
+            <field name="email">student@test.com</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_student')])]"/>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Admission Officer Test User -->
+        <record id="demo_user_admission_officer" model="res.users">
+            <field name="name">Admission Officer Test</field>
+            <field name="login">officer@test.com</field>
+            <field name="password">officer123</field>
+            <field name="email">officer@test.com</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_admission_officer')])]"/>
+            <field name="active">True</field>
+        </record>
+
+        <!-- ============================================== -->
+        <!-- Additional Test Users with Different Scenarios -->
+        <!-- ============================================== -->
+
+        <!-- Admin with Full Name -->
+        <record id="demo_user_admin_full" model="res.users">
+            <field name="name">John Smith (Admin)</field>
+            <field name="login">john.admin</field>
+            <field name="password">admin123</field>
+            <field name="email">john.admin@university.edu</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_admin')])]"/>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Student with Full Name -->
+        <record id="demo_user_student_full" model="res.users">
+            <field name="name">Sarah Johnson (Student)</field>
+            <field name="login">sarah.student</field>
+            <field name="password">student123</field>
+            <field name="email">sarah.student@university.edu</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_student')])]"/>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Admission Officer with Full Name -->
+        <record id="demo_user_officer_full" model="res.users">
+            <field name="name">Michael Brown (Admission Officer)</field>
+            <field name="login">michael.officer</field>
+            <field name="password">officer123</field>
+            <field name="email">michael.officer@university.edu</field>
+            <field name="group_ids" eval="[Command.set([ref('edu_mang_auth.group_erp_admission_officer')])]"/>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+</odoo>

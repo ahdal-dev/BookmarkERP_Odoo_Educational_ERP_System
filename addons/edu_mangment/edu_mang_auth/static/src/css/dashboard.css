@@ -1,0 +1,330 @@
+/**
+ * Educational ERP Dashboard Styles
+ * ================================
+ * Custom CSS for the authentication module dashboards and login pages.
+ */
+
+/* ============================================= */
+/* LOGIN PAGE STYLES                             */
+/* ============================================= */
+
+.edu-login-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 0;
+}
+
+.edu-login-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+}
+
+.edu-logo-circle {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.edu-logo-circle i {
+    color: white !important;
+}
+
+.edu-logo-circle-sm {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edu-logo-circle-sm i {
+    color: white !important;
+}
+
+.edu-login-form .form-control {
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 2px solid #e1e5eb;
+    transition: all 0.3s ease;
+}
+
+.edu-login-form .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.edu-login-form .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.edu-login-form .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================= */
+/* DASHBOARD LAYOUT STYLES                       */
+/* ============================================= */
+
+.edu-dashboard-wrapper {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* Sidebar Styles */
+.edu-sidebar {
+    min-height: 100vh;
+    padding: 0;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.edu-sidebar .nav-link {
+    padding: 12px 20px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.edu-sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.edu-sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-left-color: white;
+    font-weight: 600;
+}
+
+.edu-sidebar .nav-link.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* User Info Section */
+.edu-user-info {
+    padding: 20px;
+}
+
+.edu-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Main Content Area */
+.edu-main-content {
+    background-color: #f8f9fa;
+    padding-bottom: 40px;
+}
+
+/* ============================================= */
+/* CARD STYLES                                   */
+/* ============================================= */
+
+.edu-dashboard-wrapper .card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.edu-dashboard-wrapper .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.edu-dashboard-wrapper .card-header {
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+/* Stats Cards */
+.edu-dashboard-wrapper .card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+/* ============================================= */
+/* BUTTON STYLES                                 */
+/* ============================================= */
+
+.edu-dashboard-wrapper .btn-lg {
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.edu-dashboard-wrapper .btn-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.edu-dashboard-wrapper .btn-outline-primary:hover,
+.edu-dashboard-wrapper .btn-outline-success:hover,
+.edu-dashboard-wrapper .btn-outline-info:hover,
+.edu-dashboard-wrapper .btn-outline-warning:hover,
+.edu-dashboard-wrapper .btn-outline-secondary:hover {
+    color: white;
+}
+
+/* ============================================= */
+/* BADGE STYLES                                  */
+/* ============================================= */
+
+.edu-dashboard-wrapper .badge {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* ============================================= */
+/* RESPONSIVE ADJUSTMENTS                        */
+/* ============================================= */
+
+@media (max-width: 767.98px) {
+    .edu-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        max-width: 280px;
+        z-index: 1050;
+        transition: left 0.3s ease;
+    }
+
+    .edu-sidebar.show {
+        left: 0;
+    }
+
+    .edu-main-content {
+        margin-left: 0 !important;
+        padding: 15px;
+    }
+
+    .edu-login-card {
+        padding: 25px;
+        margin: 0 15px;
+    }
+
+    .edu-logo-circle {
+        width: 80px;
+        height: 80px;
+    }
+
+    .edu-logo-circle i {
+        font-size: 2rem !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .edu-sidebar {
+        position: sticky;
+        top: 0;
+    }
+}
+
+/* ============================================= */
+/* ANIMATION CLASSES                             */
+/* ============================================= */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.edu-dashboard-wrapper .card {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.edu-dashboard-wrapper .row > div:nth-child(1) .card {
+    animation-delay: 0.1s;
+}
+
+.edu-dashboard-wrapper .row > div:nth-child(2) .card {
+    animation-delay: 0.2s;
+}
+
+.edu-dashboard-wrapper .row > div:nth-child(3) .card {
+    animation-delay: 0.3s;
+}
+
+.edu-dashboard-wrapper .row > div:nth-child(4) .card {
+    animation-delay: 0.4s;
+}
+
+/* ============================================= */
+/* ACCESS DENIED PAGE                            */
+/* ============================================= */
+
+.access-denied-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ============================================= */
+/* SCROLLBAR STYLES                              */
+/* ============================================= */
+
+.edu-sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.edu-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.edu-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.edu-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================= */
+/* UTILITY CLASSES                               */
+/* ============================================= */
+
+.min-vh-100 {
+    min-height: 100vh !important;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+}

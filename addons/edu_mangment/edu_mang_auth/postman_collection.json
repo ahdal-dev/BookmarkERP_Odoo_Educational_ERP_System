@@ -1,0 +1,492 @@
+{
+  "info": {
+    "name": "Educational ERP Authentication API",
+    "description": "Complete test suite for the Educational ERP authentication and authorization module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication Flow",
+      "item": [
+        {
+          "name": "1.1 Login as Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Capture session cookie",
+                  "if (pm.cookies.has('session_id')) {",
+                  "    pm.collectionVariables.set('session_id', pm.cookies.get('session_id'));",
+                  "    console.log('✅ Session captured');",
+                  "}",
+                  "",
+                  "// Verify redirect",
+                  "pm.test('✅ Status is 303 redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([302, 303]);",
+                  "});",
+                  "",
+                  "pm.test('✅ Redirects to student dashboard', function () {",
+                  "    var location = pm.response.headers.get('Location');",
+                  "    pm.expect(location).to.include('/student/dashboard');",
+                  "    console.log('Redirect URL:', location);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "login",
+                  "value": "student@test.com",
+                  "description": "Student username"
+                },
+                {
+                  "key": "password",
+                  "value": "student123",
+                  "description": "Student password"
+                },
+                {
+                  "key": "redirect",
+                  "value": "",
+                  "description": "Leave empty for role-based routing"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/web/login",
+              "host": ["{{base_url}}"],
+              "path": ["web", "login"]
+            },
+            "description": "Login as a student user. Should redirect to /student/dashboard"
+          }
+        },
+        {
+          "name": "1.2 Access Student Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Contains Student Dashboard', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Student Dashboard');",
+                  "});",
+                  "",
+                  "pm.test('✅ Contains Submit Petition link', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Submit Petition');",
+                  "});",
+                  "",
+                  "pm.test('✅ Contains Register for Courses link', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Register for Courses');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/student/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["student", "dashboard"]
+            },
+            "description": "Access student dashboard after authentication"
+          }
+        },
+        {
+          "name": "1.3 Check Session (As Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "pm.test('✅ User is logged in', function () {",
+                  "    pm.expect(jsonData.result.logged_in).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('✅ User is identified as student', function () {",
+                  "    pm.expect(jsonData.result.is_student).to.be.true;",
+                  "    pm.expect(jsonData.result.is_admission_officer).to.be.false;",
+                  "    pm.expect(jsonData.result.is_admin).to.be.false;",
+                  "});",
+                  "",
+                  "console.log('User Info:', jsonData.result);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"call\",\n    \"params\": {},\n    \"id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edu/check_session",
+              "host": ["{{base_url}}"],
+              "path": ["edu", "check_session"]
+            },
+            "description": "Check current session status via JSON-RPC"
+          }
+        },
+        {
+          "name": "1.4 Unauthorized Access (Student tries Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Returns 200 (with Access Denied content)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Shows Access Denied message', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Access Denied');",
+                  "});",
+                  "",
+                  "pm.test('✅ Mentions permission issue', function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.match(/permission|administrator/i);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "dashboard"]
+            },
+            "description": "Try to access admin dashboard as student (should fail)"
+          }
+        },
+        {
+          "name": "1.5 Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Redirects after logout', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([302, 303]);",
+                  "});",
+                  "",
+                  "pm.test('✅ Redirects to login page', function () {",
+                  "    var location = pm.response.headers.get('Location');",
+                  "    pm.expect(location).to.include('/edu/login');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edu/logout",
+              "host": ["{{base_url}}"],
+              "path": ["edu", "logout"]
+            },
+            "description": "Logout and redirect to login page"
+          }
+        }
+      ],
+      "description": "Test complete authentication flow for student user"
+    },
+    {
+      "name": "Admission Officer Flow",
+      "item": [
+        {
+          "name": "2.1 Login as Admission Officer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Redirects to admission dashboard', function () {",
+                  "    var location = pm.response.headers.get('Location');",
+                  "    pm.expect(location).to.include('/admission/dashboard');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "login",
+                  "value": "officer@test.com"
+                },
+                {
+                  "key": "password",
+                  "value": "officer123"
+                },
+                {
+                  "key": "redirect",
+                  "value": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/web/login",
+              "host": ["{{base_url}}"],
+              "path": ["web", "login"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Access Admission Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Contains Admission Dashboard', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Admission Dashboard');",
+                  "});",
+                  "",
+                  "pm.test('✅ Shows application statistics', function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.match(/Pending|Under Review|Accepted|Rejected/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admission/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admission", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Officer tries Student Dashboard (Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Shows Access Denied', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Access Denied');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/student/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["student", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Flow",
+      "item": [
+        {
+          "name": "3.1 Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Redirects to admin dashboard', function () {",
+                  "    var location = pm.response.headers.get('Location');",
+                  "    pm.expect(location).to.include('/admin/dashboard');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "login",
+                  "value": "erpadmin@test.com"
+                },
+                {
+                  "key": "password",
+                  "value": "admin123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/web/login",
+              "host": ["{{base_url}}"],
+              "path": ["web", "login"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Access Admin Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('✅ Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('✅ Contains Admin Dashboard', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Admin Dashboard');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Utility Endpoints",
+      "item": [
+        {
+          "name": "Get Custom Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edu/login",
+              "host": ["{{base_url}}"],
+              "path": ["edu", "login"]
+            },
+            "description": "Access the custom educational ERP login page"
+          }
+        },
+        {
+          "name": "Session Check (Not Logged In)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.test('✅ User is not logged in', function () {",
+                  "    pm.expect(jsonData.result.logged_in).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"call\",\n    \"params\": {},\n    \"id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edu/check_session",
+              "host": ["{{base_url}}"],
+              "path": ["edu", "check_session"]
+            }
+          }
+        },
+        {
+          "name": "Student Petitions Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/student/petitions",
+              "host": ["{{base_url}}"],
+              "path": ["student", "petitions"]
+            },
+            "description": "Access student petitions page (must be logged in as student)"
+          }
+        },
+        {
+          "name": "Student Registration Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/student/registration",
+              "host": ["{{base_url}}"],
+              "path": ["student", "registration"]
+            },
+            "description": "Access course registration page (must be logged in as student)"
+          }
+        }
+      ]
+    }
+  ]
+}

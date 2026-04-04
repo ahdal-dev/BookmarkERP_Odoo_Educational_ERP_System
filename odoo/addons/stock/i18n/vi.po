@@ -14,8 +14,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-09 18:36+0000\n"
-"PO-Revision-Date: 2026-01-17 19:01+0000\n"
+"POT-Creation-Date: 2026-01-30 18:35+0000\n"
+"PO-Revision-Date: 2026-01-23 07:35+0000\n"
 "Last-Translator: \"Thi Huong Nguyen (thng)\" <thng@odoo.com>\n"
 "Language-Team: Vietnamese <https://translate.odoo.com/projects/odoo-19/stock/"
 "vi/>\n"
@@ -1360,7 +1360,6 @@ msgstr "Tất cả lệnh chuyển hàng"
 #. module: stock
 #. odoo-javascript
 #: code:addons/stock/static/src/views/search/stock_report_search_panel.xml:0
-#: model_terms:ir.ui.view,arch_db:stock.stock_location_route_form_view
 msgid "All Warehouses"
 msgstr "Tất cả kho hàng"
 
@@ -1395,7 +1394,7 @@ msgstr "Cho phép sản phẩm mới"
 #. module: stock
 #: model:ir.model.fields.selection,name:stock.selection__stock_storage_category__allow_new_product__mixed
 msgid "Allow mixed products"
-msgstr "Cho phép phối trộn sản phẩm"
+msgstr "Cho phép kết hợp sản phẩm"
 
 #. module: stock
 #: model:ir.model.fields,field_description:stock.field_stock_warehouse_orderpoint__allowed_location_ids
@@ -2104,6 +2103,11 @@ msgid "Choose Type of Labels To Print"
 msgstr "Chọn loại nhãn để in"
 
 #. module: stock
+#: model_terms:ir.ui.view,arch_db:stock.stock_location_route_form_view
+msgid "Choose Warehouses"
+msgstr ""
+
+#. module: stock
 #: model:ir.model.fields,help:stock.field_stock_quantity_history__inventory_datetime
 #: model:ir.model.fields,help:stock.field_stock_request_count__inventory_date
 msgid "Choose a date to get the inventory at that date"
@@ -2322,8 +2326,8 @@ msgid ""
 "days') to avoid overstocking."
 msgstr ""
 "Thiết lập khoảng thời gian dự trù để hệ thống kích hoạt quy tắc tái đặt hàng "
-"sớm hơn, từ đó giúp chủ động bổ sung hàng và tránh chậm trễ, hoặc đặt về "
-"('0 ngày') để chỉ đặt hàng đúng lúc cần, hạn chế tồn kho dư thừa."
+"sớm hơn, từ đó giúp chủ động bổ sung hàng và tránh chậm trễ, hoặc đặt về ('0 "
+"ngày') để chỉ đặt hàng đúng lúc cần, hạn chế tồn kho dư thừa."
 
 #. module: stock
 #: model_terms:ir.ui.view,arch_db:stock.lot_label_layout_form_picking
@@ -4065,7 +4069,7 @@ msgstr "Từ"
 #. module: stock
 #: model:ir.model.fields,field_description:stock.field_stock_move_line__owner_id
 msgid "From Owner"
-msgstr "Từ người phụ trách"
+msgstr "Từ bên sở hữu"
 
 #. module: stock
 #: model:ir.model.fields,field_description:stock.field_stock_location__complete_name
@@ -7621,7 +7625,7 @@ msgstr "Khả năng áp dụng đẩy"
 #. module: stock
 #: model_terms:ir.ui.view,arch_db:stock.report_stock_rule
 msgid "Push Rule"
-msgstr "Quy tắc kéo"
+msgstr "Quy tắc đẩy"
 
 #. module: stock
 #: model:ir.model.fields.selection,name:stock.selection__stock_rule__action__push
@@ -10984,6 +10988,7 @@ msgstr "Vị trí nhà cung cấp"
 
 #. module: stock
 #: model_terms:ir.ui.view,arch_db:stock.stock_picking_type_kanban
+#: model_terms:ir.ui.view,arch_db:stock.view_stock_package_history_list
 msgid "View"
 msgstr "Chế độ xem"
 

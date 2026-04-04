@@ -9,20 +9,7 @@
             <div>
                 <p>Dear <t t-out="object.name"/>,</p>
                 <p>Your admission application has been received.</p>
-                <p>Notes: <t t-out="object.notes or ''"/></p>
-            </div>
-        </field>
-    </record>
-    <record id="email_template_admission_status" model="mail.template">
-        <field name="name">Admission Status Update</field>
-        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
-        <field name="subject">Status Update - {{ object.reference }}</field>
-        <field name="email_to">${object.email}</field>
-        <field name="body_html" type="html">
-            <div>
-                <p>Dear <t t-out="object.name"/>,</p>
-                <p>Your admission application status has been <b><t t-out="object.state"/></b>.</p>
-                <p>Notes: <t t-out="object.notes or ''"/></p>
+                <p>Reference: <t t-out="object.reference or ''"/></p>
             </div>
         </field>
     </record>
@@ -96,6 +83,22 @@
                     
                     <group string="Additional Notes">
                         <field name="notes" nolabel="1" placeholder="Enter any additional information..."/>
+                    </group>
+
+                    <!-- Account &amp; Mailbox Provisioning – only visible once accepted -->
+                    <group string="Account &amp; Mailbox" invisible="state != 'accepted'">
+                        <group>
+                            <field name="generated_login_email" readonly="1"/>
+                            <field name="mailbox_status" readonly="1"/>
+                            <field name="mailbox_created_at" readonly="1"
+                                   invisible="not mailbox_created_at"/>
+                        </group>
+                        <group>
+                            <field name="mailbox_external_id" readonly="1"
+                                   invisible="not mailbox_external_id"/>
+                            <field name="mailbox_error_message" readonly="1"
+                                   invisible="mailbox_status != 'failed'"/>
+                        </group>
                     </group>
                 </sheet>
                 <chatter/>
