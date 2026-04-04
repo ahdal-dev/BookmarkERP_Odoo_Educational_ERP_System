@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 
+    Assets are now loaded via __manifest__.py 'assets' key in Odoo 19.
+    This file is kept for compatibility but contains no asset definitions.
+    -->
+</odoo>
