@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 
+    Educational Portal Gateway - Security Groups
+    
+    This file extends the groups defined in edu_mang_auth to add 
+    portal-specific permissions.
+    
+    Note: Primary groups (Student, Officer, Admin) are defined in edu_mang_auth.
+    This module adds portal-specific access.
+    
+    Odoo 19 Note: category_id no longer exists in res.groups.
+    -->
+
+    <!-- Portal User Group (Base for all portal access) -->
+    <record id="group_portal_user" model="res.groups">
+        <field name="name">Educational Portal User</field>
+        <field name="comment">
+            Base group for all Educational Portal users.
+            Grants access to the /edu-portal/ routes.
+        </field>
+    </record>
+
+    <!-- Extend Student Group with Portal Access -->
+    <record id="edu_mang_auth.group_erp_student" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_portal_user'))]"/>
+    </record>
+
+    <!-- Extend Admission Officer Group with Portal Access -->
+    <record id="edu_mang_auth.group_erp_admission_officer" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_portal_user'))]"/>
+    </record>
+
+    <!-- Extend Admin Group with Portal Access -->
+    <record id="edu_mang_auth.group_erp_admin" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_portal_user'))]"/>
+    </record>
+
+    <!-- Professor Group (if different from Officer for petition review) -->
+    <record id="group_professor" model="res.groups">
+        <field name="name">Professor</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('group_portal_user'))]"/>
+        <field name="comment">
+            Professors can review petitions for courses they teach
+            and access student academic records for their courses.
+        </field>
+    </record>
+
+    <!-- Registrar Group (for registration management) -->
+    <record id="group_registrar" model="res.groups">
+        <field name="name">Registrar</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('group_portal_user'))]"/>
+        <field name="comment">
+            Registrar staff can manage course registrations,
+            configure registration windows, and handle student holds.
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,335 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Program Catalog | Intellectual Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Public_Sans:wght@400;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#d9dadb",
+              "surface-container-highest": "#e1e3e4",
+              "outline-variant": "#d1c3ca",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#191c1d",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#bac3ff",
+              "error": "#ba1a1a",
+              "on-secondary-fixed-variant": "#394378",
+              "surface-container-high": "#e7e8e9",
+              "secondary-fixed": "#dee0ff",
+              "on-secondary-container": "#434d83",
+              "primary-container": "#714b67",
+              "inverse-surface": "#2e3132",
+              "surface-variant": "#e1e3e4",
+              "primary": "#57344f",
+              "on-tertiary-container": "#c0d5a0",
+              "inverse-on-surface": "#f0f1f2",
+              "surface-tint": "#79526f",
+              "primary-fixed-dim": "#e9b8d9",
+              "on-secondary-fixed": "#0b164a",
+              "secondary": "#515b92",
+              "background": "#f8f9fa",
+              "on-surface-variant": "#4e444a",
+              "on-primary-fixed": "#2f1029",
+              "on-tertiary": "#ffffff",
+              "surface-container-low": "#f3f4f5",
+              "outline": "#80747a",
+              "tertiary-fixed-dim": "#b9ce9a",
+              "tertiary": "#34451e",
+              "secondary-container": "#b7c0fe",
+              "on-primary-container": "#f0bfe0",
+              "on-error": "#ffffff",
+              "surface": "#f8f9fa",
+              "on-error-container": "#93000a",
+              "on-surface": "#191c1d",
+              "tertiary-container": "#4b5d33",
+              "primary-fixed": "#ffd7f1",
+              "on-primary-fixed-variant": "#5f3b56",
+              "on-tertiary-fixed-variant": "#3b4c24",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#d5eab4",
+              "surface-container": "#edeeef",
+              "inverse-primary": "#e9b8d9",
+              "on-tertiary-fixed": "#112000",
+              "surface-bright": "#f8f9fa"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e1e3e4;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar Shell -->
+<nav class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-md shadow-sm flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#57344f]" style="">Edu Mangement</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-['Inter'] font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Dashboard</a>
+<a class="font-['Inter'] font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Reports</a>
+<a class="font-['Inter'] font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" style="">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="Search programs..." type="text">
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" style="">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer" style="">apps</button>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full bg-surface-container-highest" data-alt="Close-up professional headshot of an academic administrator in a modern office setting with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL1NY6UAHi_8fyo1fSy-iTPlw6NKt82olAC_KSxSnSJfZfMvX5ZaY8LXVintzWVsgbalAXKdwQzqZ963JzvU9LBne3apkDLytzB0_tS1sQqqRmGUaBLvw4Q59xWBWTLDVBCiMAvY5mNvVcfnugV1uDuuQ4f1pIW5rc0rif1fre_IzgGIDyk2FT14nY0dww7r8nNMb6wo23zPgfWGM3fiFILwMozgm4zGNi6KH_0-ddJeZpCLDgcdVEvY9he3JXmSIa0lmDAAe4AUCJ" style="">
+</div>
+</nav>
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-[#e1e3e4] flex flex-col py-8 pt-24">
+<div class="px-6 mb-8">
+<h2 class="text-lg font-black text-[#57344f]" style="">Academic ERP</h2>
+<p class="font-['Public_Sans'] uppercase tracking-wider text-[0.75rem] text-neutral-600" style="">Management Suite</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#57344f] hover:bg-white/50 transition-all scale-95 duration-150 font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">person_add</span> Admissions
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#57344f] hover:bg-white/50 transition-all scale-95 duration-150 font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">security</span> Authentication
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#57344f] hover:bg-white/50 transition-all scale-95 duration-150 font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">description</span> Petitions
+            </a>
+<!-- Active Tab: Registration maps closest to Catalog/Enrollment -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white border-l-4 border-[#ffd7f1] text-[#57344f] font-bold transition-all scale-95 duration-150 font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">app_registration</span> Registration
+            </a>
+</nav>
+<div class="px-4 mt-auto space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 hover:bg-white/50 transition-all font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">help_outline</span> Help
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-600 hover:bg-white/50 transition-all font-['Public_Sans'] uppercase tracking-wider text-[0.75rem]" href="#" style="">
+<span class="material-symbols-outlined" style="">logout</span> Logout
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="p-10 max-w-7xl mx-auto">
+<!-- Page Header -->
+<header class="mb-12">
+<div class="flex items-baseline gap-4 mb-2">
+<h1 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface" style="">Program Catalog</h1>
+<span class="text-on-surface-variant font-label text-xs uppercase tracking-widest bg-surface-container-high px-3 py-1 rounded-full" style="">Academic Year 2024/25</span>
+</div>
+<p class="text-on-surface-variant max-w-2xl text-lg" style="">
+                    Discover our curated selection of world-class academic programs designed to foster intellectual growth and professional excellence.
+                </p>
+</header>
+<!-- Filters & Search Bento Area -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="md:col-span-2 bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-between">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant mb-2 block" style="">Quick Search</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-12 focus:ring-2 focus:ring-primary text-on-surface" placeholder="Search by name, code, or keyword..." type="text">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" style="">search</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-center">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant mb-2 block" style="">Faculty</label>
+<select class="w-full bg-surface-container-low border-none rounded-xl py-3 focus:ring-2 focus:ring-primary text-on-surface appearance-none">
+<option>All Faculties</option>
+<option>School of Engineering</option>
+<option>Faculty of Arts</option>
+<option>Business School</option>
+</select>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm flex flex-col justify-center">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant mb-2 block" style="">Degree Type</label>
+<div class="flex gap-2">
+<button class="bg-primary text-white px-4 py-2 rounded-full text-xs font-bold transition-transform active:scale-95" style="">All</button>
+<button class="bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-dim transition-all" style="">UG</button>
+<button class="bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-dim transition-all" style="">PG</button>
+</div>
+</div>
+</section>
+<!-- Catalog Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="BSc Computer Science" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="High-angle shot of a clean, modern workstation with a sleek laptop displaying lines of code, surrounded by ambient studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCExeTxf56ZkaTEhywiPyGkfP61jqG1WSOVA29NccCdsNGGCTAsLHcCnG9oLjdoEcHaDVMHbsAyGUZAm1wNVWZCwdehmkCYeWxHZgXGx_F0V2WP5A88DCC8SHoMuCgRHoSGUtHOsBr6SfMQaE-DJZpUcmqa88xRnYS8wq0C4HgqpncgayVcPCXRzl8Lhmc7y-BpcD5S0iqQXGWiY5fJr6ddp0WVmEsJyz7jHF_jYJzNZ1gyRnL5VdlL6V1CkmxhZ0H--QxKI39cSSd5" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">STEM</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">BSc Computer Science</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Undergraduate • 3 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Master the foundations of computation, algorithms, and software engineering in our state-of-the-art laboratory environment.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="MA Philosophy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Classic library setting with rows of leather-bound books and a soft golden lamp light reflecting on polished wooden tables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBebiRurgDbY_bJsjK7Bkn5L7D-vZURNaNF8f1EmL9tkhRFXgAyRYBbnaR3C8jv7WbEEARosZmWsQjTZvmKTIOOXj1knwZzu6w_pMpHX_jdazM4_rF9EJRElKJs0B3JbBltFCAdI6Vr5xK7GX39Ys3vbfnx2_q2U2ha-n97tG7aOfY-eNLvVruzpas5kd-va_9-0PAyB8VnOULz9P-oal-FPOxHt5agjQNXNHfGAxYCpRkiQkH1zih3STgpU7G2_4TnX8ObXVEHuSUO" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-tertiary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">HUMANITIES</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">MA Philosophy</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Postgraduate • 2 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Explore the depths of human thought, ethics, and logic through rigorous seminar-based discussion and classical analysis.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="MBA Global Business" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A brightly lit modern board room with a view of a city skyline, featuring a glass table and minimal office furniture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0KBgI_MxaIGIqJIJjKnGomiv_aLKWZUw75HSR_rGq4b-DXtTiZnHv7KpCYkn7VnMnZ0nkhZCvUJl2PODHpJ31nY_B_wOOgo0Ylmj9ex1K6b4moKMSiuPCbU4AFmyOVj7fA1cHcQl2ZcES1HQ_P0DtXw2pYhlV15PwG3o0XhfAcKmKFosUE1PM-GTkU0Lxjb9lUzKPJR2F-t1GLXdR68XO4erGfFMj2o-WaNwKD0cGrJ1MOY567029hxm_0VtDKe4kNCFtucP3VdYU" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">PROFESSIONAL</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">MBA Global Business</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Postgraduate • 1.5 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Accelerate your leadership career with a focus on international markets, strategic innovation, and fiscal management.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="BEng Robotics" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A high-tech robotics lab with mechanical arms and electronic components on a white workbench, blue accent lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdDxBvO8Kab2yZG5lEj2Gocwe7CrHArgxKtsr3w3Fu4vsXYU4FEATAGApNk7zLCeWRiZof04E3qKBgPPzTElKEpjPP-azitNKTgKhU2ug2t1fnSLd5pOGV60Nbr4WRPMOFwXpx8eJlFubfahIlstM4bbwFB8osHYC6vYsgfBrhhAp8mtKSXDVfuMya40XXkUJdJxriZOb21bJe0ZDHRIU8Hj1E6o15KKL3ht4iuJSavTh936zKE1QYvprEoAddE1ryq5neeZKR3AFR" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-secondary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">STEM</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">BEng Robotics</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Undergraduate • 4 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Design, build, and program the future of autonomous systems through intensive hands-on engineering challenges.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="BEd Education" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A vibrant, modern classroom with colorful educational posters and neatly arranged desks under bright, warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_bKsrPzoJRO3pFEvtZohVCGTwuoyG-aNWndTBgN0fQcUZGtfCU8DNM8LoJrTYmW1fsGZFLPjnDHax469IYHwzq5g8Yi8ozM_tv3_nmqTzOPshB_gIv45Zzw3p4agmshJnacCCVbrcjBZ5BG8g6E-BrYOM4uvkOaQipEvtBuqnUPW6zzijUxCU-O30C1j_hfoqAFVqWFe5FxCVN0p8OUBobeQ5NP7syizb5WYj-lW8f2HdQAaX6uR-f2e0VLeTjlrxNHBU9h5URWHZ" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-tertiary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">EDUCATION</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">BEd Primary Education</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Undergraduate • 4 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Shape the next generation by mastering pedagogical theories and classroom management techniques in real-world settings.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="group bg-surface-container-lowest rounded-xl overflow-hidden flex flex-col transition-all hover:shadow-[0_20px_40px_rgba(25,28,29,0.06)]">
+<div class="h-48 overflow-hidden relative">
+<img alt="BFA Visual Arts" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Sunlit artist studio with large canvases, paint splatters on the floor, and diverse brushes in glass jars" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIhKQlcjBUjXYCLE1sWeoXMXNMKTJiJUeFCMt8HLqFEMjjDRCWXCn7F_xVK_R89FR61fY1nflrzI_g80I5EHlp05uw1sKlTDma94JFKcLmVsan6KG0ICOmiJjNGSRga-M9pGklzrMOcjuiwRyH5iF_OSEFoImoyGmELLOy-R67OA2NFPaKsA0bGazeDviJcPAsrQ8QwMhGdeb6N8jgYAtqyvWyBAc4cJrHk1d5K2oLgVhp1x3ONyDtjZ8IO72VjEyY9Sc0GU9sdPBx" style="">
+<div class="absolute top-4 left-4">
+<span class="bg-tertiary text-white text-[0.65rem] font-black uppercase tracking-widest px-3 py-1 rounded-full" style="">CREATIVE</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-on-surface mb-1 leading-tight" style="">BFA Visual Arts</h3>
+<p class="text-xs font-label text-on-surface-variant uppercase tracking-wide" style="">Undergraduate • 3 Years</p>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3" style="">
+                            Cultivate your unique artistic voice through exploration of traditional and digital media in a collaborative studio environment.
+                        </p>
+<div class="mt-auto flex items-center justify-between">
+<span class="text-primary font-bold text-lg" style=""><br></span>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all" style="">Apply Now</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<footer class="mt-16 flex items-center justify-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" style="">
+<span class="material-symbols-outlined" style="">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white font-bold" style="">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" style="">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" style="">3</button>
+<span class="mx-2 text-on-surface-variant" style="">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" style="">12</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors" style="">
+<span class="material-symbols-outlined" style="">chevron_right</span>
+</button>
+</footer>
+</div>
+</main>
+<!-- FAB for quick inquiry - only visible on relevant top-level screens -->
+<button class="fixed bottom-8 right-8 bg-gradient-to-br from-primary to-primary-container text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50" style="">
+<span class="material-symbols-outlined" style="">chat_bubble</span>
+</button>
+</body></html>
