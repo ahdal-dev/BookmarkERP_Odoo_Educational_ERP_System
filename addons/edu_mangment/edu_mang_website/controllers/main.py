@@ -43,12 +43,12 @@ class EduAuthMixin:
         # Student group (portal-based)
         if user.has_group('edu_mang_auth.group_erp_student'):
             _logger.info(f"User {user.login} identified as Student, redirecting to /student/dashboard")
-            return '/student/dashboard'
+            return '/edu-portal/student/dashboard'
 
         # Admission Officer group
         if user.has_group('edu_mang_auth.group_erp_admission_officer'):
             _logger.info(f"User {user.login} identified as Admission Officer, redirecting to /admission/dashboard")
-            return '/admission/dashboard'
+            return '/edu-portal/officer/dashboard'
 
         # ERP Admin group
         if user.has_group('edu_mang_auth.group_erp_admin'):

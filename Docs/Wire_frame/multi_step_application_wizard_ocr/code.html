@@ -1,0 +1,255 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Multi-Step Application | Intellectual Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Public_Sans:wght@400;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#d9dadb",
+              "surface-container-highest": "#e1e3e4",
+              "outline-variant": "#d1c3ca",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#191c1d",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#bac3ff",
+              "error": "#ba1a1a",
+              "on-secondary-fixed-variant": "#394378",
+              "surface-container-high": "#e7e8e9",
+              "secondary-fixed": "#dee0ff",
+              "on-secondary-container": "#434d83",
+              "primary-container": "#714b67",
+              "inverse-surface": "#2e3132",
+              "surface-variant": "#e1e3e4",
+              "primary": "#57344f",
+              "on-tertiary-container": "#c0d5a0",
+              "inverse-on-surface": "#f0f1f2",
+              "surface-tint": "#79526f",
+              "primary-fixed-dim": "#e9b8d9",
+              "on-secondary-fixed": "#0b164a",
+              "secondary": "#515b92",
+              "background": "#f8f9fa",
+              "on-surface-variant": "#4e444a",
+              "on-primary-fixed": "#2f1029",
+              "on-tertiary": "#ffffff",
+              "surface-container-low": "#f3f4f5",
+              "outline": "#80747a",
+              "tertiary-fixed-dim": "#b9ce9a",
+              "tertiary": "#34451e",
+              "secondary-container": "#b7c0fe",
+              "on-primary-container": "#f0bfe0",
+              "on-error": "#ffffff",
+              "surface": "#f8f9fa",
+              "on-error-container": "#93000a",
+              "on-surface": "#191c1d",
+              "tertiary-container": "#4b5d33",
+              "primary-fixed": "#ffd7f1",
+              "on-primary-fixed-variant": "#5f3b56",
+              "on-tertiary-fixed-variant": "#3b4c24",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#d5eab4",
+              "surface-container": "#edeeef",
+              "inverse-primary": "#e9b8d9",
+              "on-tertiary-fixed": "#112000",
+              "surface-bright": "#f8f9fa"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .scanner-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffd7f1, transparent);
+            box-shadow: 0 0 15px #ffd7f1;
+            animation: scan 3s ease-in-out infinite;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-white/85 backdrop-blur-md shadow-sm flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#57344f] font-headline tracking-tight" style=""><span style="letter-spacing: normal;">Edu Mangement</span></span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-headline font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Dashboard</a>
+<a class="font-headline font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Reports</a>
+<a class="font-headline font-medium text-sm tracking-tight text-neutral-500 hover:text-[#714B67] transition-colors cursor-pointer active:opacity-70" href="#" style="">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer" style="">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer" style="">apps</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Administrator Profile" data-alt="professional portrait of a university administrator in a modern office setting, soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTzGTyT5GWOamIzyM17zgFj6ZqqGp0Qfu6bMnyffML_VmAbcS-wgC2HH20T5kNhfbcZ1h6iI2wKppXJqhrE9S-9jOibzkzc6Z-lvichwCmvNFncNh5iVQPwWkFQBLoxyYs_Km7kNi-RCkk233HmAg9bGGTypWzYK6n_oT5tcDKs_N-ErExMQZCZyVQBAVeperOWLO0HP4sN869_ZGiL4rQZXoeT_cKjh7ipJ2Igddrkh7f7t1tEnPQPiPGgha8PyVOlUO326ZX_vEV" class="" style="">
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-12 px-6 max-w-6xl mx-auto min-h-screen">
+<!-- Wizard Progress Tracker -->
+<div class="flex justify-between items-center mb-10 max-w-3xl mx-auto">
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-sm" style="">check</span>
+</div>
+<span class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant" style="">Personal Info</span>
+</div>
+<div class="flex-1 h-[2px] bg-outline-variant mx-4 -mt-6"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-sm" style="">check</span>
+</div>
+<span class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant" style="">Academic History</span>
+</div>
+<div class="flex-1 h-[2px] bg-primary-container mx-4 -mt-6"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold shadow-lg" style="">
+                    3
+                </div>
+<span class="font-label text-[0.75rem] uppercase tracking-wider text-primary font-bold" style="">Document Upload</span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left: Document Scanning Section -->
+<section class="lg:col-span-7 bg-surface-container-low rounded-xl p-8 space-y-6">
+<header class="space-y-1">
+<h1 class="text-2xl font-extrabold font-headline text-primary tracking-tight" style="">Document Verification</h1>
+<p class="text-on-surface-variant body-md" style="">Upload your official transcript for instant validation.</p>
+</header>
+<div class="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm aspect-[4/3] flex items-center justify-center group">
+<!-- The "Scanning" Visual -->
+<div class="absolute inset-0 z-0 opacity-10">
+<img class="w-full h-full object-cover" data-alt="a formal academic transcript document lying on a clean workspace with pen and glasses nearby" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXS4-eq9hnK-7hnyINHPUjPVAKHIVXSgu_P3nMyfjvDPfdAeGzFGJ9xQXlLP4L33XRbptjzlitj0EX-ZwdLSAy60NfByBeA8faqm6zHHtDo5kBKeQYe4qJmnREHcon43acq_lS45D3dEVJ72fN1lMsVWSlBZKnpmjXWHY29_iFbSQtNnzyE_lwhqvTlYN2-FQwtVvG7uEjEFrvlLdBlAQkNao1nnG_BQIJ64sfR5Al4zn6nOoFRy8DFiU-KrIoGWdHlCRCl0fnB0Oy" style="">
+</div>
+<!-- Scanner Animation Overlay -->
+<div class="relative w-4/5 h-4/5 bg-white shadow-xl rounded-lg border border-outline-variant/30 overflow-hidden flex flex-col">
+<div class="scanner-line"></div>
+<div class="p-6 space-y-4 opacity-40">
+<div class="h-4 bg-surface-container-highest w-3/4 rounded"></div>
+<div class="h-4 bg-surface-container-highest w-1/2 rounded"></div>
+<div class="grid grid-cols-2 gap-4 pt-4">
+<div class="h-20 bg-surface-container-low rounded"></div>
+<div class="h-20 bg-surface-container-low rounded"></div>
+</div>
+<div class="h-4 bg-surface-container-highest w-2/3 rounded"></div>
+<div class="h-4 bg-surface-container-highest w-1/3 rounded"></div>
+</div>
+<!-- Status Badge -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="glass-panel px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-primary animate-spin" style="">sync</span>
+<span class="text-sm font-bold text-primary" style="">Extracting data...</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 bg-secondary-fixed rounded-xl">
+<span class="material-symbols-outlined text-on-secondary-fixed-variant" style="font-variation-settings: &quot;FILL&quot; 1;">info</span>
+<p class="text-sm text-on-secondary-fixed-variant" style="">Supported formats: PDF, JPEG, PNG. Max file size 10MB.</p>
+</div>
+</section>
+<!-- Right: Auto-populated Fields -->
+<section class="lg:col-span-5 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline font-bold text-lg text-on-surface" style="">Extracted Information</h2>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-widest flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: &quot;FILL&quot; 1;">verified</span>
+                            OCR Verified
+                        </span>
+</div>
+<div class="space-y-5">
+<div class="space-y-2">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant font-bold" style="">Full Name</label>
+<div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary text-on-surface font-medium" style="">
+                                Alexander J. Sterling
+                            </div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant font-bold" style="">Cumulative GPA</label>
+<div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary text-on-surface font-medium flex items-center justify-between">
+<span class="" style="">3.92 / 4.00</span>
+<span class="text-xs text-on-surface-variant italic" style="">High Distinction</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant font-bold" style="">Institution</label>
+<div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary text-on-surface font-medium" style="">
+                                Royal Institute of Technology
+                            </div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant font-bold" style="">Degree Program</label>
+<div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary text-on-surface font-medium" style="">
+                                B.Sc. in Computational Linguistics
+                            </div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/20 flex flex-col gap-3">
+<button class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-full font-bold shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2" style="">
+                            Confirm &amp; Proceed
+                            <span class="material-symbols-outlined" style="">arrow_forward</span>
+</button>
+<button class="w-full py-3 text-on-surface font-bold hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center gap-2" style="">
+<span class="material-symbols-outlined" style="">arrow_back</span>
+                            Back to Academic History
+                        </button>
+</div>
+</div>
+<!-- Guidance Card -->
+<div class="bg-[#515b92] rounded-xl p-6 text-white shadow-xl relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-headline font-bold mb-2" style="">Need Assistance?</h3>
+<p class="text-sm opacity-90 leading-relaxed mb-4" style="">Our AI-assisted scanner usually takes 5-10 seconds. If data is incorrect, you can manually override it in the next step.</p>
+<a class="text-xs font-bold uppercase tracking-widest underline underline-offset-4" href="#" style="">Talk to an advisor</a>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl opacity-10 rotate-12" style="">help_center</span>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Meta -->
+<footer class="mt-auto py-8 px-6 border-t border-outline-variant/10 bg-surface-container-low">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold" style="">Academic ERP</span>
+<span class="text-on-surface-variant text-sm" style="">| Management Suite v4.2.0</span>
+</div>
+<div class="flex gap-8">
+<a class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors" href="#" style="">Privacy Policy</a>
+<a class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors" href="#" style="">Terms of Service</a>
+<a class="font-label text-[0.75rem] uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors" href="#" style="">Help &amp; Support</a>
+</div>
+</div>
+</footer>
+</body></html>

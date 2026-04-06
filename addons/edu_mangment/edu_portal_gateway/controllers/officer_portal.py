@@ -537,3 +537,308 @@ class OfficerPortalController(http.Controller, EduPortalAccessMixin):
             
         except Exception as e:
             return request.redirect(f'/edu-portal/officer/students/{student_id}?error={str(e)}')
+    
+    # =========================================================================
+    # Course Management
+    # =========================================================================
+    
+    @http.route('/edu-portal/officer/courses', type='http', auth='user', website=True)
+    def officer_courses_list(self, page=1, search=None, status=None, **kw):
+        """
+        List all courses with filtering and search.
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        
+        # Build domain
+        domain = []
+        
+        # By default show active courses, allow filtering inactive
+        if status == 'inactive':
+            domain.append(('active', '=', False))
+        elif status == 'all':
+            pass  # Show all
+        else:
+            domain.append(('active', '=', True))
+        
+        if search:
+            domain.append('|')
+            domain.append('|')
+            domain.append(('name', 'ilike', search))
+            domain.append(('code', 'ilike', search))
+            domain.append(('instructor', 'ilike', search))
+        
+        # Pagination
+        page = int(page) or 1
+        total = Course.search_count(domain)
+        offset = (page - 1) * self.ITEMS_PER_PAGE
+        
+        courses = Course.search(
+            domain,
+            limit=self.ITEMS_PER_PAGE,
+            offset=offset,
+            order='code, name'
+        )
+        
+        # Status counts
+        status_counts = {
+            'active': Course.search_count([('active', '=', True)]),
+            'inactive': Course.search_count([('active', '=', False)]),
+            'open': Course.search_count([('active', '=', True), ('registration_open', '=', True)]),
+            'closed': Course.search_count([('active', '=', True), ('registration_open', '=', False)]),
+            'total': Course.search_count([]),
+        }
+        
+        total_pages = (total + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
+        
+        values = {
+            'page_name': 'Course Management',
+            'user': user,
+            'courses': courses,
+            'search': search or '',
+            'current_status': status or 'active',
+            'status_counts': status_counts,
+            'page': page,
+            'total_pages': total_pages,
+            'total': total,
+            'success': kw.get('success'),
+            'error': kw.get('error'),
+        }
+        
+        return request.render('edu_portal_gateway.officer_courses_list', values)
+    
+    @http.route('/edu-portal/officer/courses/new', type='http', auth='user', website=True)
+    def officer_course_create_form(self, **kw):
+        """
+        Display form to create a new course.
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        values = {
+            'page_name': 'Create Course',
+            'user': user,
+            'course': None,
+            'is_edit': False,
+            'semesters': [('fall', 'Fall'), ('spring', 'Spring'), ('summer', 'Summer')],
+            'error': kw.get('error'),
+        }
+        
+        return request.render('edu_portal_gateway.officer_course_form', values)
+    
+    @http.route('/edu-portal/officer/courses/create', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def officer_course_create(self, **kw):
+        """
+        Process course creation.
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        
+        try:
+            # Validate required fields
+            name = kw.get('name', '').strip()
+            code = kw.get('code', '').strip()
+            
+            if not name or not code:
+                return request.redirect('/edu-portal/officer/courses/new?error=Course name and code are required')
+            
+            # Create course
+            course_vals = {
+                'name': name,
+                'code': code,
+                'description': kw.get('description', '').strip(),
+                'instructor': kw.get('instructor', '').strip(),
+                'total_seats': int(kw.get('total_seats', 30)),
+                'credits': int(kw.get('credits', 3)),
+                'schedule': kw.get('schedule', '').strip(),
+                'semester': kw.get('semester', 'fall'),
+                'year': int(kw.get('year', fields.Date.today().year)),
+                'registration_open': kw.get('registration_open') == 'on',
+                'active': True,
+            }
+            
+            course = Course.create(course_vals)
+            
+            _logger.info(
+                'Course created: %s (%s) by %s',
+                course.name, course.code, user.login
+            )
+            
+            return request.redirect(f'/edu-portal/officer/courses?success=Course {course.code} created successfully')
+            
+        except Exception as e:
+            _logger.error('Course creation failed: %s', str(e))
+            return request.redirect(f'/edu-portal/officer/courses/new?error={str(e)}')
+    
+    @http.route('/edu-portal/officer/courses/<int:course_id>/edit', type='http', auth='user', website=True)
+    def officer_course_edit_form(self, course_id, **kw):
+        """
+        Display form to edit an existing course.
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        course = Course.browse(course_id)
+        
+        if not course.exists():
+            raise NotFound('Course not found.')
+        
+        values = {
+            'page_name': f'Edit Course: {course.code}',
+            'user': user,
+            'course': course,
+            'is_edit': True,
+            'semesters': [('fall', 'Fall'), ('spring', 'Spring'), ('summer', 'Summer')],
+            'error': kw.get('error'),
+        }
+        
+        return request.render('edu_portal_gateway.officer_course_form', values)
+    
+    @http.route('/edu-portal/officer/courses/<int:course_id>/update', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def officer_course_update(self, course_id, **kw):
+        """
+        Process course update.
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        course = Course.browse(course_id)
+        
+        if not course.exists():
+            return request.redirect('/edu-portal/officer/courses?error=Course not found')
+        
+        try:
+            # Validate required fields
+            name = kw.get('name', '').strip()
+            code = kw.get('code', '').strip()
+            
+            if not name or not code:
+                return request.redirect(f'/edu-portal/officer/courses/{course_id}/edit?error=Course name and code are required')
+            
+            # Update course
+            course_vals = {
+                'name': name,
+                'code': code,
+                'description': kw.get('description', '').strip(),
+                'instructor': kw.get('instructor', '').strip(),
+                'total_seats': int(kw.get('total_seats', 30)),
+                'credits': int(kw.get('credits', 3)),
+                'schedule': kw.get('schedule', '').strip(),
+                'semester': kw.get('semester', 'fall'),
+                'year': int(kw.get('year', fields.Date.today().year)),
+                'registration_open': kw.get('registration_open') == 'on',
+            }
+            
+            course.write(course_vals)
+            
+            _logger.info(
+                'Course updated: %s (%s) by %s',
+                course.name, course.code, user.login
+            )
+            
+            return request.redirect(f'/edu-portal/officer/courses?success=Course {course.code} updated successfully')
+            
+        except Exception as e:
+            _logger.error('Course update failed: %s', str(e))
+            return request.redirect(f'/edu-portal/officer/courses/{course_id}/edit?error={str(e)}')
+    
+    @http.route('/edu-portal/officer/courses/<int:course_id>/toggle-status', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def officer_course_toggle_status(self, course_id, **kw):
+        """
+        Toggle course registration status (open/closed).
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        course = Course.browse(course_id)
+        
+        if not course.exists():
+            return request.redirect('/edu-portal/officer/courses?error=Course not found')
+        
+        try:
+            current_status = course.registration_open
+            course.write({'registration_open': not current_status})
+            
+            status = 'opened' if not current_status else 'closed'
+            _logger.info(
+                'Course registration %s: %s by %s',
+                status, course.code, user.login
+            )
+            
+            return request.redirect(f'/edu-portal/officer/courses?success=Course {course.code} registration {status}')
+            
+        except Exception as e:
+            return request.redirect(f'/edu-portal/officer/courses?error={str(e)}')
+    
+    @http.route('/edu-portal/officer/courses/<int:course_id>/toggle-active', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def officer_course_toggle_active(self, course_id, **kw):
+        """
+        Toggle course active status (archive/unarchive).
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        course = Course.browse(course_id)
+        
+        if not course.exists():
+            return request.redirect('/edu-portal/officer/courses?error=Course not found')
+        
+        try:
+            current_status = course.active
+            course.write({'active': not current_status})
+            
+            status = 'archived' if current_status else 'restored'
+            _logger.info(
+                'Course %s: %s by %s',
+                status, course.code, user.login
+            )
+            
+            return request.redirect(f'/edu-portal/officer/courses?success=Course {course.code} {status}')
+            
+        except Exception as e:
+            return request.redirect(f'/edu-portal/officer/courses?error={str(e)}')
+    
+    @http.route('/edu-portal/officer/courses/<int:course_id>/delete', type='http', auth='user', website=True, methods=['POST'], csrf=True)
+    def officer_course_delete(self, course_id, **kw):
+        """
+        Delete a course (permanently).
+        """
+        user = self._require_group(self.OFFICER_GROUP)
+        if not user:
+            return self._get_login_redirect()
+        
+        Course = request.env['education.course'].sudo()
+        course = Course.browse(course_id)
+        
+        if not course.exists():
+            return request.redirect('/edu-portal/officer/courses?error=Course not found')
+        
+        try:
+            course_code = course.code
+            course.unlink()
+            
+            _logger.info(
+                'Course deleted: %s by %s',
+                course_code, user.login
+            )
+            
+            return request.redirect(f'/edu-portal/officer/courses?success=Course {course_code} deleted')
+            
+        except Exception as e:
+            _logger.error('Course deletion failed: %s', str(e))
+            return request.redirect(f'/edu-portal/officer/courses?error={str(e)}')

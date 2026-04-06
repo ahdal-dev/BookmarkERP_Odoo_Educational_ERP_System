@@ -3,10 +3,11 @@
 Authentication Controller for Educational Portal Gateway
 
 Implements:
-- Custom login endpoint at /edu-portal/login (US 02.01)
 - Role-based dashboard routing after authentication
 - Session management and secure logout
 - CSRF protection for all forms
+
+Note: Login is handled by /edu/login from edu_mang_website module.
 """
 
 import logging
@@ -22,8 +23,8 @@ class EduPortalAuthController(http.Controller):
     """
     Main authentication controller for the Educational Portal.
     
-    Provides a dedicated login flow separate from Odoo's standard web login,
-    routing users to role-specific dashboards after authentication.
+    Provides role-specific dashboards and session management.
+    Login is handled by edu_mang_website at /edu/login.
     """
 
     # =========================================================================
@@ -73,10 +74,10 @@ class EduPortalAuthController(http.Controller):
             'student': '/edu-portal/student/dashboard',
             'staff': '/web',  # Internal staff go to Odoo backend
         }
-        return role_dashboards.get(role, '/edu-portal/login')
+        return role_dashboards.get(role, '/edu/login')
     
     # =========================================================================
-    # Login Routes
+    # Portal Entry Point
     # =========================================================================
     
     @http.route('/edu-portal', type='http', auth='public', website=True)
@@ -89,73 +90,7 @@ class EduPortalAuthController(http.Controller):
             if user.exists():
                 role = self._get_user_role(user)
                 return request.redirect(self._get_dashboard_url(role))
-        return request.redirect('/edu-portal/login')
-    
-    @http.route('/edu-portal/login', type='http', auth='public', website=True, sitemap=False)
-    def portal_login(self, redirect=None, **kw):
-        """
-        Custom login page for the Educational Portal.
-        
-        GET: Display the login form
-        POST: Process authentication and redirect based on role
-        """
-        # If already logged in, redirect to dashboard
-        if request.session.uid:
-            user = request.env['res.users'].sudo().browse(request.session.uid)
-            if user.exists():
-                role = self._get_user_role(user)
-                return request.redirect(self._get_dashboard_url(role))
-        
-        error_message = ''
-        login = kw.get('login', '')
-        
-        # Process POST (login attempt)
-        if request.httprequest.method == 'POST':
-            login = kw.get('login', '')
-            password = kw.get('password', '')
-            
-            if not login or not password:
-                error_message = 'Please enter both email/ID and password.'
-            else:
-                try:
-                    # Authenticate user
-                    uid = request.session.authenticate(
-                        request.session.db, 
-                        login, 
-                        password
-                    )
-                    
-                    if uid:
-                        user = request.env['res.users'].sudo().browse(uid)
-                        role = self._get_user_role(user)
-                        
-                        _logger.info(
-                            'Portal login success: user=%s, role=%s',
-                            login, role
-                        )
-                        
-                        # Redirect to specified URL or role-based dashboard
-                        if redirect and redirect not in ['/', '/web', '']:
-                            return request.redirect(redirect)
-                        
-                        return request.redirect(self._get_dashboard_url(role))
-                    else:
-                        error_message = 'Invalid credentials. Please try again.'
-                        
-                except Exception as e:
-                    _logger.warning('Portal login failed: user=%s, error=%s', login, str(e))
-                    error_message = 'Invalid credentials. Please try again.'
-        
-        # Prepare template values
-        values = {
-            'page_name': 'Educational ERP Login',
-            'login': login,
-            'error': error_message,
-            'redirect': redirect,
-            'csrf_token': request.csrf_token(),
-        }
-        
-        return request.render('edu_portal_gateway.portal_login_page', values)
+        return request.redirect('/edu/login')
     
     @http.route('/edu-portal/logout', type='http', auth='user', website=True)
     def portal_logout(self, **kw):
@@ -167,7 +102,7 @@ class EduPortalAuthController(http.Controller):
             _logger.info('Portal logout: user=%s', user.login if user else 'unknown')
         
         request.session.logout(keep_db=True)
-        return request.redirect('/edu-portal/login')
+        return request.redirect('/edu/login')
     
     # =========================================================================
     # Password Reset (US 02.02)
@@ -306,7 +241,7 @@ class EduPortalAccessMixin:
         Returns:
             werkzeug.wrappers.Response
         """
-        url = '/edu-portal/login'
+        url = '/edu/login'
         if error:
             url += f'?error={error}'
         return request.redirect(url)

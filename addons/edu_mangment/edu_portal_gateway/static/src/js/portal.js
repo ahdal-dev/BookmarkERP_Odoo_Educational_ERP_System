@@ -547,7 +547,7 @@
                 .then(function (response) { return response.json(); })
                 .then(function (data) {
                     if (data.expired) {
-                        window.location.href = '/edu-portal/login?session_expired=1';
+                        window.location.href = '/edu/login?session_expired=1';
                     } else if (data.warning) {
                         showNotification('Your session will expire in 5 minutes. Please save your work.', 'warning');
                     }
