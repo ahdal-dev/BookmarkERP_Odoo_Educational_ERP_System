@@ -68,6 +68,10 @@
                         <span class="action-icon">👥</span>
                         <span class="action-text">Student Directory</span>
                     </a>
+                    <a href="/edu-portal/officer/courses" class="action-card">
+                        <span class="action-icon">📚</span>
+                        <span class="action-text">Manage Courses</span>
+                    </a>
                 </div>
             </div>
             
@@ -817,6 +821,265 @@
                         <a href="/edu-portal/officer/students" class="btn btn-secondary">← Back to Directory</a>
                     </div>
                 </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Course Management List -->
+    <template id="officer_courses_list" name="Course Management">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'courses'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Success/Error Messages -->
+            <t t-if="success">
+                <div class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+            </t>
+            <t t-if="error">
+                <div class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+            </t>
+            
+            <!-- Page Header with Add Button -->
+            <div class="page-header">
+                <h1 class="page-title">Course Management</h1>
+                <a href="/edu-portal/officer/courses/new" class="btn btn-primary">+ Add Course</a>
+            </div>
+            
+            <!-- Search and Filters -->
+            <div class="filter-bar">
+                <form action="/edu-portal/officer/courses" method="get" class="filter-form">
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Search by name, code, or instructor..."
+                           t-att-value="search"/>
+                    <select name="status" class="filter-select">
+                        <option value="active" t-att-selected="current_status == 'active'">Active Courses</option>
+                        <option value="inactive" t-att-selected="current_status == 'inactive'">Archived Courses</option>
+                        <option value="all" t-att-selected="current_status == 'all'">All Courses</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+            
+            <!-- Status Tabs -->
+            <div class="filter-tabs">
+                <a href="/edu-portal/officer/courses?status=active" 
+                   t-attf-class="filter-tab #{current_status == 'active' and 'active' or ''}">
+                    Active <span class="badge"><t t-esc="status_counts.get('active', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/courses?status=inactive" 
+                   t-attf-class="filter-tab #{current_status == 'inactive' and 'active' or ''}">
+                    Archived <span class="badge badge-secondary"><t t-esc="status_counts.get('inactive', 0)"/></span>
+                </a>
+                <span class="filter-tab-divider">|</span>
+                <span class="filter-tab-info">
+                    <span class="badge badge-success"><t t-esc="status_counts.get('open', 0)"/></span> Open Registration
+                    <span class="badge badge-danger" style="margin-left: 8px;"><t t-esc="status_counts.get('closed', 0)"/></span> Closed
+                </span>
+            </div>
+            
+            <!-- Courses Table -->
+            <t t-if="courses">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Instructor</th>
+                                <th>Seats</th>
+                                <th>Semester</th>
+                                <th>Registration</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="courses" t-as="course">
+                                <tr>
+                                    <td><strong><t t-esc="course.code"/></strong></td>
+                                    <td><t t-esc="course.name"/></td>
+                                    <td><t t-esc="course.instructor or '-'"/></td>
+                                    <td>
+                                        <span t-attf-class="badge #{course.available_seats > 5 and 'badge-success' or (course.available_seats > 0 and 'badge-warning' or 'badge-danger')}">
+                                            <t t-esc="course.available_seats"/>/<t t-esc="course.total_seats"/>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <t t-if="course.semester">
+                                            <t t-esc="course.semester.capitalize()"/> <t t-esc="course.year"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                    <td>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/toggle-status" method="post" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" t-attf-class="btn btn-sm #{course.registration_open and 'btn-success' or 'btn-danger'}">
+                                                <t t-if="course.registration_open">Open</t>
+                                                <t t-else="">Closed</t>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <t t-if="course.active">
+                                            <span class="badge badge-success">Active</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-secondary">Archived</span>
+                                        </t>
+                                    </td>
+                                    <td class="action-cell">
+                                        <a t-attf-href="/edu-portal/officer/courses/#{course.id}/edit" class="btn btn-sm btn-outline-primary" title="Edit">✏️</a>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/toggle-active" method="post" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" t-att-title="course.active and 'Archive' or 'Restore'">
+                                                <t t-if="course.active">📦</t>
+                                                <t t-else="">♻️</t>
+                                            </button>
+                                        </form>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/delete" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this course? This cannot be undone.');">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">🗑️</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/officer/courses?page=#{page - 1}&amp;status=#{current_status}&amp;search=#{search}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/officer/courses?page=#{page + 1}&amp;status=#{current_status}&amp;search=#{search}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <p>No courses found.</p>
+                    <a href="/edu-portal/officer/courses/new" class="btn btn-primary">Create First Course</a>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Course Create/Edit Form -->
+    <template id="officer_course_form" name="Course Form">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'courses'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Error Message -->
+            <t t-if="error">
+                <div class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+            </t>
+            
+            <!-- Form Card -->
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>
+                        <t t-if="is_edit">Edit Course: <t t-esc="course.code"/></t>
+                        <t t-else="">Create New Course</t>
+                    </h2>
+                </div>
+                
+                <form t-attf-action="#{is_edit and '/edu-portal/officer/courses/' + str(course.id) + '/update' or '/edu-portal/officer/courses/create'}" method="post" class="portal-form">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="code">Course Code *</label>
+                            <input type="text" id="code" name="code" class="form-control" 
+                                   t-att-value="course.code if course else ''" required="" placeholder="e.g., CS101"/>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label for="name">Course Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" 
+                                   t-att-value="course.name if course else ''" required="" placeholder="e.g., Introduction to Computer Science"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" 
+                                  placeholder="Course description..."><t t-if="course"><t t-esc="course.description or ''"/></t></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="instructor">Instructor</label>
+                            <input type="text" id="instructor" name="instructor" class="form-control" 
+                                   t-att-value="course.instructor if course else ''" placeholder="e.g., Dr. Smith"/>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="schedule">Schedule</label>
+                            <input type="text" id="schedule" name="schedule" class="form-control" 
+                                   t-att-value="course.schedule if course else ''" placeholder="e.g., MWF 10:00-11:00"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="total_seats">Total Seats</label>
+                            <input type="number" id="total_seats" name="total_seats" class="form-control" 
+                                   t-att-value="course.total_seats if course else 30" min="1"/>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="credits">Credits</label>
+                            <input type="number" id="credits" name="credits" class="form-control" 
+                                   t-att-value="course.credits if course else 3" min="1" max="12"/>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="year">Year</label>
+                            <input type="number" id="year" name="year" class="form-control" 
+                                   t-att-value="course.year if course else 2026" min="2020" max="2030"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="semester">Semester</label>
+                            <select id="semester" name="semester" class="form-control">
+                                <t t-foreach="semesters" t-as="sem">
+                                    <option t-att-value="sem[0]" t-att-selected="course and course.semester == sem[0]">
+                                        <t t-esc="sem[1]"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-check" style="margin-top: 32px;">
+                                <input type="checkbox" id="registration_open" name="registration_open" class="form-check-input"
+                                       t-att-checked="course.registration_open if course else False"/>
+                                <label for="registration_open" class="form-check-label">Registration Open</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="/edu-portal/officer/courses" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <t t-if="is_edit">Update Course</t>
+                            <t t-else="">Create Course</t>
+                        </button>
+                    </div>
+                </form>
             </div>
             
         </t>

@@ -43,6 +43,7 @@ User Stories Implemented:
         'security/security.xml',
         'security/ir.model.access.csv',
         'security/ir_rules.xml',
+        'views/menus.xml',
         'views/assets.xml',
         'views/templates/portal_layout.xml',
         'views/templates/login_template.xml',

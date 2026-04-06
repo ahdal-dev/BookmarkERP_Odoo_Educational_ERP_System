@@ -35,7 +35,7 @@
                             </div>
                         </t>
                         
-                        <form action="/edu-portal/login" method="post" class="login-form">
+                        <form action="/edu/login" method="post" class="login-form">
                             <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
                             <input type="hidden" name="redirect" t-att-value="redirect"/>
                             
@@ -142,7 +142,7 @@
                         </t>
                         
                         <div class="login-alt">
-                            <p><a href="/edu-portal/login">← Back to Login</a></p>
+                            <p><a href="/edu/login">← Back to Login</a></p>
                         </div>
                     </div>
                 </div>
