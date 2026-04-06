@@ -3809,6 +3809,17 @@ class TestMrpOrder(TestMrpCommon):
         self.assertEqual(mo.state, 'confirmed')
         self.assertEqual(len(mo.workorder_ids), 2)
 
+    def test_unlink_update_workcenter_productivity(self):
+        """ Test that workcenter_productivity entries for deleted work order has end date set
+        """
+        mo_form = Form(self.env['mrp.production'])
+        mo_form.bom_id = self.bom_3
+        mo = mo_form.save()
+        mo.workorder_ids[0].button_start()
+        time_log = mo.workorder_ids[0].time_ids[0]
+        mo.workorder_ids[0].unlink()
+        self.assertIsNot(time_log.date_end, False)
+
     def test_consumption_action_set_qty_and_validate(self):
         """
         Check `To Consume` and `Consumed` qty are correctly updated to match the consumption warning values
@@ -5406,7 +5417,7 @@ class TestTourMrpOrder(HttpCase):
         the catalog.
         '''
         # Enable storage locations
-        self.env['res.config.settings'].create({'group_stock_multi_locations': True}).execute()
+        self.env.user.group_ids += self.env.ref('stock.group_stock_multi_locations')
         # Set WH manufacture to 2-step
         warehouse = self.env.ref('stock.warehouse0')
         warehouse.manufacture_steps = 'pbm'

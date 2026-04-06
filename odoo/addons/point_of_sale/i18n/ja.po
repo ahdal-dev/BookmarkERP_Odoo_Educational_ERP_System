@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-15 18:36+0000\n"
-"PO-Revision-Date: 2026-01-15 08:07+0000\n"
+"POT-Creation-Date: 2026-01-30 18:35+0000\n"
+"PO-Revision-Date: 2026-01-30 07:44+0000\n"
 "Last-Translator: \"Junko Augias (juau)\" <juau@odoo.com>\n"
 "Language-Team: Japanese <https://translate.odoo.com/projects/odoo-19/"
 "point_of_sale/ja/>\n"
@@ -1417,12 +1417,12 @@ msgstr "バーコード"
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.res_config_settings_view_form
 msgid "Barcode Nomenclature"
-msgstr "バーコード表現規則"
+msgstr "バーコード表現ルール"
 
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_barcode_rule
 msgid "Barcode Rule"
-msgstr "バーコード規則"
+msgstr "バーコードルール"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -1440,6 +1440,12 @@ msgstr "バーコードスキャナ/カードリーダー"
 #: model:ir.model.fields,field_description:point_of_sale.field_res_config_settings__pos_basic_receipt
 msgid "Basic Receipt"
 msgstr "基本の領収書"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/sync_popup/sync_popup.xml:0
+msgid "Be aware that reloading data will delete unsaved orders."
+msgstr ""
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_session__cash_register_difference
@@ -1976,8 +1982,8 @@ msgid ""
 "Check the printer configuration for the 'Device ID' setting.\n"
 "It should be set to: 'local_printer'"
 msgstr ""
-"プリンタの設定で「デバイスID」を確認してください。\n"
-"設定は「local_printer」である必要があります"
+"プリンタ設定の 'デバイス ID' を確認してください。\n"
+"設定値は次の通りです：local_printer"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -1986,8 +1992,14 @@ msgid ""
 "Check the printer configuration for the 'Device ID' setting.\n"
 "It should be set to: local_printer"
 msgstr ""
-"プリンタの設定で「デバイスID」を確認してください。\n"
-"設定は「local_printer」である必要があります"
+"プリンタ設定の 'デバイス ID' を確認してください。\n"
+"設定値は次の通りです：local_printer"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/services/pos_store.js:0
+msgid "Checking Local Network Access permission..."
+msgstr ""
 
 #. module: point_of_sale
 #: model:product.template,name:point_of_sale.product_cheese_croissant_product_template
@@ -2408,7 +2420,7 @@ msgstr "サーバーへの接続が切断されました。インターネット
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_make_invoice__consolidated_billing
 msgid "Consolidated Billing"
-msgstr "連結請求"
+msgstr "まとめ請求"
 
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_res_partner
@@ -3913,6 +3925,12 @@ msgid "Hide Use Payment Terminal"
 msgstr "「決済端末を使用」を非表示にする"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/critical_pos_error/critical_pos_error.xml:0
+msgid "Hide details"
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,help:point_of_sale.field_res_config_settings__group_pos_preset
 msgid "Hide or show the Presets menu in the Point of Sale configuration."
 msgstr "POS の設定で、プリセットメニューを表示または非表示にします。"
@@ -4487,6 +4505,12 @@ msgid "LED Lamp"
 msgstr "LEDランプ"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/navbar.js:0
+msgid "LNA Permission status"
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_payment__name
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_preset__name
 msgid "Label"
@@ -4750,15 +4774,19 @@ msgstr ""
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/navbar/navbar.xml:0
+msgid "Local Network Access"
+msgstr ""
+
+#. module: point_of_sale
+#. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/utils/init_lna.js:0
 msgid ""
 "Local Network Access configuration is enabled, but your browser is not "
 "Chromium-based. Please use a Chromium-based browser to benefit from this "
-"feature."
+"feature. Please note that IOS devices do not support Local Network Access "
+"yet."
 msgstr ""
-"ローカルネットワークアクセス設定は有効化されていますが、お使いのブラウザは"
-"Chromiumベースではありません。この機能をご利用いただくには、Chromiumベースの"
-"ブラウザをご利用ください。"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -4774,6 +4802,18 @@ msgstr ""
 #. module: point_of_sale
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/utils/init_lna.js:0
+msgid "Local Network Access is not configured for this POS."
+msgstr ""
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/utils/init_lna.js:0
+msgid "Local Network Access permission granted."
+msgstr ""
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/utils/init_lna.js:0
 msgid ""
 "Local Network Access permission is denied. Some hardware devices might not "
 "work properly. Please allow Local Network Access in your browser settings."
@@ -4781,6 +4821,15 @@ msgstr ""
 "ローカルネットワークアクセスが拒否されました。一部のハードウェアデバイスが正"
 "常に動作しない可能性があります。ブラウザの設定でローカルネットワークアクセス"
 "を許可してください。"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/utils/init_lna.js:0
+msgid ""
+"Local Network Access permission is not yet granted. Some hardware devices "
+"might not work properly. Please allow Local Network Access in your browser "
+"settings."
+msgstr ""
 
 #. module: point_of_sale
 #: model_terms:ir.ui.view,arch_db:point_of_sale.pos_config_view_form
@@ -5354,6 +5403,12 @@ msgid "No slot available for this day"
 msgstr "その日に空きがありません"
 
 #. module: point_of_sale
+#. odoo-python
+#: code:addons/point_of_sale/wizard/pos_make_invoice.py:0
+msgid "No valid orders were selected. No new invoices could be generated"
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_res_config_settings__barcode_nomenclature_id
 msgid "Nomenclature"
 msgstr "体系"
@@ -5582,6 +5637,12 @@ msgid ""
 msgstr ""
 "PoSアプリのマネージャーアクセス権を持つユーザのみが、オーダのプロダクト価格を"
 "変更できます。"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/critical_pos_error/critical_pos_error.xml:0
+msgid "Oops!"
+msgstr ""
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -6586,7 +6647,7 @@ msgstr "POSオーダ"
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_report_pos_order
 msgid "Point of Sale Orders Report"
-msgstr "POS注文レポート"
+msgstr "POSオーダレポート"
 
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_pos_payment_method
@@ -6878,7 +6939,7 @@ msgstr "価格表"
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_product_pricelist_item
 msgid "Pricelist Rule"
-msgstr "価格表規則"
+msgstr "価格表ルール"
 
 #. module: point_of_sale
 #: model:ir.ui.menu,name:point_of_sale.pos_config_menu_action_product_pricelist
@@ -7515,6 +7576,8 @@ msgstr "関連セッション:%(link)s"
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/components/navbar/navbar.js:0
 #: code:addons/point_of_sale/static/src/app/components/navbar/navbar.xml:0
+#: code:addons/point_of_sale/static/src/app/components/popups/confirmation_dialog/confirmation_dialog.js:0
+#: code:addons/point_of_sale/static/src/app/components/popups/confirmation_dialog/confirmation_dialog.xml:0
 msgid "Reload Data"
 msgstr "データを再読み込みする"
 
@@ -7530,6 +7593,12 @@ msgid "Reload all data (may take longer depending on the amount of data)."
 msgstr ""
 "すべてのデータを再読み込み(データ量によっては、さらに時間がかかる場合がありま"
 "す)"
+
+#. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/critical_pos_error/critical_pos_error.xml:0
+msgid "Reload data"
+msgstr ""
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -8261,6 +8330,12 @@ msgid "Show category images in the Point of Sale interface."
 msgstr "POSインターフェイスにカテゴリ画像を表示します。"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/critical_pos_error/critical_pos_error.xml:0
+msgid "Show details"
+msgstr ""
+
+#. module: point_of_sale
 #: model:ir.model.fields,help:point_of_sale.field_pos_config__module_pos_hr
 #: model:ir.model.fields,help:point_of_sale.field_res_config_settings__pos_module_pos_hr
 msgid "Show employee login screen"
@@ -8373,6 +8448,14 @@ msgstr ""
 "すべてでなければ、いくつかについて、同期オーダー後の後処理に失敗しました。"
 
 #. module: point_of_sale
+#. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/loader/critical_pos_error/critical_pos_error.xml:0
+msgid ""
+"Something went wrong... If you really are stuck, share the report with your "
+"friendly support service"
+msgstr ""
+
+#. module: point_of_sale
 #: model:product.template,name:point_of_sale.product_sourdough_loaf_product_template
 msgid "Sourdough Loaf"
 msgstr "サワードウ・ローフ"
@@ -8438,7 +8521,7 @@ msgstr "在庫移動"
 #. module: point_of_sale
 #: model:ir.model,name:point_of_sale.model_stock_rule
 msgid "Stock Rule"
-msgstr "在庫規則"
+msgstr "在庫ルール"
 
 #. module: point_of_sale
 #: model:ir.model.fields,field_description:point_of_sale.field_pos_session__update_stock_at_closing
@@ -8572,7 +8655,7 @@ msgstr "テイクアウト / 配送 / メンバー"
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/screens/scale_screen/scale_screen.xml:0
 msgid "Tare"
-msgstr "風袋重量"
+msgstr "風袋"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -9876,19 +9959,6 @@ msgstr ""
 "してください:%s"
 
 #. module: point_of_sale
-#. odoo-python
-#: code:addons/point_of_sale/wizard/pos_make_invoice.py:0
-msgid ""
-"Unable to create consolidated invoice/s because the following orders can't "
-"be invoiced.\n"
-"\n"
-"%s"
-msgstr ""
-"以下のオーダに請求書を作成できないため、統合請求書を作成できません。\n"
-"\n"
-"%s"
-
-#. module: point_of_sale
 #. odoo-javascript
 #: code:addons/point_of_sale/static/src/app/screens/ticket_screen/invoice_button/invoice_button.js:0
 msgid "Unable to download invoice."
@@ -10085,15 +10155,10 @@ msgstr "UUID"
 
 #. module: point_of_sale
 #. odoo-javascript
+#: code:addons/point_of_sale/static/src/app/components/popups/product_info_popup/product_info_popup.js:0
 #: code:addons/point_of_sale/static/src/app/screens/receipt_screen/receipt/receipt_header/receipt_header.xml:0
 msgid "VAT"
 msgstr "VAT（Value Added Tax）"
-
-#. module: point_of_sale
-#. odoo-javascript
-#: code:addons/point_of_sale/static/src/app/components/popups/product_info_popup/product_info_popup.xml:0
-msgid "VAT:"
-msgstr "消費税:"
 
 #. module: point_of_sale
 #. odoo-javascript
@@ -10363,9 +10428,8 @@ msgid ""
 "the form view in studio if no PoS order exist"
 msgstr ""
 "POSオーダが存在しない場合は、バックエンドのインターフェイスからPOSオーダを作"
-"成したり、プライスリストを解除したり、フォームツールを使ってPythonテストで"
-"pos.orderを作成したり、スタジオでフォームビューを編集したりすることはできませ"
-"ん。"
+"成したり、価格表を解除したり、フォームツールを使ってPythonテストでpos.orderを"
+"作成したり、スタジオでフォームビューを編集したりすることはできません。"
 
 #. module: point_of_sale
 #. odoo-python
@@ -10847,6 +10911,28 @@ msgstr "ボタンを有効化します。"
 #: model_terms:ir.ui.view,arch_db:point_of_sale.report_invoice_document
 msgid "using"
 msgstr "支払方法:"
+
+#~ msgid ""
+#~ "Local Network Access configuration is enabled, but your browser is not "
+#~ "Chromium-based. Please use a Chromium-based browser to benefit from this "
+#~ "feature."
+#~ msgstr ""
+#~ "ローカルネットワークアクセス設定は有効化されていますが、お使いのブラウザは"
+#~ "Chromiumベースではありません。この機能をご利用いただくには、Chromiumベース"
+#~ "のブラウザをご利用ください。"
+
+#~ msgid ""
+#~ "Unable to create consolidated invoice/s because the following orders "
+#~ "can't be invoiced.\n"
+#~ "\n"
+#~ "%s"
+#~ msgstr ""
+#~ "以下のオーダに請求書を作成できないため、統合請求書を作成できません。\n"
+#~ "\n"
+#~ "%s"
+
+#~ msgid "VAT:"
+#~ msgstr "消費税:"
 
 #~ msgid "Ok"
 #~ msgstr "OK"
