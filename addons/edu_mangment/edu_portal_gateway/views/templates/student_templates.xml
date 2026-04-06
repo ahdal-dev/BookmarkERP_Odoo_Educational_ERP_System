@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Student Portal Templates
+    ========================
+    Dashboard, petitions, courses, and registration views for students
+    -->
+
+    <!-- Student Dashboard -->
+    <template id="student_dashboard" name="Student Dashboard">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'dashboard'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Hold Warning -->
+            <t t-if="is_on_hold">
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠</span>
+                    <span>Your account is currently on hold. Some features may be restricted. Please contact the registrar.</span>
+                </div>
+            </t>
+            
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="pending_petitions"/></div>
+                        <div class="stat-label">Pending Petitions</div>
+                    </div>
+                    <a href="/edu-portal/student/petitions?status=submitted" class="stat-link">View →</a>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="enrolled_courses"/></div>
+                        <div class="stat-label">Enrolled Courses</div>
+                    </div>
+                    <a href="/edu-portal/student/registrations" class="stat-link">View →</a>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🛒</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="cart_items"/></div>
+                        <div class="stat-label">Cart Items</div>
+                    </div>
+                    <a href="/edu-portal/student/cart" class="stat-link">View →</a>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="section">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="action-grid">
+                    <a href="/edu-portal/student/petitions/new" class="action-card">
+                        <span class="action-icon">➕</span>
+                        <span class="action-text">New Petition</span>
+                    </a>
+                    <a href="/edu-portal/student/courses" class="action-card">
+                        <span class="action-icon">📚</span>
+                        <span class="action-text">Browse Courses</span>
+                    </a>
+                    <a href="/edu-portal/student/registrations" class="action-card">
+                        <span class="action-icon">📋</span>
+                        <span class="action-text">My Schedule</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Recent Petitions -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Petitions</h2>
+                    <a href="/edu-portal/student/petitions" class="section-link">View All →</a>
+                </div>
+                
+                <t t-if="recent_petitions">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Type</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="recent_petitions" t-as="petition">
+                                    <tr>
+                                        <td>
+                                            <a t-attf-href="/edu-portal/student/petitions/#{petition.id}">
+                                                <t t-esc="petition.name"/>
+                                            </a>
+                                        </td>
+                                        <td><t t-esc="petition.petition_type_id.name or '-'"/></td>
+                                        <td><t t-esc="petition.subject"/></td>
+                                        <td>
+                                            <span t-attf-class="status-badge status-#{petition.state}">
+                                                <t t-esc="petition.state"/>
+                                            </span>
+                                        </td>
+                                        <td><t t-esc="petition.create_date" t-options='{"widget": "date"}'/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="empty-state">
+                        <p>No petitions yet. <a href="/edu-portal/student/petitions/new">Submit your first petition</a></p>
+                    </div>
+                </t>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Petitions List -->
+    <template id="student_petitions_list" name="My Petitions">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'petitions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Header Actions -->
+            <div class="page-actions">
+                <a href="/edu-portal/student/petitions/new" class="btn btn-primary">
+                    <span>+</span> New Petition
+                </a>
+            </div>
+            
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <a href="/edu-portal/student/petitions?status=all" 
+                   t-attf-class="filter-tab #{current_status == 'all' and 'active' or ''}">
+                    All <span class="badge"><t t-esc="status_counts.get('all', 0)"/></span>
+                </a>
+                <a href="/edu-portal/student/petitions?status=draft" 
+                   t-attf-class="filter-tab #{current_status == 'draft' and 'active' or ''}">
+                    Draft <span class="badge"><t t-esc="status_counts.get('draft', 0)"/></span>
+                </a>
+                <a href="/edu-portal/student/petitions?status=submitted" 
+                   t-attf-class="filter-tab #{current_status == 'submitted' and 'active' or ''}">
+                    Submitted <span class="badge"><t t-esc="status_counts.get('submitted', 0)"/></span>
+                </a>
+                <a href="/edu-portal/student/petitions?status=approved" 
+                   t-attf-class="filter-tab #{current_status == 'approved' and 'active' or ''}">
+                    Approved <span class="badge"><t t-esc="status_counts.get('approved', 0)"/></span>
+                </a>
+                <a href="/edu-portal/student/petitions?status=rejected" 
+                   t-attf-class="filter-tab #{current_status == 'rejected' and 'active' or ''}">
+                    Rejected <span class="badge"><t t-esc="status_counts.get('rejected', 0)"/></span>
+                </a>
+            </div>
+            
+            <!-- Petitions Table -->
+            <t t-if="petitions">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Type</th>
+                                <th>Subject</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="petitions" t-as="petition">
+                                <tr>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/student/petitions/#{petition.id}">
+                                            <t t-esc="petition.name"/>
+                                        </a>
+                                    </td>
+                                    <td><t t-esc="petition.petition_type_id.name or '-'"/></td>
+                                    <td><t t-esc="petition.subject"/></td>
+                                    <td>
+                                        <t t-if="petition.submitted_date">
+                                            <t t-esc="petition.submitted_date" t-options='{"widget": "date"}'/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                    <td>
+                                        <span t-attf-class="status-badge status-#{petition.state}">
+                                            <t t-esc="petition.state"/>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/student/petitions/#{petition.id}" class="btn btn-sm">View</a>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/student/petitions?page=#{page - 1}&amp;status=#{current_status}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/student/petitions?page=#{page + 1}&amp;status=#{current_status}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No Petitions Found</h3>
+                    <p>You haven't submitted any petitions yet.</p>
+                    <a href="/edu-portal/student/petitions/new" class="btn btn-primary">Submit New Petition</a>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- New Petition Form -->
+    <template id="student_petition_form" name="New Petition">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'petitions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="form-container">
+                <div class="form-card">
+                    <h2 class="form-title">Student Petition Form</h2>
+                    <p class="form-description">
+                        Please provide accurate details for your academic request. 
+                        Your petition will be reviewed by the Registrar within 3-5 business days.
+                    </p>
+                    
+                    <form action="/edu-portal/student/petitions/submit" method="post" enctype="multipart/form-data" class="petition-form">
+                        <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+                        
+                        <div class="form-group">
+                            <label for="petition_type_id">PETITION TYPE *</label>
+                            <select id="petition_type_id" name="petition_type_id" class="form-select" required="required">
+                                <option value="">Select a request type...</option>
+                                <t t-foreach="petition_types" t-as="ptype">
+                                    <option t-att-value="ptype.id"><t t-esc="ptype.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">SUBJECT *</label>
+                            <input type="text" id="subject" name="subject" class="form-input" 
+                                   placeholder="Brief title for your petition" required="required"/>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">DETAILED JUSTIFICATION *</label>
+                            <textarea id="description" name="description" class="form-textarea" rows="5"
+                                      placeholder="Describe the academic grounds for your petition..." required="required"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="attachments">SUPPORTING DOCUMENTS</label>
+                            <div class="file-upload-zone" id="fileUploadZone">
+                                <div class="upload-icon">📁</div>
+                                <p class="upload-text">Drag and drop files here</p>
+                                <p class="upload-hint">PDF, JPEG, or PNG (Max 10MB per file)</p>
+                                <input type="file" id="attachments" name="attachments" class="file-input" 
+                                       multiple="multiple" accept=".pdf,.jpg,.jpeg,.png"/>
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('attachments').click()">
+                                    Browse Files
+                                </button>
+                            </div>
+                            <div id="fileList" class="file-list"></div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" name="auto_submit" value="1" class="btn btn-primary">
+                                Submit for Review →
+                            </button>
+                            <button type="submit" class="btn btn-secondary">
+                                Save as Draft
+                            </button>
+                            <a href="/edu-portal/student/petitions" class="btn btn-link">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Help Sidebar -->
+                <div class="form-sidebar">
+                    <div class="help-card">
+                        <h4>Need guidance?</h4>
+                        <p>Read our comprehensive guide on academic appeals and institutional policies.</p>
+                        <a href="/help/petitions" class="btn btn-link">Open Handbook →</a>
+                    </div>
+                </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Petition Detail -->
+    <template id="student_petition_detail" name="Petition Detail">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'petitions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="detail-container">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <h2><t t-esc="petition.subject"/></h2>
+                            <p class="detail-ref"><t t-esc="petition.name"/></p>
+                        </div>
+                        <span t-attf-class="status-badge status-#{petition.state} large">
+                            <t t-esc="petition.state"/>
+                        </span>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Petition Type</label>
+                            <span><t t-esc="petition.petition_type_id.name or '-'"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Submitted Date</label>
+                            <span>
+                                <t t-if="petition.submitted_date">
+                                    <t t-esc="petition.submitted_date" t-options='{"widget": "datetime"}'/>
+                                </t>
+                                <t t-else="">Not submitted yet</t>
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Days Pending</label>
+                            <span><t t-esc="petition.days_pending"/> days</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Reviewer</label>
+                            <span><t t-esc="petition.reviewer_id.name or 'Not assigned'"/></span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Description</h3>
+                        <p class="description-text"><t t-esc="petition.description"/></p>
+                    </div>
+                    
+                    <t t-if="petition.attachment_ids">
+                        <div class="detail-section">
+                            <h3>Attachments</h3>
+                            <div class="attachment-list">
+                                <t t-foreach="petition.attachment_ids" t-as="att">
+                                    <div class="attachment-item">
+                                        <span class="attachment-icon">📎</span>
+                                        <span class="attachment-name"><t t-esc="att.name"/></span>
+                                        <a t-attf-href="/web/content/#{att.id}?download=true" class="attachment-download">Download</a>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-if="petition.comments">
+                        <div class="detail-section">
+                            <h3>Reviewer Comments</h3>
+                            <p class="comment-text"><t t-esc="petition.comments"/></p>
+                        </div>
+                    </t>
+                    
+                    <t t-if="petition.rejection_reason">
+                        <div class="detail-section alert-section">
+                            <h3>Rejection Reason</h3>
+                            <p class="rejection-text"><t t-esc="petition.rejection_reason"/></p>
+                        </div>
+                    </t>
+                    
+                    <!-- Actions -->
+                    <div class="detail-actions">
+                        <t t-if="petition.state == 'draft'">
+                            <form t-attf-action="/edu-portal/student/petitions/#{petition.id}/submit" method="post" style="display: inline;">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-primary">Submit for Review</button>
+                            </form>
+                        </t>
+                        <a href="/edu-portal/student/petitions" class="btn btn-secondary">← Back to Petitions</a>
+                    </div>
+                </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Course Catalog -->
+    <template id="student_course_catalog" name="Course Catalog">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'courses'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Search and Filters -->
+            <div class="search-bar">
+                <form action="/edu-portal/student/courses" method="get" class="search-form">
+                    <input type="text" name="search" class="search-input" 
+                           placeholder="Search by name, code, or keyword..." 
+                           t-att-value="search"/>
+                    <select name="semester" class="filter-select">
+                        <option value="">All Semesters</option>
+                        <option value="fall" t-att-selected="semester == 'fall'">Fall</option>
+                        <option value="spring" t-att-selected="semester == 'spring'">Spring</option>
+                        <option value="summer" t-att-selected="semester == 'summer'">Summer</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+            
+            <!-- Course Grid -->
+            <t t-if="courses">
+                <div class="course-grid">
+                    <t t-foreach="courses" t-as="course">
+                        <div class="course-card">
+                            <div class="course-header">
+                                <span class="course-code"><t t-esc="course.code"/></span>
+                                <span class="course-credits"><t t-esc="course.credits"/> Credits</span>
+                            </div>
+                            <h3 class="course-name"><t t-esc="course.name"/></h3>
+                            <p class="course-instructor">
+                                <t t-if="course.instructor">Instructor: <t t-esc="course.instructor"/></t>
+                            </p>
+                            <p class="course-schedule">
+                                <t t-if="course.schedule"><t t-esc="course.schedule"/></t>
+                            </p>
+                            <div class="course-seats">
+                                <span class="seats-available"><t t-esc="course.available_seats"/></span>
+                                <span class="seats-label">/ <t t-esc="course.total_seats"/> seats</span>
+                            </div>
+                            <div class="course-actions">
+                                <t t-if="course.id in enrolled_course_ids">
+                                    <span class="status-badge status-enrolled">Enrolled</span>
+                                </t>
+                                <t t-elif="course.id in cart_course_ids">
+                                    <span class="status-badge status-cart">In Cart</span>
+                                </t>
+                                <t t-elif="course.available_seats > 0">
+                                    <form t-attf-action="/edu-portal/student/cart/add/#{course.id}" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-secondary btn-sm">Add to Cart</button>
+                                    </form>
+                                </t>
+                                <t t-else="">
+                                    <span class="status-badge status-full">Full</span>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/student/courses?page=#{page - 1}&amp;search=#{search}&amp;semester=#{semester}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/student/courses?page=#{page + 1}&amp;search=#{search}&amp;semester=#{semester}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">📚</div>
+                    <h3>No Courses Found</h3>
+                    <p>Try adjusting your search criteria.</p>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Registration Cart -->
+    <template id="student_cart" name="Registration Cart">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'cart'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <t t-if="is_on_hold">
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠</span>
+                    <span>Your account is on hold. You cannot register for courses until the hold is removed.</span>
+                </div>
+            </t>
+            
+            <t t-if="cart_items">
+                <div class="cart-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Courses</span>
+                        <span class="summary-value"><t t-esc="len(cart_items)"/></span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Credits</span>
+                        <span class="summary-value"><t t-esc="total_credits"/></span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Credits</th>
+                                <th>Schedule</th>
+                                <th>Seats</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="cart_items" t-as="item">
+                                <tr>
+                                    <td>
+                                        <strong><t t-esc="item.course_code"/></strong><br/>
+                                        <span class="text-muted"><t t-esc="item.course_name"/></span>
+                                    </td>
+                                    <td><t t-esc="item.course_id.credits"/></td>
+                                    <td><t t-esc="item.course_id.schedule or '-'"/></td>
+                                    <td>
+                                        <t t-esc="item.available_seats"/> / <t t-esc="item.course_id.total_seats"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="item.registration_open">
+                                            <span class="status-badge status-open">Open</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="status-badge status-closed">Closed</span>
+                                        </t>
+                                    </td>
+                                    <td class="action-cell">
+                                        <t t-if="item.registration_open and item.available_seats > 0 and not is_on_hold">
+                                            <form t-attf-action="/edu-portal/student/cart/register/#{item.id}" method="post" style="display: inline;">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-primary btn-sm">Register</button>
+                                            </form>
+                                        </t>
+                                        <form t-attf-action="/edu-portal/student/cart/remove/#{item.id}" method="post" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-link btn-sm">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">🛒</div>
+                    <h3>Your Cart is Empty</h3>
+                    <p>Browse the course catalog to add courses to your cart.</p>
+                    <a href="/edu-portal/student/courses" class="btn btn-primary">Browse Courses</a>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- My Registrations -->
+    <template id="student_registrations" name="My Registrations">
+        <t t-set="is_student" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/student/dashboard'"/>
+        <t t-set="active_menu" t-value="'registrations'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="registrations-summary">
+                <div class="summary-item">
+                    <span class="summary-label">Total Enrolled</span>
+                    <span class="summary-value"><t t-esc="len(enrolled_courses)"/></span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Credits</span>
+                    <span class="summary-value"><t t-esc="total_credits"/></span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">Current Enrollments</h2>
+                
+                <t t-if="enrolled_courses">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Credits</th>
+                                    <th>Instructor</th>
+                                    <th>Schedule</th>
+                                    <th>Registered</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="enrolled_courses" t-as="reg">
+                                    <tr>
+                                        <td>
+                                            <strong><t t-esc="reg.course_code"/></strong><br/>
+                                            <span class="text-muted"><t t-esc="reg.course_name"/></span>
+                                        </td>
+                                        <td><t t-esc="reg.course_id.credits"/></td>
+                                        <td><t t-esc="reg.course_instructor or '-'"/></td>
+                                        <td><t t-esc="reg.course_schedule or '-'"/></td>
+                                        <td><t t-esc="reg.registration_date" t-options='{"widget": "date"}'/></td>
+                                        <td>
+                                            <form t-attf-action="/edu-portal/student/registrations/drop/#{reg.id}" method="post" 
+                                                  onsubmit="return confirm('Are you sure you want to drop this course?');">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-danger btn-sm">Drop</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="empty-state">
+                        <p>You are not currently enrolled in any courses.</p>
+                        <a href="/edu-portal/student/courses" class="btn btn-primary">Browse Courses</a>
+                    </div>
+                </t>
+            </div>
+            
+            <t t-if="dropped_courses">
+                <div class="section">
+                    <h2 class="section-title">Recently Dropped</h2>
+                    <div class="table-container">
+                        <table class="data-table muted-table">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Dropped Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="dropped_courses" t-as="reg">
+                                    <tr>
+                                        <td><t t-esc="reg.course_code"/> - <t t-esc="reg.course_name"/></td>
+                                        <td><t t-esc="reg.dropped_date" t-options='{"widget": "date"}'/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+</odoo>
