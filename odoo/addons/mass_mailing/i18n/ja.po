@@ -14,8 +14,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-30 18:36+0000\n"
-"PO-Revision-Date: 2026-01-13 15:32+0000\n"
+"POT-Creation-Date: 2026-01-25 18:35+0000\n"
+"PO-Revision-Date: 2026-01-27 08:09+0000\n"
 "Last-Translator: \"Junko Augias (juau)\" <juau@odoo.com>\n"
 "Language-Team: Japanese <https://translate.odoo.com/projects/odoo-19/"
 "mass_mailing/ja/>\n"
@@ -2893,10 +2893,10 @@ msgid ""
 "one will be interested. Write for one person. If it's genuine for the one, "
 "it's genuine for the rest."
 msgstr ""
-"優れたストーリーは、たとえ<strong>一人のため</strong>に書かれたものであっても"
-"、<strong>多くの人の心に届きます</strong>。不特定多数を意識しすぎると、言葉は"
-"薄まり、感情が伝わりません。一人に向けて書いてください。その想いが本物であれ"
-"ば、きっと他の人にも響きます。"
+"優れたストーリーは、たとえ<strong>一人のため</strong>に書かれたものであって"
+"も、<strong>多くの人の心に届きます</strong>。不特定多数を意識しすぎると、言葉"
+"は薄まり、感情が伝わりません。一人に向けて書いてください。その想いが本物であ"
+"れば、きっと他の人にも響きます。"
 
 #. module: mass_mailing
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_text_block
@@ -4500,7 +4500,8 @@ msgstr "優先返信先アドレス"
 msgid ""
 "Prevent sending messages to blacklisted contacts. Disable only when "
 "absolutely necessary."
-msgstr "ブラックリストに登録された連絡先へのメッセージ送信を防止します。絶対に必要な"
+msgstr ""
+"ブラックリストに登録された連絡先へのメッセージ送信を防止します。絶対に必要な"
 "場合のみ無効化してください。"
 
 #. module: mass_mailing
@@ -4858,7 +4859,7 @@ msgstr "スケジュール"
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_trace_report__scheduled
 #: model_terms:ir.ui.view,arch_db:mass_mailing.mailing_trace_view_search
 msgid "Scheduled"
-msgstr "予定"
+msgstr "スケジュール済"
 
 #. module: mass_mailing
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_trace_report__scheduled_date
@@ -5156,7 +5157,7 @@ msgstr "小"
 #. odoo-javascript
 #: code:addons/mass_mailing/static/src/builder/tabs/design_tab.xml:0
 msgid "Solid"
-msgstr "ソリッド"
+msgstr "実線"
 
 #. module: mass_mailing
 #: model:ir.model.fields,field_description:mass_mailing.field_mailing_mailing__source_id
@@ -5219,7 +5220,8 @@ msgstr "初めての <b>メール配信</b>を作成することから始めま�
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_image_text
 #: model_terms:ir.ui.view,arch_db:mass_mailing.s_text_image
 msgid "Start with the customer - find out what they want and give it to them."
-msgstr "顧客を起点に考えましょう。顧客が何を求めているのかを理解し、それを提供するこ"
+msgstr ""
+"顧客を起点に考えましょう。顧客が何を求めているのかを理解し、それを提供するこ"
 "とです。"
 
 #. module: mass_mailing
@@ -5884,8 +5886,8 @@ msgid ""
 "                by clicking on <i class=\"fa fa-floppy-o text-warning\"></i> "
 "icon next to \"Recipients\"."
 msgstr ""
-"メールのデザイン中に、受信者をフィルタリングするための規則を定義することがで"
-"きます。\n"
+"メールのデザイン中に、受信者をフィルタリングするためのルールを定義することが"
+"できます。\n"
 "                同じ条件を保存して後で使用するには、\n"
 "　　　　 \"受信者\"の隣にある <i class=\"fa fa-floppy-o text-warning\"></i>ア"
 "イコンをクリックして、お気に入りリストに追加します。"

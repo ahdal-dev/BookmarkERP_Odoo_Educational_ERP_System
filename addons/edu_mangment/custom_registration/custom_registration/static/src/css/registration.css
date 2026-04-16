@@ -1,0 +1,124 @@
+/* Registration Module Styles */
+
+/* Card Styling */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* Badge Improvements */
+.badge {
+    font-weight: 500;
+}
+
+/* Table Hover Effects */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Alert Styling */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* Button Group Spacing */
+.btn-group > form {
+    margin: 0;
+}
+
+.btn-group > form > .btn {
+    border-radius: 0;
+}
+
+.btn-group > form:first-child > .btn {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group > form:last-child > .btn,
+.btn-group > .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* List Group in Cards */
+.list-group-flush .list-group-item {
+    border-left: 0;
+    border-right: 0;
+}
+
+/* Statistics Cards */
+.card.bg-primary,
+.card.bg-info,
+.card.bg-danger,
+.card.bg-success {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card.bg-primary:hover,
+.card.bg-info:hover,
+.card.bg-danger:hover,
+.card.bg-success:hover {
+    transform: translateY(-2px);
+}
+
+/* Form Controls */
+.form-control:focus,
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .btn-group > .btn,
+    .btn-group > form > .btn {
+        border-radius: 0.25rem !important;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Hold Status Styling */
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* Schedule View */
+.schedule-item {
+    border-left: 4px solid #007bff;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Cart Item Styling */
+.cart-item {
+    transition: background-color 0.2s ease;
+}
+
+.cart-item:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* Course Card Hover */
+.course-card {
+    transition: box-shadow 0.2s ease;
+}
+
+.course-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Opacity Utility */
+.opacity-50 {
+    opacity: 0.5;
+}
