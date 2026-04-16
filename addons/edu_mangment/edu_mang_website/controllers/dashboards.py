@@ -1,14 +1,17 @@
 """
-Dashboard Controllers for Educational ERP
-==========================================
+Website Dashboard Controller for Educational ERP
+=================================================
 
-This module provides secure dashboard endpoints for different user roles:
-- Student Dashboard: /student/dashboard
-- Admission Officer Dashboard: /admission/dashboard
-- Admin Dashboard: /admin/dashboard
+This controller provides the website-facing dashboard routes with access control.
+Routes use website=True for website rendering context.
 
-Each dashboard route includes access control verification to ensure
-only authorized users can access their respective interfaces.
+Dashboard routes:
+- /student/dashboard: Student portal main page
+- /student/petitions: Student petitions page
+- /student/registration: Course registration page
+- /admission/dashboard: Admission officer portal
+- /admin/dashboard: Admin portal
+- /edu/access-denied: Access denied page
 """
 
 from odoo import http
@@ -20,9 +23,10 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class DashboardController(http.Controller):
+class WebsiteDashboardController(http.Controller):
     """
     Controller for role-based dashboard routing with access control.
+    All routes use website=True for website rendering.
     """
 
     def _check_access(self, required_group):
@@ -63,7 +67,7 @@ class DashboardController(http.Controller):
         """
         Return a standardized access denied response.
         """
-        return request.render('edu_mang_auth.access_denied_page', {
+        return request.render('edu_mang_website.access_denied_page', {
             'error_message': message,
         })
 
@@ -101,7 +105,7 @@ class DashboardController(http.Controller):
             'announcements': [],
         }
 
-        return request.render('edu_mang_auth.student_dashboard', values)
+        return request.render('edu_mang_website.student_dashboard', values)
 
     @http.route('/student/petitions', type='http', auth='user', website=True)
     def student_petitions(self, **kw):
@@ -119,7 +123,7 @@ class DashboardController(http.Controller):
             'petitions': [],  # Placeholder
         }
 
-        return request.render('edu_mang_auth.student_petitions', values)
+        return request.render('edu_mang_website.student_petitions', values)
 
     @http.route('/student/registration', type='http', auth='user', website=True)
     def student_registration(self, **kw):
@@ -138,7 +142,7 @@ class DashboardController(http.Controller):
             'registered_courses': [],  # Placeholder
         }
 
-        return request.render('edu_mang_auth.student_registration', values)
+        return request.render('edu_mang_website.student_registration', values)
 
     # =========================================
     # ADMISSION OFFICER DASHBOARD
@@ -180,7 +184,7 @@ class DashboardController(http.Controller):
             'rejected': rejected_count,
         }
 
-        return request.render('edu_mang_auth.admission_dashboard', values)
+        return request.render('edu_mang_website.admission_dashboard', values)
 
     # =========================================
     # ADMIN DASHBOARD
@@ -225,7 +229,7 @@ class DashboardController(http.Controller):
             'backend_url': '/web',
         }
 
-        return request.render('edu_mang_auth.admin_dashboard', values)
+        return request.render('edu_mang_website.admin_dashboard', values)
 
     # =========================================
     # ACCESS DENIED PAGE
@@ -236,6 +240,6 @@ class DashboardController(http.Controller):
         """
         Generic access denied page.
         """
-        return request.render('edu_mang_auth.access_denied_page', {
+        return request.render('edu_mang_website.access_denied_page', {
             'error_message': kw.get('message', 'You do not have permission to access this resource.'),
         })

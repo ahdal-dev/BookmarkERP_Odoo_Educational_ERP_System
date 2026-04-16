@@ -1,29 +1,29 @@
 """
-Custom Authentication Controller for Educational ERP
-=====================================================
+Website Authentication Controller for Educational ERP
+======================================================
 
-This controller inherits from Odoo's standard web login controller
-and implements role-based post-login routing.
+This controller provides the website-facing login/logout functionality.
+It extends the pure auth controller from edu_mang_auth with website-specific
+rendering (templates, pages, redirects).
 
-After successful authentication, users are redirected based on their group:
-- Students -> /student/dashboard
-- Admission Officers -> /admission/dashboard
-- ERP Admins -> /admin/dashboard (or /web backend)
+Routes:
+- /edu/login: Custom educational login page
+- /edu/logout: Logout and redirect to login page
+- /web/login: Override to redirect to custom login
 """
 
 from odoo import http
 from odoo.http import request
 from odoo.addons.web.controllers.home import Home
-from odoo.addons.website.controllers.main import Website
 import logging
 
 _logger = logging.getLogger(__name__)
 
 
-class EduERPAuthController(Home):
+class EduAuthMixin:
     """
-    Custom login controller that extends Odoo's default login behavior
-    to implement role-based dashboard routing.
+    Mixin class providing authentication utilities.
+    Can be inherited by other controllers to add role-based routing.
     """
 
     def _get_user_redirect_url(self, user):
@@ -43,12 +43,12 @@ class EduERPAuthController(Home):
         # Student group (portal-based)
         if user.has_group('edu_mang_auth.group_erp_student'):
             _logger.info(f"User {user.login} identified as Student, redirecting to /student/dashboard")
-            return '/student/dashboard'
+            return '/edu-portal/student/dashboard'
 
         # Admission Officer group
         if user.has_group('edu_mang_auth.group_erp_admission_officer'):
             _logger.info(f"User {user.login} identified as Admission Officer, redirecting to /admission/dashboard")
-            return '/admission/dashboard'
+            return '/edu-portal/officer/dashboard'
 
         # ERP Admin group
         if user.has_group('edu_mang_auth.group_erp_admin'):
@@ -63,6 +63,13 @@ class EduERPAuthController(Home):
         # Portal users without specific role
         _logger.info(f"User {user.login} is portal user, redirecting to /my")
         return '/my'
+
+
+class EduWebsiteAuthController(Home, EduAuthMixin):
+    """
+    Website login controller that extends Odoo's default login behavior
+    with custom templates and role-based dashboard routing.
+    """
 
     @http.route('/web/login', type='http', auth='none', website=True, sitemap=False)
     def web_login(self, redirect=None, **kw):
@@ -125,7 +132,7 @@ class EduERPAuthController(Home):
             'csrf_token': request.csrf_token(),
         }
 
-        return request.render('edu_mang_auth.edu_login_page', values)
+        return request.render('edu_mang_website.edu_login_page', values)
 
     @http.route('/edu/logout', type='http', auth='user', website=True)
     def edu_logout(self, redirect='/edu/login', **kw):
@@ -136,12 +143,12 @@ class EduERPAuthController(Home):
         return request.redirect(redirect)
 
 
-class EduERPWebsite(Website):
+class EduWebsiteSessionController(http.Controller, EduAuthMixin):
     """
-    Extended website controller for additional authentication features.
+    Controller for session-related endpoints.
     """
 
-    @http.route('/edu/check_session', type='jsonrpc', auth='public')
+    @http.route('/edu/check_session', type='jsonrpc', auth='public', website=True)
     def check_session(self):
         """
         AJAX endpoint to check if user session is still valid.

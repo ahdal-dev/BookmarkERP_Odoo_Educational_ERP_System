@@ -1,42 +1,40 @@
 {
     'name': 'Educational ERP Authentication & Authorization',
-    'version': '1.0.0',
+    'version': '1.1.0',
     'category': 'Education',
-    'summary': 'Custom authentication with role-based access control for Educational ERP',
+    'summary': 'Pure authentication with role-based access control for Educational ERP',
     'description': """
 Educational ERP Authentication & Authorization Module
 ======================================================
 
-This module provides:
+This module provides PURE authentication without website dependencies:
 - Custom user groups: ERP Admin, Student, Admission Officer
-- Role-based dashboard routing after login
-- Custom login page template
-- Secure dashboard access with group verification
-- Student-friendly portal interface
+- Role-based routing logic (determines redirect URLs)
+- Security rules and access control
+- JSON API endpoints for authentication
+
+This is the core authentication module. For website portal UI
+(login pages, dashboards, templates), install edu_mang_website.
 
 Key Features:
-- Automatic redirect based on user role after login
-- Access control for dashboard routes
-- Custom website login experience
-- Responsive dashboard templates
+- User groups with role-based permissions
+- Record rules for data access control
+- Session check API endpoint
+- Role detection and redirect URL determination
+
+Note: This module does NOT include website templates or dashboard UI.
+Install 'edu_mang_website' for the full portal experience.
     """,
     'author': 'Educational ERP Team',
     'website': 'https://www.TEAM.com',
-    'depends': ['base', 'web', 'website', 'portal', 'mail'],
+    'depends': ['base', 'web', 'portal', 'mail'],
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
         'data/demo_users.xml',
-        'views/login_templates.xml',
-        'views/dashboard_templates.xml',
     ],
     'demo': [
     ],
-    'assets': {
-        'web.assets_frontend': [
-            'edu_mang_auth/static/src/css/dashboard.css',
-        ],
-    },
     'installable': True,
     'application': True,
     'auto_install': False,
