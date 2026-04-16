@@ -22,7 +22,7 @@ Key Features:
     """,
     'author': 'Educational ERP Team',
     'website': 'https://www.TEAM.com',
-    'depends': ['base', 'web', 'edu_mang_website'],
+    'depends': ['base', 'web', 'website', 'edu_mang_auth'],
     'data': [
         'security/ir.model.access.csv',
         'security/security_rules.xml',
