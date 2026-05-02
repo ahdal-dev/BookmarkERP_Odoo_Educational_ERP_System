@@ -65,8 +65,7 @@ ORIGINAL_SCRIPT = Path(__file__).parent / "Transcript_generator (1).py"
 OUTPUT_DIR      = Path("generated_data")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-OLLAMA_API_KEY  = os.getenv("OLLAMA_API_KEY", "28a461fc69bd49ff919312200fb836c8.LKhlcs14IRGw_xgi-Foialjk")
-MODEL           = "gpt-oss:120b-cloud"    # cloud model name on ollama.com
+
 
 REQUEST_TIMEOUT = 120          # seconds per LLM call
 MAX_RETRIES     = 3

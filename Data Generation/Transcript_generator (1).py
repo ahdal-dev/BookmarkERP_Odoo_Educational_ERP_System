@@ -10,7 +10,7 @@ Includes:
 - Complete Course Catalogs (300+ courses)
 
 Author: AI-Assisted Development
-Project: Zewail City Educational ERP System
+Project: Educational ERP System
 """
 
 import json
@@ -27,10 +27,7 @@ from pathlib import Path
 # Google Gemini imports
 import google.generativeai as genai
 
-# Configuration
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyAecSxwbw_plgCx0LjD9uTTv7f4Zh0ijZM")
-OUTPUT_DIR = Path("generated_data")
-OUTPUT_DIR.mkdir(exist_ok=True)
+
 
 # Configure Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
