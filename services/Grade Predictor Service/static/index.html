@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Predictor API</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 GPA Predictor API</h1>
+            <p>Intelligent academic performance prediction system</p>
+        </header>
+        
+        <div class="content">
+            <section class="api-endpoints">
+                <h2>📡 API Endpoints</h2>
+                <div class="endpoint">
+                    <strong>POST /predict</strong>
+                    <span>Predict GPA for a student</span>
+                </div>
+                <div class="endpoint">
+                    <strong>GET /docs</strong>
+                    <span>Interactive API documentation (Swagger UI)</span>
+                </div>
+                <div class="endpoint">
+                    <strong>GET /health</strong>
+                    <span>Health check</span>
+                </div>
+            </section>
+
+            <section class="tester">
+                <h2>🧪 Test the API</h2>
+                <button onclick="testPrediction()" class="btn-primary">Run Test Prediction</button>
+                <div id="result" class="result" style="display: none;"></div>
+            </section>
+
+            <section class="example">
+                <h2>📝 Example cURL Command</h2>
+                <pre id="curlCommand"></pre>
+                <button onclick="copyToClipboard()" class="btn-primary">Copy Command</button>
+            </section>
+
+            <section class="model-status">
+                <h2>ℹ️ Model Status</h2>
+                <div id="modelStatus" class="status-card">
+                    Loading...
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
