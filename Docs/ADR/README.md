@@ -4,7 +4,7 @@ This directory contains the project’s Architecture Decision Records.
 
 ## Index
 
-- [ADR 001: Add Makefile for Odoo Project Task Management](Makefile/001-add-cmake-build-system.md) - Existing task runner decision; filename/title should be aligned if you later rename it.
+- [ADR 001: Add Makefile for Odoo Project Task Management](Management/001-add-cmake-build-system.md) - Existing task runner decision; filename/title should be aligned if you later rename it.
 - [ADR 002: Adopt Odoo as the Core ERP Platform](Architecture/002-adopt-odoo-as-core-erp-platform.md)
 - [ADR 003: Introduce FastAPI and NGINX as the API Gateway Layer](Architecture/003-introduce-fastapi-and-nginx-api-gateway-layer.md)
 - [ADR 004: Extract OCR into a Dedicated Microservice](Services/004-extract-ocr-into-dedicated-microservice.md)
