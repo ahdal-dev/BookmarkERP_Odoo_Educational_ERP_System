@@ -83,9 +83,10 @@ class TestAdmissionSubmitValidation:
 
 
 class TestAdmissionSubmitAuth:
-    def test_no_auth_returns_403(self, client):
+    def test_no_auth_returns_401(self, client):
+        """Missing JWT should return 401 (gateway rejects before reaching RBAC)."""
         response = client.post(ENDPOINT, json=VALID_APPLICATION)
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestAdmissionBackendFailure:

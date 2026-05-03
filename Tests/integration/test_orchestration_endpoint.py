@@ -67,12 +67,12 @@ class TestOrchestrationPartialFailure:
 
 
 class TestOrchestrationAuth:
-    def test_no_auth_returns_403(self, client):
-        """Orchestration without JWT should return 403."""
+    def test_no_auth_returns_401(self, client):
+        """Orchestration without JWT should return 401."""
         response = client.post(
             ENDPOINT,
             data={"email": "t@t.com", "phone": "+201001234567",
                   "desired_program": "CS"},
             files={"file": ("d.jpg", io.BytesIO(b"\xff\xd8"), "image/jpeg")},
         )
-        assert response.status_code == 403
+        assert response.status_code == 401

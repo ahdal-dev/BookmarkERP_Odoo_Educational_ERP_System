@@ -82,7 +82,7 @@ def mock_ocr_success():
             return_value=Response(200, json={
                 "result": {
                     "name": "Ahmed Hassan", "nid": "29901011234567",
-                    "date_of_birth": "2000-01-15", "address": "Cairo",
+                    "date_of_birth": "2000-01-15", "address": "123 Tahrir Street, Downtown Cairo",
                     "city": "Cairo", "qualification": "High School",
                     "graduation_year": "2020", "gpa": "3.5",
                 },

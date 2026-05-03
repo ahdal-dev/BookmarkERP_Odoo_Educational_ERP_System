@@ -129,14 +129,14 @@ class TestAdmissionApplicationData:
         assert app.graduation_year == datetime.now().year
 
     def test_graduation_year_future_rejected(self, sample_admission_data):
-        """Future graduation year should fail the custom validator."""
+        """Future graduation year should fail the le= constraint."""
         data = sample_admission_data.copy()
         data["graduation_year"] = datetime.now().year + 5
 
         with pytest.raises(ValidationError) as exc_info:
             AdmissionApplicationData(**data)
 
-        assert "future" in str(exc_info.value).lower()
+        assert "graduation_year" in str(exc_info.value)
 
     def test_graduation_year_below_1950_rejected(self, sample_admission_data):
         """Year before 1950 should fail ge=1950 constraint."""
