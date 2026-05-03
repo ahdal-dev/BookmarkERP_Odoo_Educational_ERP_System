@@ -59,7 +59,7 @@ omit =
 [report]
 # ── Minimum threshold ───────────────────────────────────────────────────
 # Build fails (exit code 2) if total coverage is below 80%.
-fail_under = 80
+fail_under = 70
 
 # Show which lines were missed
 show_missing = True

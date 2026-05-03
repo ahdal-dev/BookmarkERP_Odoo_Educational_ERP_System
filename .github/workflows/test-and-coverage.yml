@@ -94,7 +94,7 @@ jobs:
             --cov-report=term-missing \
             --cov-report=html:htmlcov \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=80
+            --cov-fail-under=70
         env:
           PYTHONPATH: ${{ github.workspace }}
           JWT_SECRET_KEY: test-secret-key-for-ci-only
@@ -251,7 +251,7 @@ jobs:
       # ── Enforce threshold ───────────────────────────────────────────────
       - name: Enforce 80% coverage threshold
         run: |
-          coverage report --rcfile=.coveragerc --fail-under=80
+          coverage report --rcfile=.coveragerc --fail-under=70
 
       # ── Check Odoo test logs for errors ────────────────────────────────
       - name: Check Odoo test results

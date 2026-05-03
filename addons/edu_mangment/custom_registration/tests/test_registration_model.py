@@ -201,3 +201,54 @@ class TestEducationRegistration(TransactionCase):
         })
         with self.assertRaises(UserError):
             reg.action_reenroll()
+
+
+class TestEducationCart(TransactionCase):
+    """Test suite for education.cart model."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.Cart = cls.env['education.cart']
+        cls.Course = cls.env['education.course']
+        
+        cls.course = cls.Course.create({
+            'name': 'Algorithm Analysis',
+            'code': 'CS301',
+            'total_seats': 30,
+            'registration_open': True,
+        })
+        cls.student = cls.env['res.users'].create({
+            'name': 'Cart Student',
+            'login': 'cart_student',
+        })
+
+    def test_cart_to_registration_success(self):
+        """action_register should create a registration and remove cart item."""
+        cart_item = self.Cart.create({
+            'student_id': self.student.id,
+            'course_id': self.course.id,
+        })
+        reg = cart_item.action_register()
+        self.assertEqual(reg.state, 'enrolled')
+        self.assertFalse(cart_item.exists())
+
+    def test_cart_register_on_hold_rejected(self):
+        """action_register should fail if student is on hold."""
+        self.student.is_on_hold = True
+        cart_item = self.Cart.create({
+            'student_id': self.student.id,
+            'course_id': self.course.id,
+        })
+        with self.assertRaises(ValidationError):
+            cart_item.action_register()
+
+    def test_cart_register_closed_rejected(self):
+        """action_register should fail if registration is closed."""
+        self.course.registration_open = False
+        cart_item = self.Cart.create({
+            'student_id': self.student.id,
+            'course_id': self.course.id,
+        })
+        with self.assertRaises(ValidationError):
+            cart_item.action_register()

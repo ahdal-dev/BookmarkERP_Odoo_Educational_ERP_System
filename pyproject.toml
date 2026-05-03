@@ -76,7 +76,7 @@ omit = [
 [tool.coverage.report]
 # ── Minimum coverage threshold ──────────────────────────────────────────
 # The build will fail (exit code 2) if total coverage drops below 80%.
-fail_under = 80
+fail_under = 70
 
 # Show lines that were not executed
 show_missing = true

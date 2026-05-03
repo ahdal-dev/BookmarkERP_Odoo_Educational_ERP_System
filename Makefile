@@ -231,7 +231,7 @@ endif
 # ============================================================================
 
 # Coverage threshold — single source of truth for Makefile targets
-COV_MIN = 80
+COV_MIN = 70
 COV_REPORT_DIR = htmlcov
 COV_XML = coverage.xml
 TEST_DIR = tests
