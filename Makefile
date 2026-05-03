@@ -1,4 +1,4 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module grade-run grade-install gateway-up gateway-down clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module test-install test-cov test-cov-unit test-cov-integration test-cov-ci odoo-cov odoo-cov-module grade-run grade-install gateway-up gateway-down clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
@@ -38,6 +38,17 @@ help:
 	@echo   make test-admission - Run all admission_portal module tests
 	@echo   make test-all       - Run tests for all installed modules
 	@echo   make test-module    - Run tests for specific module (set MODULE=name)
+	@echo.
+	@echo COVERAGE COMMANDS (FastAPI / Microservices — pytest-cov):
+	@echo   make test-install        - Install test dependencies (pytest, pytest-cov, etc.)
+	@echo   make test-cov            - Run all pytest tests with coverage (80%% min)
+	@echo   make test-cov-unit       - Run unit tests only with coverage
+	@echo   make test-cov-integration - Run integration tests only with coverage
+	@echo   make test-cov-ci         - Full CI pipeline: install, test, enforce threshold
+	@echo.
+	@echo COVERAGE COMMANDS (Odoo Custom Modules — coverage.py):
+	@echo   make odoo-cov            - Run all custom module tests with coverage (80%% min)
+	@echo   make odoo-cov-module     - Run a single module with coverage (set MODULE=name)
 	@echo.
 	@echo GRADE PREDICTOR COMMANDS:
 	@echo   make grade-install  - Install Grade Predictor dependencies
@@ -215,11 +226,136 @@ endif
 	@echo ============================================
 	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u $(MODULE) --test-enable --stop-after-init --log-level=test
 
+# ============================================================================
+# Coverage Commands  (pytest-cov — reads pyproject.toml)
+# ============================================================================
+
+# Coverage threshold — single source of truth for Makefile targets
+COV_MIN = 80
+COV_REPORT_DIR = htmlcov
+COV_XML = coverage.xml
+TEST_DIR = tests
+TEST_REQ = $(TEST_DIR)/requirements-test.txt
+
+# Install test dependencies
+test-install:
+	@echo ============================================
+	@echo Installing test dependencies...
+	@echo ============================================
+	$(PIP) install -r $(TEST_REQ)
+	@echo Test dependencies installed!
+
+# Run ALL pytest tests with coverage — fails if < 80%
+test-cov:
+	@echo ============================================
+	@echo Running tests with coverage (min $(COV_MIN)%%)
+	@echo ============================================
+	$(PYTHON) -m pytest $(TEST_DIR) \
+		--cov=api_gateway \
+		--cov=services \
+		--cov-config=pyproject.toml \
+		--cov-report=term-missing \
+		--cov-report=html:$(COV_REPORT_DIR) \
+		--cov-report=xml:$(COV_XML) \
+		--cov-fail-under=$(COV_MIN) \
+		-v
+	@echo ============================================
+	@echo Coverage report: $(COV_REPORT_DIR)/index.html
+	@echo XML report:      $(COV_XML)
+	@echo ============================================
+
+# Unit tests only with coverage
+test-cov-unit:
+	@echo Running UNIT tests with coverage...
+	$(PYTHON) -m pytest $(TEST_DIR)/unit -m unit \
+		--cov=api_gateway \
+		--cov=services \
+		--cov-config=pyproject.toml \
+		--cov-report=term-missing \
+		--cov-report=html:$(COV_REPORT_DIR) \
+		--cov-report=xml:$(COV_XML) \
+		--cov-fail-under=$(COV_MIN) \
+		-v
+
+# Integration tests only with coverage
+test-cov-integration:
+	@echo Running INTEGRATION tests with coverage...
+	$(PYTHON) -m pytest $(TEST_DIR)/integration -m integration \
+		--cov=api_gateway \
+		--cov=services \
+		--cov-config=pyproject.toml \
+		--cov-report=term-missing \
+		--cov-report=html:$(COV_REPORT_DIR) \
+		--cov-report=xml:$(COV_XML) \
+		-v
+
+# CI pipeline: install deps → run tests → enforce threshold → report
+test-cov-ci: test-install test-cov
+	@echo ============================================
+	@echo CI coverage pipeline PASSED
+	@echo ============================================
+
+# ============================================================================
+# Odoo Module Coverage Commands  (coverage.py — reads .coveragerc)
+# ============================================================================
+
+# All custom modules under addons/edu_mangment
+ODOO_CUSTOM_MODULES = custom_registration,edu_mang_admission,edu_mang_auth,edu_mang_petition,edu_mang_website,edu_portal_gateway
+ODOO_COV_HTML = htmlcov_odoo
+ODOO_COV_XML = coverage_odoo.xml
+ODOO_COVERAGERC = .coveragerc
+
+# Run ALL custom Odoo module tests under coverage — fails if < 80%
+# The dash (-) prefix ensures reports are generated even if some Odoo tests fail.
+odoo-cov:
+	@echo ============================================
+	@echo Running Odoo custom module tests with coverage
+	@echo Modules: $(ODOO_CUSTOM_MODULES)
+	@echo ============================================
+	$(PYTHON) -m coverage erase
+	-$(PYTHON) -m coverage run --rcfile=$(ODOO_COVERAGERC) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u $(ODOO_CUSTOM_MODULES) --test-enable --stop-after-init --log-level=test
+	@echo.
+	@echo Generating coverage reports...
+	-$(PYTHON) -m coverage report --rcfile=$(ODOO_COVERAGERC)
+	-$(PYTHON) -m coverage html --rcfile=$(ODOO_COVERAGERC)
+	-$(PYTHON) -m coverage xml --rcfile=$(ODOO_COVERAGERC)
+	@echo ============================================
+	@echo HTML report: $(ODOO_COV_HTML)/index.html
+	@echo XML  report: $(ODOO_COV_XML)
+	@echo ============================================
+	$(PYTHON) -m coverage report --rcfile=$(ODOO_COVERAGERC) --fail-under=$(COV_MIN)
+
+# Run a SINGLE custom Odoo module under coverage
+# Usage: make odoo-cov-module MODULE=custom_registration
+odoo-cov-module:
+ifndef MODULE
+	@echo Error: MODULE variable not set
+	@echo Usage: make odoo-cov-module MODULE=custom_registration
+	@exit 1
+endif
+	@echo ============================================
+	@echo Running coverage for Odoo module: $(MODULE)
+	@echo ============================================
+	$(PYTHON) -m coverage erase
+	-$(PYTHON) -m coverage run --rcfile=$(ODOO_COVERAGERC) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u $(MODULE) --test-enable --stop-after-init --log-level=test
+	-$(PYTHON) -m coverage report --rcfile=$(ODOO_COVERAGERC)
+	-$(PYTHON) -m coverage html --rcfile=$(ODOO_COVERAGERC)
+	-$(PYTHON) -m coverage xml --rcfile=$(ODOO_COVERAGERC)
+	@echo ============================================
+	@echo HTML report: $(ODOO_COV_HTML)/index.html
+	@echo XML  report: $(ODOO_COV_XML)
+	@echo ============================================
+
 # Clean Python cache files
 clean:
 	@echo Cleaning Python cache files...
 	@del /s /q *.pyc 2>nul
 	@for /d /r %%d in (__pycache__) do @if exist "%%d" rd /s /q "%%d"
+	@if exist "$(COV_REPORT_DIR)" rd /s /q "$(COV_REPORT_DIR)"
+	@if exist "$(COV_XML)" del /q "$(COV_XML)"
+	@if exist "$(ODOO_COV_HTML)" rd /s /q "$(ODOO_COV_HTML)"
+	@if exist "$(ODOO_COV_XML)" del /q "$(ODOO_COV_XML)"
+	@if exist ".coverage" del /q ".coverage"
 	@echo Done!
 
 # ============================================================================
