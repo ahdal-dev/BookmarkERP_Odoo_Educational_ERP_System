@@ -61,4 +61,10 @@ api_gateway/nginx/ssl/*.pem
 # Odoo core (uncomment to exclude the official Odoo repo)
 # odoo/
 
-
+# Coverage reports (pytest-cov + coverage.py)
+htmlcov/
+htmlcov_odoo/
+coverage.xml
+coverage_odoo.xml
+.coverage
+.coverage.*
