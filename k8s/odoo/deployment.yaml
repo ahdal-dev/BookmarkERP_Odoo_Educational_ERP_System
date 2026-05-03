@@ -1,0 +1,210 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo-deployment
+  namespace: default
+  labels:
+    app: edu-erp
+    component: odoo-erp
+    version: v1
+  annotations:
+    description: "Odoo ERP system deployment with PostgreSQL backend integration"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: odoo-erp
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: odoo-erp
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8069"
+    spec:
+      # Pod anti-affinity for distributed deployment
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - odoo-erp
+              topologyKey: kubernetes.io/hostname
+
+      containers:
+      - name: odoo
+        image: odoo:16.0  # Update to your custom Odoo image
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: web
+          containerPort: 8069
+          protocol: TCP
+        - name: longpolling
+          containerPort: 8072
+          protocol: TCP
+
+        # ====================================================================
+        # Environment Variables - Injected from ConfigMap & Secrets
+        # ====================================================================
+        envFrom:
+        - configMapRef:
+            name: edu-erp-config
+        - secretRef:
+            name: edu-erp-secrets
+
+        env:
+        # Odoo-specific environment variables
+        - name: ODOO_ADMIN_PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: ODOO_PASSWORD
+        - name: PGHOST
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_HOST
+        - name: PGPORT
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_PORT
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_USER
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_PASSWORD
+
+        # ====================================================================
+        # Resource Requests & Limits
+        # ====================================================================
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+        # ====================================================================
+        # Liveness Probe - HTTP endpoint check
+        # ====================================================================
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: web
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+
+        # ====================================================================
+        # Readiness Probe - Checks if Odoo is ready to accept traffic
+        # ====================================================================
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: web
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+          successThreshold: 1
+
+        # ====================================================================
+        # Volume Mounts
+        # ====================================================================
+        volumeMounts:
+        - name: odoo-data
+          mountPath: /var/lib/odoo
+        - name: odoo-filestore
+          mountPath: /mnt/extra-addons
+        - name: odoo-config
+          mountPath: /etc/odoo
+        - name: tmp
+          mountPath: /tmp
+
+        # ====================================================================
+        # Security Context
+        # ====================================================================
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+
+      # ====================================================================
+      # Pod-level Security Context
+      # ====================================================================
+      securityContext:
+        fsGroup: 101
+
+      # ====================================================================
+      # Service Account
+      # ====================================================================
+      serviceAccountName: odoo-sa
+
+      # ====================================================================
+      # Init Container - Wait for PostgreSQL
+      # ====================================================================
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z ${DB_HOST} ${DB_PORT}; do echo waiting for db; sleep 2; done']
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_PORT
+
+      # ====================================================================
+      # Volumes
+      # ====================================================================
+      volumes:
+      - name: odoo-data
+        emptyDir: {}
+      - name: odoo-filestore
+        emptyDir: {}
+      - name: odoo-config
+        configMap:
+          name: odoo-config
+      - name: tmp
+        emptyDir: {}
+
+      # ====================================================================
+      # Restart Policy
+      # ====================================================================
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+      # DNS Configuration
+      dnsPolicy: ClusterFirst

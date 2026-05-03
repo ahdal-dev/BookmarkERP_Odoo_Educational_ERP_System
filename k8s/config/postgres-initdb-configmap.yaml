@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: default
+  labels:
+    app: edu-erp
+    component: postgres-db
+data:
+  init.sql: |
+    -- ================================================================
+    -- PostgreSQL Initialization Script for Odoo
+    -- ================================================================
+    -- Create initial extensions and settings
+    
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+    
+    -- Create role for Odoo if it doesn't exist
+    -- (Usually done via environment variables, but can be customized here)
+    
+    -- Create initial schemas
+    CREATE SCHEMA IF NOT EXISTS public;
+    
+    -- Grant privileges
+    -- GRANT ALL PRIVILEGES ON SCHEMA public TO odoo;
+    -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO odoo;
+    -- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO odoo;
