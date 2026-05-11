@@ -1,0 +1,30 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: edu-erp
+
+# Node configuration
+nodes:
+  # Control plane node
+  - role: control-plane
+    image: kindest/node:v1.27.0
+    extraPortMappings:
+      # Nginx service port mapping
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 30443
+        hostPort: 8443
+        protocol: TCP
+
+  # Worker nodes for distributing services
+  - role: worker
+    image: kindest/node:v1.27.0
+  - role: worker
+    image: kindest/node:v1.27.0
+
+# Cluster-level configuration
+networking:
+  # Pod subnet for internal service discovery
+  podSubnet: "10.244.0.0/16"
+  # Service subnet for cluster IPs
+  serviceSubnet: "10.96.0.0/12"
