@@ -1,4 +1,4 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module test-install test-cov test-cov-unit test-cov-integration test-cov-ci odoo-cov odoo-cov-module grade-run grade-install gateway-up gateway-down clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module test-install test-cov test-cov-unit test-cov-integration test-cov-ci odoo-cov odoo-cov-module grade-run grade-install gateway-up gateway-down clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean k8s-obs-deploy k8s-obs-status k8s-obs-forward-prom k8s-obs-forward-grafana k8s-obs-clean
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
@@ -72,6 +72,13 @@ help:
 	@echo   make k8s-port-forward       - Forward NGINX to localhost:8080
 	@echo   make k8s-logs               - View logs from running pods
 	@echo   make k8s-clean              - Complete cleanup
+	@echo.
+	@echo KUBERNETES OBSERVABILITY COMMANDS:
+	@echo   make k8s-obs-deploy         - Deploy Prometheus and Grafana stack
+	@echo   make k8s-obs-status         - Check monitoring pods status
+	@echo   make k8s-obs-forward-prom   - Forward Prometheus to localhost:9090
+	@echo   make k8s-obs-forward-grafana - Forward Grafana to localhost:3000
+	@echo   make k8s-obs-clean          - Remove observability stack
 	@echo.
 	@echo EXAMPLES:
 	@echo   make config
@@ -409,8 +416,7 @@ k8s-build-images:
 	@echo Building OCR Service image...
 	@docker build -t ocr-service:latest -f services/ocr/Dockerfile services/ocr
 	@echo Docker images built!
-	@echo Verify with: docker images | findstr "fastapi-gateway ocr-service"
-
+	@echo "Verify with: docker images | findstr \"fastapi-gateway ocr-service\""
 # Load Docker images into Kind cluster
 k8s-load-images:
 	@echo Loading Docker images into Kind cluster...
@@ -496,3 +502,51 @@ k8s-clean:
 	@echo Deleting cluster...
 	@kind delete cluster --name edu-erp
 	@echo Cleanup complete!
+
+# ============================================================================
+# Kubernetes Observability Commands (Prometheus & Grafana)
+# ============================================================================
+
+# Deploy the complete observability stack
+k8s-obs-deploy:
+	@echo Deploying Observability Stack...
+	@echo Creating monitoring namespace...
+	@kubectl apply -f k8s/monitoring/namespace.yaml
+	@echo Deploying Nginx Prometheus Exporter...
+	@kubectl apply -f k8s/nginx/nginx-exporter-deployment.yaml
+	@kubectl apply -f k8s/nginx/nginx-exporter-service.yaml
+	@echo Deploying Prometheus (Persistent Storage)...
+	@kubectl apply -f k8s/monitoring/prometheus/
+	@echo Deploying Grafana (Persistent Storage + Dashboards)...
+	@kubectl apply -f k8s/monitoring/grafana/
+	@echo Observability stack deployed!
+	@echo Use 'make k8s-obs-status' to check progress.
+
+# Check monitoring status
+k8s-obs-status:
+	@echo ============================================
+	@echo Observability Stack Status (monitoring ns)
+	@echo ============================================
+	@kubectl get pods,svc,pvc -n monitoring
+	@echo.
+	@echo Nginx Exporter Status (default ns):
+	@kubectl get pods,svc -l component=nginx-exporter
+
+# Port forward Prometheus UI
+k8s-obs-forward-prom:
+	@echo Forwarding Prometheus UI to http://localhost:9090
+	@kubectl port-forward -n monitoring svc/prometheus-service 9090:9090
+
+# Port forward Grafana UI
+k8s-obs-forward-grafana:
+	@echo Forwarding Grafana UI to http://localhost:3000
+	@echo Credentials: admin / admin
+	@kubectl port-forward -n monitoring svc/grafana-service 3000:3000
+
+# Remove observability stack
+k8s-obs-clean:
+	@echo Removing Observability Stack...
+	@kubectl delete -f k8s/nginx/nginx-exporter-deployment.yaml
+	@kubectl delete -f k8s/nginx/nginx-exporter-service.yaml
+	@kubectl delete namespace monitoring
+	@echo Observability stack removed!

@@ -1,0 +1,25 @@
+# ================================================================
+# Prometheus Persistent Volume Claim
+# ================================================================
+# Provides durable storage for the Prometheus TSDB (Time Series
+# Database). Metrics data survives pod restarts and rescheduling.
+# ================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data-pvc
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: prometheus
+    tier: observability
+  annotations:
+    description: "Persistent storage for Prometheus metrics TSDB"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi    # 5GB is sufficient for a graduation project
+  # storageClassName: standard   # Uncomment and set to your cluster's StorageClass
