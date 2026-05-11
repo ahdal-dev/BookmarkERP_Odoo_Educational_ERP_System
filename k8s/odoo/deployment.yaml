@@ -104,13 +104,11 @@ spec:
             cpu: "1000m"
 
         # ====================================================================
-        # Liveness Probe - HTTP endpoint check
+        # Liveness Probe - TCP socket check
         # ====================================================================
         livenessProbe:
-          httpGet:
-            path: /health
+          tcpSocket:
             port: web
-            scheme: HTTP
           initialDelaySeconds: 60
           periodSeconds: 30
           timeoutSeconds: 10
@@ -118,13 +116,11 @@ spec:
           successThreshold: 1
 
         # ====================================================================
-        # Readiness Probe - Checks if Odoo is ready to accept traffic
+        # Readiness Probe - TCP socket check
         # ====================================================================
         readinessProbe:
-          httpGet:
-            path: /health
+          tcpSocket:
             port: web
-            scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5

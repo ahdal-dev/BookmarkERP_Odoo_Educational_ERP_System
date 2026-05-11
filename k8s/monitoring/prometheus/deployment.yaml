@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: prometheus
+    tier: observability
+    version: v2.53
+  annotations:
+    description: "Prometheus time-series database for Educational ERP metrics collection"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # Recreate required for RWO PVC
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: prometheus
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: prometheus
+        tier: observability
+      annotations:
+        prometheus.io/scrape: "false"   # Don't self-scrape via annotations
+    spec:
+      serviceAccountName: prometheus-sa
+
+      # ================================================================
+      # Init Container — Fix volume permissions
+      # ================================================================
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ['sh', '-c', 'chown -R 65534:65534 /prometheus']
+          volumeMounts:
+            - name: prometheus-data
+              mountPath: /prometheus
+
+      # ================================================================
+      # Main Container
+      # ================================================================
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.53.0
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.retention.time=30d'
+            - '--storage.tsdb.retention.size=4GB'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--web.enable-lifecycle'
+
+          ports:
+            - name: web
+              containerPort: 9090
+              protocol: TCP
+
+          # ==============================================================
+          # Resource Limits
+          # ==============================================================
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # ==============================================================
+          # Health Probes
+          # ==============================================================
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # ==============================================================
+          # Volume Mounts
+          # ==============================================================
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+              readOnly: true
+            - name: prometheus-data
+              mountPath: /prometheus
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534     # nobody user
+            allowPrivilegeEscalation: false
+
+      # ================================================================
+      # Volumes
+      # ================================================================
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-data
+          persistentVolumeClaim:
+            claimName: prometheus-data-pvc
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      dnsPolicy: ClusterFirst

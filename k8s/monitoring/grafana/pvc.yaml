@@ -1,0 +1,25 @@
+# ================================================================
+# Grafana Persistent Volume Claim
+# ================================================================
+# Stores Grafana's SQLite database (dashboards, users, settings).
+# Data survives pod restarts and rescheduling.
+# ================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data-pvc
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: grafana
+    tier: observability
+  annotations:
+    description: "Persistent storage for Grafana database and configuration"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi    # 2GB is ample for Grafana dashboards and settings
+  # storageClassName: standard   # Uncomment and set to your cluster's StorageClass
