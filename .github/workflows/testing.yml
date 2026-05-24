@@ -1,0 +1,81 @@
+<<<<<<< Updated upstream
+=======
+# ============================================================================
+# Testing Pipeline Orchestrator
+# ============================================================================
+# Orchestrates the full testing pyramid as a single status check.
+# Calls the three layer-specific workflows and provides a unified
+# pass/fail status for branch protection rules.
+#
+# Individual layer workflows also run independently on their own triggers.
+# ============================================================================
+
+name: "🏗️ Testing Pipeline"
+
+on:
+  push:
+    branches: "!*main"
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: testing-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ════════════════════════════════════════════════════════════════════════════
+  # Layer 1: Unit Tests (always runs — fast, no dependencies)
+  # ════════════════════════════════════════════════════════════════════════════
+  unit:
+    name: "🧪 Layer 1 — Unit"
+    uses: ./.github/workflows/unit-tests.yml
+    secrets: inherit
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Layer 2: Integration Tests (runs after unit tests pass)
+  # ════════════════════════════════════════════════════════════════════════════
+  integration:
+    name: "🔗 Layer 2 — Integration"
+    needs: [unit]
+    uses: ./.github/workflows/integration-tests.yml
+    secrets: inherit
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Layer 3: E2E Tests (only on main, after integration passes)
+  # ════════════════════════════════════════════════════════════════════════════
+  e2e:
+    name: "🌐 Layer 3 — E2E"
+    needs: [integration]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets: inherit
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Final Status Gate (for branch protection rules)
+  # ════════════════════════════════════════════════════════════════════════════
+  pipeline-status:
+    name: "✅ Pipeline Status"
+    runs-on: ubuntu-latest
+    needs: [unit, integration]
+    if: always()
+    steps:
+      - name: Check pipeline result
+        run: |
+          echo "=== Testing Pyramid Results ==="
+          echo "Unit Tests:        ${{ needs.unit.result }}"
+          echo "Integration Tests: ${{ needs.integration.result }}"
+          echo ""
+
+          if [[ "${{ needs.unit.result }}" == "failure" ]]; then
+            echo "❌ Unit tests failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.integration.result }}" == "failure" ]]; then
+            echo "❌ Integration tests failed"
+            exit 1
+          fi
+
+          echo "✅ All required test layers passed!"
+>>>>>>> Stashed changes

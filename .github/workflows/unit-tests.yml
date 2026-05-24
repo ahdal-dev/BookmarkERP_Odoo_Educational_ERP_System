@@ -1,0 +1,107 @@
+# ============================================================================
+# Unit Tests Workflow — Testing Pyramid Layer 1 (Base)
+# ============================================================================
+# Runs on every push and PR. Fastest feedback loop (~1-2 min).
+# Tests isolated business logic with ALL external dependencies mocked.
+# No database, no Docker, no network calls.
+# ============================================================================
+
+name: "🧪 Unit Tests"
+
+on:
+  push:
+    branches: ["*!main","feature/**"]
+    paths:
+      - "api_gateway/fastapi_app/**"
+      - "services/ocr/**"
+      - "tests/unit/**"
+      - "tests/conftest.py"
+      - "tests/requirements-test.txt"
+      - ".github/workflows/unit-tests.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "api_gateway/fastapi_app/**"
+      - "services/ocr/**"
+      - "tests/unit/**"
+      - "tests/conftest.py"
+      - "tests/requirements-test.txt"
+
+concurrency:
+  group: unit-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: "Unit Tests — FastAPI & OCR"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      # ── Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Python setup ──────────────────────────────────────────────────────
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # ── Dependency caching ────────────────────────────────────────────────
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-unit-${{ hashFiles('tests/requirements-test.txt', 'api_gateway/fastapi_app/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-unit-
+            ${{ runner.os }}-pip-
+
+      # ── Install dependencies ──────────────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api_gateway/fastapi_app/requirements.txt
+          pip install -r tests/requirements-test.txt
+
+      # ── Run unit tests ────────────────────────────────────────────────────
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ \
+            -v \
+            --tb=short \
+            -m unit \
+            --junitxml=reports/unit-test-results.xml \
+            --cov=api_gateway/fastapi_app \
+            --cov=services/ocr \
+            --cov-report=xml:reports/unit-coverage.xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          JWT_SECRET_KEY: test-secret-key-for-ci-only
+          JWT_ALGORITHM: HS256
+          JWT_EXPIRATION_HOURS: "1"
+
+      # ── Upload test results ───────────────────────────────────────────────
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results-py${{ matrix.python-version }}
+          path: reports/
+          retention-days: 30
+
+      # ── Coverage comment on PR ────────────────────────────────────────────
+      - name: Add coverage comment to PR
+        uses: MishaKav/pytest-coverage-comment@main
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.12'
+        with:
+          pytest-xml-coverage-path: reports/unit-coverage.xml
+          junitxml-path: reports/unit-test-results.xml
+          title: "📊 Unit Test Coverage"
