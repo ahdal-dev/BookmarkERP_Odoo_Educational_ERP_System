@@ -1,22 +1,33 @@
 import base64
 import json
 import os
-# import fitz
 from PIL import Image
-import os
 from dotenv import load_dotenv
-from mistralai import Mistral
 
 load_dotenv()
 
-API_KEY = os.getenv("QzjgLxty0dWSqUhhrKIfkr3Qcds1U9Tg")
-if not API_KEY:
-    API_KEY = "QzjgLxty0dWSqUhhrKIfkr3Qcds1U9Tg"
+client = None
 
-client = Mistral(api_key=API_KEY)
-print("✅ Mistral client initialized!")
+try:
+    from mistralai.client import MistralClient
+
+
+    API_KEY = os.getenv("MISTRAL_API_KEY") or os.getenv("QzjgLxty0dWSqUhhrKIfkr3Qcds1U9Tg") 
+    if not API_KEY: 
+        API_KEY = "QzjgLxty0dWSqUhhrKIfkr3Qcds1U9Tg"
+
+    client = MistralClient(api_key=API_KEY)
+
+    print("✅ Mistral client initialized!")
+
+except Exception as e:
+    print(f"❌ Failed to initialize Mistral client: {e}")
+    client = None
 def ocr_pdf(pdf_path):
     """Send a PDF to Mistral OCR and return extracted markdown per page."""
+    if not client:
+        raise RuntimeError("Mistral client not initialized. Please install mistralai: pip install mistralai")
+    
     with open(pdf_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("utf-8")
 
@@ -36,6 +47,9 @@ def ocr_pdf(pdf_path):
 # --------------------------------------------------
 def ocr_image(image_path):
     """Send an image to Mistral OCR and return extracted markdown."""
+    if not client:
+        raise RuntimeError("Mistral client not initialized. Please install mistralai: pip install mistralai")
+    
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("utf-8")
 
@@ -60,6 +74,9 @@ def ocr_image(image_path):
 # --------------------------------------------------
 def extract_structured(ocr_text, prompt):
     """Use Mistral chat to structure OCR text into JSON."""
+    if not client:
+        raise RuntimeError("Mistral client not initialized. Please install mistralai: pip install mistralai")
+    
     messages = [
         {
             "role": "user",
@@ -247,6 +264,9 @@ def prompt_doc_type():
 
 def detect_doc_type(ocr_text):
     """Auto-detect document type from OCR text using Mistral Chat."""
+    if not client:
+        raise RuntimeError("Mistral client not initialized. Please install mistralai: pip install mistralai")
+    
     messages = [
         {"role": "user", "content": f"{PROMPTS['detect']}\n\n--- OCR Text ---\n{ocr_text}"}
     ]
@@ -262,74 +282,103 @@ def detect_doc_type(ocr_text):
 # ════════════════════════════════════════════════════
 # 📂 SET YOUR FILE PATH HERE
 # ════════════════════════════════════════════════════
-FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"  # ← Change this to your file path
-# ════════════════════════════════════════════════════
+# FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"  # ← Change this to your file path
+# # ════════════════════════════════════════════════════
 
-if not os.path.exists(FILE_PATH):
-    print(f"❌ File not found: {FILE_PATH}")
-else:
-    print(f"📂 Processing: {FILE_PATH}\n")
+# if not os.path.exists(FILE_PATH):
+#     print(f"❌ File not found: {FILE_PATH}")
+# else:
+#     print(f"📂 Processing: {FILE_PATH}\n")
 
-    # ── Step 1: Run Mistral OCR ──
-    if is_pdf(FILE_PATH):
-        print("📄 PDF detected — running Mistral OCR...")
-        pages = ocr_pdf(FILE_PATH)
+#     # ── Step 1: Run Mistral OCR ──
+#     if is_pdf(FILE_PATH):
+#         print("📄 PDF detected — running Mistral OCR...")
+#         pages = ocr_pdf(FILE_PATH)
+#     else:
+#         print("🖼️ Image detected — running Mistral OCR...")
+#         pages = ocr_image(FILE_PATH)
+
+#     # Combine all page markdown
+#     full_text = ""
+#     for page in pages:
+#         full_text += f"\n\n## Page {page.index + 1}\n\n{page.markdown}"
+#         print(f"  ✅ Page {page.index + 1} OCR complete")
+
+#     print(f"\n📝 Total pages processed: {len(pages)}")
+
+#     # ── Step 2: Auto-detect document type ──
+#     print("\n🔍 Auto-detecting document type...")
+#     doc_type = detect_doc_type(full_text)
+
+#     if doc_type:
+#         print(f"📄 Detected: {doc_type}")
+#     else:
+#         doc_type = prompt_doc_type()
+#         print(f"📄 Selected: {doc_type}")
+
+#     # ── Step 3: Structured extraction ──
+#     print(f"\n📋 Extracting structured data as '{doc_type}'...")
+
+#     if len(pages) == 1:
+#         result, raw = extract_structured(full_text, PROMPTS[doc_type])
+#         result = force_convert_numerals(result)
+
+#         print("\n" + "=" * 60)
+#         print("📊 EXTRACTED DATA (ERP Auto-Fill Ready)")
+#         print("=" * 60)
+#         print(json.dumps(result, ensure_ascii=False, indent=2))
+
+#         print("\n" + "-" * 60)
+#         print("🔤 Raw OCR Markdown:")
+#         print("-" * 60)
+#         print(full_text)
+#     else:
+#         # Process each page separately for multi-page PDFs
+#         all_results = []
+#         for page in pages:
+#             page_text = page.markdown
+#             result, raw = extract_structured(page_text, PROMPTS[doc_type])
+#             result = force_convert_numerals(result)
+#             all_results.append(result)
+#             print(f"  ✅ Page {page.index + 1} structured")
+
+#         print("\n" + "=" * 60)
+#         print("📊 EXTRACTED DATA — ALL PAGES (ERP Auto-Fill Ready)")
+#         print("=" * 60)
+#         for i, res in enumerate(all_results):
+#             print(f"\n━━━ Page {i + 1} ━━━")
+#             print(json.dumps(res, ensure_ascii=False, indent=2))
+
+#         print("\n" + "-" * 60)
+#         print("🔤 Raw OCR Markdown:")
+#         print("-" * 60)
+#         print(full_text)
+if __name__ == "__main__":
+
+    # ════════════════════════════════════════════════════
+    # 📂 SET YOUR FILE PATH HERE
+    # ════════════════════════════════════════════════════
+    FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"
+    # ════════════════════════════════════════════════════
+
+    if not os.path.exists(FILE_PATH):
+        print(f"❌ File not found: {FILE_PATH}")
+
     else:
-        print("🖼️ Image detected — running Mistral OCR...")
-        pages = ocr_image(FILE_PATH)
+        print(f"📂 Processing: {FILE_PATH}\n")
 
-    # Combine all page markdown
-    full_text = ""
-    for page in pages:
-        full_text += f"\n\n## Page {page.index + 1}\n\n{page.markdown}"
-        print(f"  ✅ Page {page.index + 1} OCR complete")
+        # ── Step 1: Run Mistral OCR ──
+        if is_pdf(FILE_PATH):
+            print("📄 PDF detected — running Mistral OCR...")
+            pages = ocr_pdf(FILE_PATH)
+        else:
+            print("🖼️ Image detected — running Mistral OCR...")
+            pages = ocr_image(FILE_PATH)
 
-    print(f"\n📝 Total pages processed: {len(pages)}")
+        full_text = ""
 
-    # ── Step 2: Auto-detect document type ──
-    print("\n🔍 Auto-detecting document type...")
-    doc_type = detect_doc_type(full_text)
-
-    if doc_type:
-        print(f"📄 Detected: {doc_type}")
-    else:
-        doc_type = prompt_doc_type()
-        print(f"📄 Selected: {doc_type}")
-
-    # ── Step 3: Structured extraction ──
-    print(f"\n📋 Extracting structured data as '{doc_type}'...")
-
-    if len(pages) == 1:
-        result, raw = extract_structured(full_text, PROMPTS[doc_type])
-        result = force_convert_numerals(result)
-
-        print("\n" + "=" * 60)
-        print("📊 EXTRACTED DATA (ERP Auto-Fill Ready)")
-        print("=" * 60)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-
-        print("\n" + "-" * 60)
-        print("🔤 Raw OCR Markdown:")
-        print("-" * 60)
-        print(full_text)
-    else:
-        # Process each page separately for multi-page PDFs
-        all_results = []
         for page in pages:
-            page_text = page.markdown
-            result, raw = extract_structured(page_text, PROMPTS[doc_type])
-            result = force_convert_numerals(result)
-            all_results.append(result)
-            print(f"  ✅ Page {page.index + 1} structured")
+            full_text += f"\n\n## Page {page.index + 1}\n\n{page.markdown}"
+            print(f"  ✅ Page {page.index + 1} OCR complete")
 
-        print("\n" + "=" * 60)
-        print("📊 EXTRACTED DATA — ALL PAGES (ERP Auto-Fill Ready)")
-        print("=" * 60)
-        for i, res in enumerate(all_results):
-            print(f"\n━━━ Page {i + 1} ━━━")
-            print(json.dumps(res, ensure_ascii=False, indent=2))
-
-        print("\n" + "-" * 60)
-        print("🔤 Raw OCR Markdown:")
-        print("-" * 60)
-        print(full_text)
+        print(f"\n📝 Total pages processed: {len(pages)}")
