@@ -1,12 +1,4 @@
-# ============================================================================
-# End-to-End Tests Workflow — Testing Pyramid Layer 3 (Top)
-# ============================================================================
-# Runs only on push to main and manual trigger. Slowest layer (~10-20 min).
-# Spins up the full Docker Compose stack (Nginx → FastAPI → Odoo → Postgres)
-# and runs API + Playwright browser tests against the live system.
-# ============================================================================
-
-name: "🌐 E2E Tests"
+name: "E2E Tests"
 
 on:
   push:
@@ -16,10 +8,8 @@ on:
       - "api_gateway/**"
       - "services/**"
       - "addons/**"
-      - "tests/e2e/**"
       - "docker-compose.yml"
       - ".github/workflows/e2e-tests.yml"
-  # Manual trigger for on-demand E2E runs
   workflow_dispatch:
     inputs:
       gateway_url:
@@ -149,8 +139,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r api_gateway/fastapi_app/requirements.txt
-          pip install -r tests/requirements-test.txt
-
+       
       # ── Install Playwright browsers ───────────────────────────────────────
       - name: Install Playwright browsers
         if: ${{ !inputs.skip_ui_tests }}

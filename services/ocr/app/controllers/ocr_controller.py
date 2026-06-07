@@ -15,6 +15,80 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def process_with_yolo_only(image_path):
+    """
+    Process uploaded image using YOLO detection only.
+    Detects National ID using YOLO models.
+    
+    Args:
+        image_path: Path to the image file
+    
+    Returns:
+        Dictionary with extracted data or error message
+    """
+    try:
+        if not os.path.exists(image_path):
+            logger.error(f"File not found: {image_path}")
+            return {"error": f"File not found: {image_path}"}
+
+        # Check if models are loaded
+        if model_id_card is None:
+            logger.error("ID card detection model is not loaded")
+            return {"error": "ID card detection model not available"}
+
+        if model_job is None:
+            logger.error("Object detection model is not loaded")
+            return {"error": "Object detection model not available"}
+
+        logger.info(f"Using YOLO detection...")
+        
+        # Detect National ID
+        image, id_card_bboxes = detect_id_card(image_path, model_id_card)
+        
+        # If National ID detected, process with YOLO pipeline
+        if id_card_bboxes and len(id_card_bboxes) > 0:
+            logger.info(f"National ID detected! Processing with YOLO pipeline...")
+            result = process_image(image_path, model_id_card, model_job)
+            result["detection_method"] = "YOLO"
+            return result
+        else:
+            logger.warning(f"No National ID detected with YOLO")
+            return {"error": "No National ID detected", "detection_method": "YOLO"}
+
+    except Exception as e:
+        logger.error(f"Error in process_with_yolo_only: {str(e)}")
+        return {"error": f"YOLO detection failed: {str(e)}", "detection_method": "YOLO"}
+
+
+def process_with_mistral_only(image_path, doc_type=None):
+    """
+    Process uploaded image using Mistral OCR detection only.
+    
+    Args:
+        image_path: Path to the image/PDF file
+        doc_type: Optional document type. If None, will auto-detect.
+    
+    Returns:
+        Dictionary with extracted structured data or error message
+    """
+    try:
+        if not os.path.exists(image_path):
+            logger.error(f"File not found: {image_path}")
+            return {"error": f"File not found: {image_path}"}
+
+        logger.info(f"Using Mistral OCR detection...")
+        result = process_uploaded_image_with_mistral(image_path, doc_type=doc_type)
+        
+        if isinstance(result, dict) and "error" not in result:
+            result["detection_method"] = "Mistral"
+        
+        return result
+
+    except Exception as e:
+        logger.error(f"Error in process_with_mistral_only: {str(e)}")
+        return {"error": f"Mistral detection failed: {str(e)}", "detection_method": "Mistral"}
+
+
 def process_uploaded_image(image_path):
     """
     Process uploaded image and extract text using OCR models.

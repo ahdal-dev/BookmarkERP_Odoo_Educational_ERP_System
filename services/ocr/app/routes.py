@@ -4,7 +4,12 @@ from fastapi import APIRouter, UploadFile, File, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from app.controllers.ocr_controller import process_uploaded_image, process_uploaded_image_with_mistral
+from app.controllers.ocr_controller import (
+    process_uploaded_image, 
+    process_uploaded_image_with_mistral,
+    process_with_yolo_only,
+    process_with_mistral_only
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -109,6 +114,81 @@ async def ocr(request: Request, file: UploadFile = File(...)):
             logger.warning(f"Error during cleanup: {str(e)}")
 
 
+@router.post("/ocr/yolo", response_class=JSONResponse)
+async def ocr_yolo(request: Request, file: UploadFile = File(...)):
+    """
+    Process uploaded image using YOLO detection only.
+    Detects National ID cards using YOLO models.
+    """
+    filepath = None
+
+    try:
+        # Validate file
+        if not file or not file.filename:
+            raise HTTPException(status_code=400, detail="No file uploaded")
+
+        if not allowed_file(file.filename):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+            )
+
+        # Read file content
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Empty file uploaded")
+
+        # Save file
+        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+
+        with open(filepath, "wb") as buffer:
+            buffer.write(contents)
+
+        # Verify file was saved
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=500, detail="Failed to save uploaded file")
+
+        logger.info(f"Processing file with YOLO detection: {file.filename}")
+
+        # Process the image with YOLO only
+        result = process_with_yolo_only(filepath)
+
+        # Check if result contains error
+        if isinstance(result, dict) and "error" in result:
+            logger.warning(f"YOLO detection error: {result['error']}")
+            return JSONResponse(
+                content=result,
+                status_code=400
+            )
+
+        return JSONResponse(content=result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in OCR YOLO endpoint: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Processing failed: {str(e)}"},
+            status_code=500
+        )
+
+    finally:
+        # Cleanup uploaded files
+        try:
+            if filepath and os.path.exists(filepath):
+                os.remove(filepath)
+
+            for filename in os.listdir(UPLOAD_FOLDER):
+                if filename.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        logger.warning(f"Failed to remove {file_path}: {str(e)}")
+        except Exception as e:
+            logger.warning(f"Error during cleanup: {str(e)}")
+
+
 @router.post("/ocr/mistral", response_class=JSONResponse)
 async def ocr_mistral(
     request: Request,
@@ -157,8 +237,8 @@ async def ocr_mistral(
 
         logger.info(f"Processing file with Mistral OCR: {file.filename}, doc_type: {doc_type}")
 
-        # Process the file with Mistral OCR
-        result = process_uploaded_image_with_mistral(filepath, doc_type)
+        # Process the file with Mistral OCR only
+        result = process_with_mistral_only(filepath, doc_type)
 
         # Check if result contains error
         if isinstance(result, dict) and "error" in result:
