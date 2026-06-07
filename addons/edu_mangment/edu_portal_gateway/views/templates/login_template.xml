@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Login Templates
+    ===============
+    Custom authentication pages for the Educational Portal
+    -->
+
+    <!-- Login Page -->
+    <template id="portal_login_page" name="Portal Login">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Login - Zewail City Educational ERP</title>
+                <link rel="stylesheet" href="/edu_portal_gateway/static/src/css/portal.css"/>
+            </t>
+            
+            <div class="login-page">
+                <div class="login-container">
+                    <div class="login-header">
+                        <div class="login-logo">🏛️</div>
+                        <h1 class="login-title">Intellectual Atelier</h1>
+                        <p class="login-subtitle">ACADEMIC ERP SUITE</p>
+                    </div>
+                    
+                    <div class="login-card">
+                        <h2 class="login-welcome">Welcome back</h2>
+                        <p class="login-instruction">Please enter your credentials to access the portal.</p>
+                        
+                        <t t-if="error">
+                            <div class="login-error">
+                                <span class="error-icon">⚠</span>
+                                <span t-esc="error"/>
+                            </div>
+                        </t>
+                        
+                        <form action="/edu/login" method="post" class="login-form">
+                            <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+                            <input type="hidden" name="redirect" t-att-value="redirect"/>
+                            
+                            <div class="form-group">
+                                <label for="login">EMAIL/STUDENT ID</label>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">@</span>
+                                    <input type="text" 
+                                           id="login" 
+                                           name="login" 
+                                           class="form-input" 
+                                           placeholder="e.g. STU-2024-001"
+                                           t-att-value="login"
+                                           required="required"
+                                           autofocus="autofocus"/>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="label-row">
+                                    <label for="password">PASSWORD</label>
+                                    <a href="/edu-portal/forgot-password" class="forgot-link">Forgot Password?</a>
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">🔒</span>
+                                    <input type="password" 
+                                           id="password" 
+                                           name="password" 
+                                           class="form-input" 
+                                           placeholder="••••••••"
+                                           required="required"/>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-login">
+                                Log in <span class="btn-arrow">→</span>
+                            </button>
+                        </form>
+                        
+                        <div class="login-alt">
+                            <p>Not yet a student? <a href="/admission/apply">Apply Now</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="login-security">
+                        <span class="security-icon">🛡️</span>
+                        <span>SECURE AES-256 ENCRYPTED PORTAL</span>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Forgot Password Page -->
+    <template id="portal_forgot_password" name="Forgot Password">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Reset Password - Educational ERP</title>
+                <link rel="stylesheet" href="/edu_portal_gateway/static/src/css/portal.css"/>
+            </t>
+            
+            <div class="login-page">
+                <div class="login-container">
+                    <div class="login-header">
+                        <div class="login-logo">🏛️</div>
+                        <h1 class="login-title">Intellectual Atelier</h1>
+                        <p class="login-subtitle">ACADEMIC ERP SUITE</p>
+                    </div>
+                    
+                    <div class="login-card">
+                        <h2 class="login-welcome">Reset Password</h2>
+                        <p class="login-instruction">Enter your email address and we'll send you instructions to reset your password.</p>
+                        
+                        <t t-if="message">
+                            <div t-attf-class="login-message #{success and 'success' or 'error'}">
+                                <span t-esc="message"/>
+                            </div>
+                        </t>
+                        
+                        <t t-if="not success">
+                            <form action="/edu-portal/forgot-password" method="post" class="login-form">
+                                <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+                                
+                                <div class="form-group">
+                                    <label for="email">EMAIL ADDRESS</label>
+                                    <div class="input-wrapper">
+                                        <span class="input-icon">✉</span>
+                                        <input type="email" 
+                                               id="email" 
+                                               name="email" 
+                                               class="form-input" 
+                                               placeholder="your.email@example.com"
+                                               required="required"
+                                               autofocus="autofocus"/>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-login">
+                                    Send Reset Link <span class="btn-arrow">→</span>
+                                </button>
+                            </form>
+                        </t>
+                        
+                        <div class="login-alt">
+                            <p><a href="/edu/login">← Back to Login</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

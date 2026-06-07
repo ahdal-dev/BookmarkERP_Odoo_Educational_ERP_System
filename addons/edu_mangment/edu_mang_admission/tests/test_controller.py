@@ -203,8 +203,8 @@ class TestAdmissionController(HttpCase):
 
     def test_submit_with_file_upload(self):
         """Test that file upload sets transcript_document and transcript_filename"""
-        # Create a fake file
-        fake_file = (io.BytesIO(b'PDF content here'), 'transcript.pdf')
+        # Create a fake file — tuple format: (filename, file_data, content_type)
+        fake_file = ('transcript.pdf', b'PDF content here', 'application/pdf')
         
         data = self.valid_form_data.copy()
         files = {'transcript_document': fake_file}

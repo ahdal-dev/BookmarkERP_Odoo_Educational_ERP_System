@@ -1,0 +1,337 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Petition Tracking Board | Intellectual Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;family=Public+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#34451e",
+              "secondary-fixed-dim": "#bac3ff",
+              "secondary-container": "#b7c0fe",
+              "primary-fixed-dim": "#e9b8d9",
+              "on-secondary": "#ffffff",
+              "surface-tint": "#79526f",
+              "on-primary-fixed-variant": "#5f3b56",
+              "on-tertiary-fixed": "#112000",
+              "surface-container-low": "#f3f4f5",
+              "primary-fixed": "#ffd7f1",
+              "outline": "#80747a",
+              "tertiary-fixed-dim": "#b9ce9a",
+              "on-surface-variant": "#4e444a",
+              "error": "#ba1a1a",
+              "secondary-fixed": "#dee0ff",
+              "inverse-surface": "#2e3132",
+              "on-tertiary-fixed-variant": "#3b4c24",
+              "tertiary-fixed": "#d5eab4",
+              "surface-container-lowest": "#ffffff",
+              "on-surface": "#191c1d",
+              "inverse-primary": "#e9b8d9",
+              "surface-dim": "#d9dadb",
+              "surface-container": "#edeeef",
+              "outline-variant": "#d1c3ca",
+              "on-tertiary": "#ffffff",
+              "primary-container": "#714b67",
+              "inverse-on-surface": "#f0f1f2",
+              "surface-bright": "#f8f9fa",
+              "on-primary": "#ffffff",
+              "on-secondary-fixed": "#0b164a",
+              "on-error-container": "#93000a",
+              "on-tertiary-container": "#c0d5a0",
+              "on-secondary-fixed-variant": "#394378",
+              "surface": "#f8f9fa",
+              "on-primary-container": "#f0bfe0",
+              "on-background": "#191c1d",
+              "on-secondary-container": "#434d83",
+              "on-error": "#ffffff",
+              "primary": "#57344f",
+              "on-primary-fixed": "#2f1029",
+              "surface-container-highest": "#e1e3e4",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#e7e8e9",
+              "background": "#f8f9fa",
+              "secondary": "#515b92",
+              "tertiary-container": "#4b5d33",
+              "surface-variant": "#e1e3e4"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-100 flex flex-col py-6 z-[60]">
+<div class="px-6 mb-8">
+<h1 class="text-xl font-bold text-[#57344f]" style=""><span style="background-color: rgba(255, 255, 255, 0.85);">Edu Mangement</span></h1>
+<p class="text-xs font-label uppercase tracking-widest text-on-surface-variant/70 mt-1" style="">Academic Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">dashboard</span>
+<span class="text-sm" style="">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#57344f] bg-transparent border-l-4 border-[#ffd7f1] font-semibold" href="#" style="">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">description</span>
+<span class="text-sm" style="">Petitions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">school</span>
+<span class="text-sm" style="">Academic</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">gavel</span>
+<span class="text-sm" style="">Appeals</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">folder_open</span>
+<span class="text-sm" style="">Documents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">settings</span>
+<span class="text-sm" style="">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-1">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-white rounded-full py-3 px-4 text-sm font-semibold mb-6 shadow-sm hover:opacity-90 transition-opacity" style="">
+                New Petition
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">help</span>
+<span class="text-sm" style="">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">logout</span>
+<span class="text-sm" style="">Logout</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-50 bg-white/85 backdrop-blur-md border-b border-slate-100 flex justify-between items-center px-8 h-16">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search petitions, student IDs..." type="text">
+</div>
+<nav class="flex gap-6 items-center">
+<a class="text-xs font-label uppercase tracking-widest text-slate-500 hover:text-[#57344f] transition-all" href="#" style="">Directory</a>
+<a class="text-xs font-label uppercase tracking-widest text-slate-500 hover:text-[#57344f] transition-all" href="#" style="">Resources</a>
+<a class="text-xs font-label uppercase tracking-widest text-slate-500 hover:text-[#57344f] transition-all" href="#" style="">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" style="">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" style="">apps</button>
+<div class="flex items-center gap-3 ml-2 pl-4 border-l border-slate-100">
+<span class="text-xs font-label font-bold text-primary" style="">Academic ERP</span>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-primary-fixed" data-alt="professional headshot of a modern academic officer with blurred library background soft lighting corporate style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApV3l1X4OVmlHM1923mQFTFHeAwcTMW1O_qK6Ttoko2k2UIfhFjdJb7lpCIs3MsUYXPCs0animJH4Uz7SsYyxHsOP4XroR64Hm6kkILpiWjO_Vjpkx3XZwuP2d-UHz6D1A5q-k7CsoT4e1ZUg0ndArqwrazMNflPLmoDW2inNUrPVXZyIqod1EOggfX6Sn6rmlhSikE1DXaabBaPRQKScCX_CP11Wpf9TSpbWNV0CGXd9vI3sy9InA5QMGTOCd6-ta5Ze6G_eqC-wX" style="">
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen bg-surface">
+<div class="flex h-[calc(100vh-4rem)]">
+<!-- Left Side: Board & List View -->
+<div class="flex-1 overflow-y-auto p-8 hide-scrollbar">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="text-3xl font-black font-headline text-on-surface tracking-tight" style="">Petition Tracking Board</h2>
+<p class="text-on-surface-variant mt-1" style="">Reviewing 24 pending institutional requests</p>
+</div>
+<div class="flex gap-2 bg-surface-container-low p-1 rounded-xl">
+<button class="px-4 py-1.5 bg-white shadow-sm rounded-lg text-xs font-label font-bold text-primary" style="">LIST VIEW</button>
+<button class="px-4 py-1.5 text-xs font-label font-bold text-on-surface-variant hover:text-primary transition-colors" style="">KANBAN</button>
+</div>
+</div>
+<!-- Odoo-Style Hybrid List -->
+<div class="space-y-4">
+<!-- Column Headers -->
+<div class="grid grid-cols-12 gap-4 px-6 py-3 bg-surface-container-low rounded-xl">
+<div class="col-span-1 text-[10px] font-label font-bold uppercase tracking-wider text-on-surface-variant" style="">Ref</div>
+<div class="col-span-3 text-[10px] font-label font-bold uppercase tracking-wider text-on-surface-variant" style="">Student ID &amp; Name</div>
+<div class="col-span-3 text-[10px] font-label font-bold uppercase tracking-wider text-on-surface-variant" style="">Petition Type</div>
+<div class="col-span-2 text-[10px] font-label font-bold uppercase tracking-wider text-on-surface-variant" style="">Submission</div>
+<div class="col-span-2 text-[10px] font-label font-bold uppercase tracking-wider text-on-surface-variant" style="">Urgency</div>
+<div class="col-span-1"></div>
+</div>
+<!-- Row 1: Active Selection -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 bg-surface-container-lowest border-l-4 border-primary shadow-sm hover:shadow-md transition-shadow cursor-pointer rounded-r-xl">
+<div class="col-span-1 self-center font-bold text-primary text-xs" style="">#9402</div>
+<div class="col-span-3 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] font-bold text-on-secondary-fixed" style="">JD</div>
+<div>
+<div class="text-sm font-bold text-on-surface" style="">Julianne Devis</div>
+<div class="text-[11px] text-on-surface-variant font-medium" style="">ID: 2024-88392</div>
+</div>
+</div>
+<div class="col-span-3 self-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary-fixed text-on-primary-fixed-variant" style="">Late Course Drop</span>
+</div>
+<div class="col-span-2 self-center text-xs text-on-surface-variant" style="">Oct 12, 2023</div>
+<div class="col-span-2 self-center">
+<span class="flex items-center gap-1.5 text-error font-bold text-[11px]" style="">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">priority_high</span>
+                                CRITICAL
+                            </span>
+</div>
+<div class="col-span-1 self-center text-right">
+<span class="material-symbols-outlined text-on-surface-variant" style="">chevron_right</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 bg-surface-container-lowest border-l-4 border-secondary shadow-sm hover:shadow-md transition-shadow cursor-pointer rounded-r-xl">
+<div class="col-span-1 self-center font-bold text-on-surface-variant text-xs" style="">#9398</div>
+<div class="col-span-3 flex items-center gap-3">
+<img alt="Student Avatar" class="w-8 h-8 rounded-full" data-alt="portrait of a young man student with glasses soft natural lighting campus background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-7d4YFjODsY5BlZOXf0YhIzzoJ2DzMxTwIO_KrcFwjzxffJkmlW2hPqJeJfF62QCAStadst45gWoJUijU9b8EJ5jepDEqgucrwZDuapmWP0oAiJxkzwrFKhxz0M4h0ASSiFqH_ZYMrSkf5eY8KY913fdQCw8B6ftaNCQgfm0KVXJ8jjKfKnYYKKHbNlE1zx6tLQt5z5oDMJCUc3uCvaUqapE-zCaFHknShYlrfbGtYGYMVwuNZ8IY6D_1hgwNqDcBa5n0YhkMeQO8" style="">
+<div>
+<div class="text-sm font-bold text-on-surface" style="">Marcus Thorne</div>
+<div class="text-[11px] text-on-surface-variant font-medium" style="">ID: 2024-71104</div>
+</div>
+</div>
+<div class="col-span-3 self-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-secondary-fixed text-on-secondary-fixed-variant" style="">Exam Reschedule</span>
+</div>
+<div class="col-span-2 self-center text-xs text-on-surface-variant" style="">Oct 11, 2023</div>
+<div class="col-span-2 self-center">
+<span class="flex items-center gap-1.5 text-tertiary font-bold text-[11px]" style="">
+<span class="material-symbols-outlined text-sm" style="">schedule</span>
+                                NORMAL
+                            </span>
+</div>
+<div class="col-span-1 self-center text-right">
+<span class="material-symbols-outlined text-on-surface-variant" style="">chevron_right</span>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-12 gap-4 px-6 py-5 bg-surface-container-lowest border-l-4 border-tertiary shadow-sm hover:shadow-md transition-shadow cursor-pointer rounded-r-xl">
+<div class="col-span-1 self-center font-bold text-on-surface-variant text-xs" style="">#9395</div>
+<div class="col-span-3 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant" style="">EL</div>
+<div>
+<div class="text-sm font-bold text-on-surface" style="">Elena Lunt</div>
+<div class="text-[11px] text-on-surface-variant font-medium" style="">ID: 2024-44210</div>
+</div>
+</div>
+<div class="col-span-3 self-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-surface-container-high text-on-surface-variant" style="">Credit Transfer</span>
+</div>
+<div class="col-span-2 self-center text-xs text-on-surface-variant" style="">Oct 10, 2023</div>
+<div class="col-span-2 self-center">
+<span class="flex items-center gap-1.5 text-on-surface-variant/60 font-bold text-[11px]" style="">
+<span class="material-symbols-outlined text-sm" style="">low_priority</span>
+                                LOW
+                            </span>
+</div>
+<div class="col-span-1 self-center text-right">
+<span class="material-symbols-outlined text-on-surface-variant" style="">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side: Side Panel Details -->
+<aside class="w-[450px] bg-surface-container-low border-l border-outline-variant/20 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)] overflow-y-auto hide-scrollbar">
+<!-- Header -->
+<div class="p-6 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+<div class="flex justify-between items-start mb-4">
+<span class="text-[10px] font-label font-bold uppercase tracking-widest px-2 py-1 bg-primary text-white rounded" style="">PETITION #9402</span>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-1 rounded-full transition-colors" style="">close</button>
+</div>
+<h3 class="text-xl font-black font-headline text-on-surface" style="">Late Course Drop Request</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="text-xs font-semibold text-on-surface" style="">Julianne Devis</span>
+<span class="text-xs text-on-surface-variant" style="">• Applied Sciences</span>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-6 space-y-8">
+<!-- Justification Section -->
+<section>
+<h4 class="text-[11px] font-label font-bold uppercase tracking-wider text-primary mb-3" style="">Justification Text</h4>
+<div class="bg-surface-container-lowest p-5 rounded-xl text-sm leading-relaxed text-on-surface border border-outline-variant/10" style="">
+                            "I am formally requesting a late withdrawal from PHYS201 (Quantum Mechanics I). Due to unforeseen personal medical circumstances that emerged in early October, I missed several pivotal laboratory sessions. My current health status requires ongoing physical therapy that conflicts with the course schedule. Documentation from my specialist is attached for review."
+                        </div>
+</section>
+<!-- PDF Preview Section -->
+<section>
+<h4 class="text-[11px] font-label font-bold uppercase tracking-wider text-primary mb-3" style="">Attachments (1)</h4>
+<div class="relative group cursor-pointer overflow-hidden rounded-xl border border-outline-variant/20 bg-white">
+<div class="aspect-[4/3] bg-surface-container shadow-inner flex items-center justify-center overflow-hidden">
+<img alt="PDF Preview" class="w-full h-full object-cover opacity-60" data-alt="blurry document preview with medical stamps and signature on paper texture soft neutral colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmXumY8jZDcVeyDlWw6DvTiwtnJUZP8e6ILapTU9AKdt8oVkgTif0T-uHxQNojEDOMPvH3rsH6y9oUIOL_1UFtnSiVqBotTVU9B-1AXTmVEacC8O7T_2JRKWnsTceet6r9TamzwHxTC9etICCusIt7lIfmu3-7HgdK6nK-QWWHUpll-VBZFd5NZXnwRTFULtru0YZmsmAq4MZ7DNMj3-DOLEai7M2xZuk8Aopag2q45h9SUYpMcjKzsEG1lUaxFhNRYM9W3ECOzbIY" style="">
+<div class="absolute inset-0 bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+<span class="bg-white text-primary px-4 py-2 rounded-full text-xs font-bold shadow-lg" style="">View Full PDF</span>
+</div>
+</div>
+<div class="p-3 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: &quot;FILL&quot; 1;">picture_as_pdf</span>
+<span class="text-xs font-bold text-on-surface truncate max-w-[180px]" style="">Medical_Certificate_JD.pdf</span>
+</div>
+<span class="text-[10px] font-label text-on-surface-variant uppercase" style="">1.2 MB</span>
+</div>
+</div>
+</section>
+<!-- Decision History (Editorial Style) -->
+<section>
+<h4 class="text-[11px] font-label font-bold uppercase tracking-wider text-primary mb-3" style="">Previous Activity</h4>
+<div class="space-y-4 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant/20">
+<div class="flex gap-4 relative">
+<div class="w-6 h-6 rounded-full bg-white border-2 border-outline-variant flex items-center justify-center z-10 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+</div>
+<div>
+<p class="text-xs text-on-surface" style=""><span class="font-bold" style="">System</span> automatically flagged as <span class="text-error font-bold" style="">Critical</span></p>
+<p class="text-[10px] text-on-surface-variant mt-0.5" style="">Oct 12, 11:45 AM</p>
+</div>
+</div>
+<div class="flex gap-4 relative">
+<div class="w-6 h-6 rounded-full bg-white border-2 border-primary flex items-center justify-center z-10 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<div>
+<p class="text-xs text-on-surface" style=""><span class="font-bold" style="">Officer Review</span> initiated by Sarah Jenkins</p>
+<p class="text-[10px] text-on-surface-variant mt-0.5" style="">Oct 12, 02:15 PM</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Actions -->
+<div class="mt-auto p-6 bg-white border-t border-outline-variant/10 space-y-3">
+<div class="flex gap-2">
+<button class="flex-1 bg-gradient-to-br from-primary to-primary-container text-white rounded-full py-2.5 text-xs font-bold shadow-md hover:scale-[1.02] transition-transform" style="">
+                            Approve
+                        </button>
+<button class="flex-1 bg-surface-container-high text-on-surface rounded-full py-2.5 text-xs font-bold hover:bg-surface-container-highest transition-colors" style="">
+                            Reject with Comments
+                        </button>
+</div>
+<button class="w-full bg-white border-2 border-outline-variant text-on-surface-variant rounded-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 hover:border-primary/30 transition-colors" style="">
+<span class="material-symbols-outlined text-sm" style="">forward</span>
+                        Escalate to Chair
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+<!-- FAB Suppression Rule Active: Not rendered on focused dashboard -->
+</body></html>

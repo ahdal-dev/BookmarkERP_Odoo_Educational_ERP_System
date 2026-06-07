@@ -2,25 +2,24 @@
 <odoo>
     <data>
         <!-- List View (Admin) -->
-       <!-- List View (Admin) -->
-<record id="view_petition_list_admin" model="ir.ui.view">
-    <field name="name">student.petition.list.admin</field>
-    <field name="model">student.petition</field>
-    <field name="arch" type="xml">
-        <list string="Petitions" multi_edit="1" default_order="create_date desc" create="1" edit="1" delete="1">
-            <field name="name"/>
-            <field name="student_id"/>
-            <field name="petition_type_id"/>
-            <field name="subject"/>
-            <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-warning="state in ('submitted', 'under_review')"/>
-            <field name="submitted_date"/>
-            <field name="days_pending" string="Days"/>
-            <field name="requested_date"/>
-        </list>
-    </field>
-</record>
+        <record id="view_petition_list_admin" model="ir.ui.view">
+            <field name="name">student.petition.list.admin</field>
+            <field name="model">student.petition</field>
+            <field name="arch" type="xml">
+                <list string="Petitions" multi_edit="1" default_order="create_date desc" create="1" edit="1" delete="1">
+                    <field name="name"/>
+                    <field name="student_id"/>
+                    <field name="petition_type_id"/>
+                    <field name="subject"/>
+                    <field name="state" widget="badge" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'" decoration-warning="state in ('submitted', 'under_review')"/>
+                    <field name="submitted_date"/>
+                    <field name="days_pending" string="Days"/>
+                    <field name="requested_date"/>
+                </list>
+            </field>
+        </record>
 
-        <!-- List View (Student) - Simplified for students -->
+        <!-- List View (Student) - Simplified for students (student field removed) -->
         <record id="view_petition_list_student" model="ir.ui.view">
             <field name="name">student.petition.list.student</field>
             <field name="model">student.petition</field>
@@ -36,129 +35,127 @@
             </field>
         </record>
 
-        <!-- Form View (Admin) -->
-        <!-- Form View (Admin) -->
-<!-- Form View (Admin) - Fixed for Odoo 19 -->
-<!-- Form View (Admin) - FIXED -->
-<record id="view_petition_form_admin" model="ir.ui.view">
-    <field name="name">student.petition.form.admin</field>
-    <field name="model">student.petition</field>
-    <field name="arch" type="xml">
-        <form string="Petition" create="1" edit="1" delete="1">
-            <header>
-                <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'" groups="edu_mang_petition.group_petition_student"/>
-                <button name="action_review" string="Start Review" type="object" class="btn-warning" invisible="state != 'submitted'" groups="edu_mang_petition.group_petition_admin"/>
-                <button name="action_approve" string="Approve" type="object" class="btn-success" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
-                <button name="action_reject" string="Reject" type="object" class="btn-danger" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
-                <button name="action_draft" string="Reset to Draft" type="object" groups="edu_mang_petition.group_petition_manager"/>
-                <button name="action_cancel" string="Cancel" type="object" groups="edu_mang_petition.group_petition_student"/>
-                <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved,rejected"/>
-            </header>
-            <sheet>
-                <group>
-                    <group>
-                        <field name="name"/>
-                        <field name="student_id" options="{'create': false}" groups="edu_mang_petition.group_petition_admin"/>
-                        <field name="petition_type_id" options="{'create': false}"/>
-                        <field name="subject"/>
-                    </group>
-                    <group>
-                        <field name="requested_date"/>
-                        <field name="desired_completion_date"/>
-                        <field name="submitted_date" readonly="1"/>
-                        <field name="days_pending" readonly="1"/>
-                    </group>
-                </group>
-                <notebook>
-                    <page string="Description">
-                        <field name="description" nolabel="1" widget="html"/>
-                    </page>
-                    <page string="Overload Details" invisible="petition_type_id.code != 'overload'">
+        <!-- Form View (Admin) - Fixed with readonly student field -->
+        <record id="view_petition_form_admin" model="ir.ui.view">
+            <field name="name">student.petition.form.admin</field>
+            <field name="model">student.petition</field>
+            <field name="arch" type="xml">
+                <form string="Petition" create="1" edit="1" delete="1">
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'" groups="edu_mang_petition.group_petition_student"/>
+                        <button name="action_review" string="Start Review" type="object" class="btn-warning" invisible="state != 'submitted'" groups="edu_mang_petition.group_petition_admin"/>
+                        <button name="action_approve" string="Approve" type="object" class="btn-success" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
+                        <button name="action_reject" string="Reject" type="object" class="btn-danger" invisible="state != 'under_review'" groups="edu_mang_petition.group_petition_admin"/>
+                        <button name="action_draft" string="Reset to Draft" type="object" groups="edu_mang_petition.group_petition_manager"/>
+                        <button name="action_cancel" string="Cancel" type="object" groups="edu_mang_petition.group_petition_student"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submitted,under_review,approved,rejected"/>
+                    </header>
+                    <sheet>
                         <group>
                             <group>
-                                <field name="current_credits"/>
+                                <field name="name"/>
+                                <!-- CHANGED: Made student field readonly for admins -->
+                                <field name="student_id" options="{'create': false, 'no_create': True}" readonly="1" groups="edu_mang_petition.group_petition_admin"/>
+                                <field name="petition_type_id" options="{'create': false}"/>
+                                <field name="subject"/>
                             </group>
                             <group>
-                                <field name="requested_credits"/>
+                                <field name="requested_date"/>
+                                <field name="desired_completion_date"/>
+                                <field name="submitted_date" readonly="1"/>
+                                <field name="days_pending" readonly="1"/>
                             </group>
                         </group>
-                        <field name="reason_for_overload" placeholder="Explain why you need credit overload..." nolabel="1"/>
-                    </page>
-                    <page string="Review Comments" groups="petition_system.group_petition_admin">
+                        <notebook>
+                            <page string="Description">
+                                <field name="description" nolabel="1" widget="html"/>
+                            </page>
+                            <page string="Overload Details" invisible="petition_type_id.code != 'overload'">
+                                <group>
+                                    <group>
+                                        <field name="current_credits"/>
+                                    </group>
+                                    <group>
+                                        <field name="requested_credits"/>
+                                    </group>
+                                </group>
+                                <field name="reason_for_overload" placeholder="Explain why you need credit overload..." nolabel="1"/>
+                            </page>
+                            <page string="Review Comments" groups="edu_mang_petition.group_petition_admin">
+                                <group>
+                                    <group>
+                                        <field name="reviewer_id" readonly="1"/>
+                                        <field name="review_date" readonly="1"/>
+                                    </group>
+                                </group>
+                                <field name="comments" nolabel="1" placeholder="Add review comments here..."/>
+                                <field name="rejection_reason" nolabel="1" placeholder="Reason for rejection..."/>
+                            </page>
+                            <page string="Attachments">
+                                <field name="attachment_ids" nolabel="1" widget="many2many_binary"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- Form View (Student) - Fixed with hidden student field -->
+        <record id="view_petition_form_student" model="ir.ui.view">
+            <field name="name">student.petition.form.student</field>
+            <field name="model">student.petition</field>
+            <field name="arch" type="xml">
+                <form string="Petition">
+                    <header>
+                        <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
+                    </header>
+                    <sheet>
                         <group>
                             <group>
-                                <field name="reviewer_id" readonly="1"/>
-                                <field name="review_date" readonly="1"/>
-                            </group>
-                        </group>
-                        <field name="comments" nolabel="1" placeholder="Add review comments here..."/>
-                        <field name="rejection_reason" nolabel="1" placeholder="Reason for rejection..."/>
-                    </page>
-                    <page string="Attachments">
-                        <field name="attachment_ids" nolabel="1" widget="many2many_binary"/>
-                    </page>
-                </notebook>
-            </sheet>
-            <chatter/>
-        </form>
-    </field>
-</record>
-        <!-- Form View (Student) - Simplified for students -->
-        <!-- Form View (Student) - Fixed with all fields -->
-<!-- Form View (Student) - Fixed for Odoo 19 -->
-<!-- Form View (Student) - COMPLETELY FIXED -->
-<record id="view_petition_form_student" model="ir.ui.view">
-    <field name="name">student.petition.form.student</field>
-    <field name="model">student.petition</field>
-    <field name="arch" type="xml">
-        <form string="Petition">
-            <header>
-                <button name="action_submit" string="Submit" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
-                <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
-            </header>
-            <sheet>
-                <group>
-                    <group>
-                        <field name="name" readonly="1"/>
-                        <field name="petition_type_id" options="{'create': false}" required="1"/>
-                        <field name="subject" required="1"/>
-                    </group>
-                    <group>
-                        <field name="requested_date" required="1"/>
-                        <field name="desired_completion_date"/>
-                        <field name="submitted_date" readonly="1"/>
-                    </group>
-                </group>
-                <notebook>
-                    <page string="Description">
-                        <field name="description" nolabel="1" widget="html" required="1"/>
-                    </page>
-                    <page string="Overload Details" invisible="petition_type_id.code != 'overload'">
-                        <group>
-                            <group>
-                                <field name="current_credits"/>
+                                <field name="name" readonly="1"/>
+                                <!-- ADDED: Hidden student field that gets auto-populated -->
+                                <field name="student_id" invisible="1"/>
+                                <field name="petition_type_id" options="{'create': false}" required="1"/>
+                                <field name="subject" required="1"/>
                             </group>
                             <group>
-                                <field name="requested_credits"/>
+                                <field name="requested_date" required="1"/>
+                                <field name="desired_completion_date"/>
+                                <field name="submitted_date" readonly="1"/>
                             </group>
                         </group>
-                        <field name="reason_for_overload" placeholder="Explain why you need credit overload..." nolabel="1"/>
-                    </page>
-                    <page string="Attachments">
-                        <field name="attachment_ids" nolabel="1" widget="many2many_binary"/>
-                    </page>
-                </notebook>
-            </sheet>
-            <!-- Chatter goes OUTSIDE sheet but INSIDE form -->
-            <div class="oe_chatter">
-                <field name="message_follower_ids"/>
-                <field name="activity_ids"/>
-                <field name="message_ids"/>
-            </div>
-        </form>
-    </field>
-</record>
+                        <notebook>
+                            <page string="Description">
+                                <field name="description" nolabel="1" widget="html" required="1"/>
+                            </page>
+                            <page string="Overload Details" invisible="petition_type_id.code != 'overload'">
+                                <group>
+                                    <group>
+                                        <field name="current_credits"/>
+                                    </group>
+                                    <group>
+                                        <field name="requested_credits"/>
+                                    </group>
+                                </group>
+                                <field name="reason_for_overload" placeholder="Explain why you need credit overload..." nolabel="1"/>
+                            </page>
+                            <page string="Attachments">
+                                <field name="attachment_ids" nolabel="1" widget="many2many_binary"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
         <!-- Search View -->
         <record id="view_petition_search" model="ir.ui.view">
             <field name="name">student.petition.search</field>
@@ -197,22 +194,21 @@
         </record>
 
         <!-- Action for Admins -->
-        <!-- Action for Admins -->
-<record id="action_petition_admin" model="ir.actions.act_window">
-    <field name="name">All Petitions</field>
-    <field name="res_model">student.petition</field>
-    <field name="view_mode">list,kanban,form</field>
-    <field name="search_view_id" ref="view_petition_search"/>
-    <field name="help" type="html">
-        <p class="o_view_nocontent_smiling_face">
-            No petitions found
-        </p>
-        <p>
-            Manage student petitions from this view. Review, approve, or reject submitted petitions.
-        </p>
-    </field>
-    <field name="context">{}</field>
-</record>
+        <record id="action_petition_admin" model="ir.actions.act_window">
+            <field name="name">All Petitions</field>
+            <field name="res_model">student.petition</field>
+            <field name="view_mode">list,kanban,form</field>
+            <field name="search_view_id" ref="view_petition_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No petitions found
+                </p>
+                <p>
+                    Manage student petitions from this view. Review, approve, or reject submitted petitions.
+                </p>
+            </field>
+            <field name="context">{}</field>
+        </record>
 
         <!-- Kanban View for Admin Dashboard -->
         <record id="view_petition_kanban_admin" model="ir.ui.view">

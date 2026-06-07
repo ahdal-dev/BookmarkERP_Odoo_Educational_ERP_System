@@ -1,0 +1,438 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>User Management | Academic ERP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Public_Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-error-container": "#93000a",
+              "inverse-primary": "#e9b8d9",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#4e444a",
+              "on-primary": "#ffffff",
+              "on-primary-fixed-variant": "#5f3b56",
+              "on-primary-fixed": "#2f1029",
+              "tertiary-container": "#4b5d33",
+              "on-secondary": "#ffffff",
+              "surface-tint": "#79526f",
+              "primary": "#57344f",
+              "on-tertiary-fixed": "#112000",
+              "on-tertiary-fixed-variant": "#3b4c24",
+              "on-secondary-fixed-variant": "#394378",
+              "background": "#f8f9fa",
+              "surface-container-low": "#f3f4f5",
+              "surface-container": "#edeeef",
+              "tertiary": "#34451e",
+              "on-surface": "#191c1d",
+              "surface-bright": "#f8f9fa",
+              "primary-fixed-dim": "#e9b8d9",
+              "outline": "#80747a",
+              "secondary": "#515b92",
+              "secondary-fixed": "#dee0ff",
+              "error-container": "#ffdad6",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-fixed-dim": "#b9ce9a",
+              "on-secondary-fixed": "#0b164a",
+              "outline-variant": "#d1c3ca",
+              "on-primary-container": "#f0bfe0",
+              "inverse-on-surface": "#f0f1f2",
+              "secondary-container": "#b7c0fe",
+              "inverse-surface": "#2e3132",
+              "error": "#ba1a1a",
+              "surface-dim": "#d9dadb",
+              "on-tertiary-container": "#c0d5a0",
+              "on-error": "#ffffff",
+              "surface-variant": "#e1e3e4",
+              "surface": "#f8f9fa",
+              "secondary-fixed-dim": "#bac3ff",
+              "primary-fixed": "#ffd7f1",
+              "primary-container": "#714b67",
+              "surface-container-high": "#e7e8e9",
+              "on-background": "#191c1d",
+              "on-secondary-container": "#434d83",
+              "tertiary-fixed": "#d5eab4",
+              "surface-container-highest": "#e1e3e4"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1c3ca; border-radius: 10px; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased overflow-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 overflow-y-auto bg-slate-100 dark:bg-slate-900 font-['Inter'] antialiased text-sm h-screen w-64 border-r-0">
+<div class="flex flex-col h-full">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined" data-icon="school" style="">school</span>
+</div>
+<div>
+<h1 class="font-['Public_Sans'] font-bold tracking-tight text-[#57344f] dark:text-white text-lg leading-none" style=""><span style="font-family: Inter; font-size: 20px; letter-spacing: normal; background-color: rgba(255, 255, 255, 0.85);">Edu Mangement</span></h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1" style="">Intellectual Atelier</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg group" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="dashboard" style="">dashboard</span>
+<span class="" style="">Dashboard</span>
+</a>
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="person_add" style="">person_add</span>
+<span class="" style="">Admissions</span>
+</a>
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="school" style="">school</span>
+<span class="" style="">Registration</span>
+</a>
+<!-- Active Navigation: Semantic mapping for User Management/Admin Control -->
+<a class="relative flex items-center px-4 py-3 text-[#57344f] dark:text-[#ffd7f1] font-semibold before:absolute before:left-0 before:w-1 before:h-8 before:bg-[#ffd7f1] before:rounded-r-full" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="admin_panel_settings" style="">admin_panel_settings</span>
+<span class="" style="">Admin Control</span>
+</a>
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="Description" style="">description</span>
+<span class="" style="">Petitions</span>
+</a>
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="smart_toy" style="">smart_toy</span>
+<span class="" style="">AI Assistant</span>
+</a>
+</nav>
+<div class="p-4 mt-auto space-y-1 border-t border-slate-200 dark:border-slate-800">
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="settings" style="">settings</span>
+<span class="" style="">Settings</span>
+</a>
+<a class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-[#f3f4f5] dark:hover:bg-slate-800 transition-colors rounded-lg" href="#" style="">
+<span class="material-symbols-outlined mr-3 text-lg" data-icon="help" style="">help</span>
+<span class="" style="">Help</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 h-16 flex justify-between items-center px-6 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/50 shadow-sm dark:shadow-none">
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" style="">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" placeholder="Search users, roles, or departments..." type="text">
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<div class="hidden lg:flex items-center space-x-4">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#57344f] font-medium text-sm" href="#" style="">Overview</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#57344f] font-medium text-sm" href="#" style="">Analytics</a>
+<a class="text-[#57344f] dark:text-[#ffd7f1] border-b-2 border-[#57344f] pb-1 font-medium text-sm" href="#" style="">User Management</a>
+</div>
+<div class="flex items-center space-x-3">
+<button class="p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-lg transition-opacity active:opacity-70" style="">
+<span class="material-symbols-outlined" data-icon="notifications" style="">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-lg transition-opacity active:opacity-70" style="">
+<span class="material-symbols-outlined" data-icon="chat_bubble" style="">chat_bubble</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 shadow-md" style="">
+<span class="material-symbols-outlined text-sm" data-icon="add" style="">add</span>
+<span class="" style="">Create User</span>
+</button>
+<div class="flex items-center gap-2 ml-4">
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full border-2 border-primary-fixed" data-alt="Close-up portrait of a professional male administrator in a light blue shirt with a neutral office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnplwXvbduzuE_thQ4oo_Krphyz1NeS3ZYo5ZGRY-R6TrOFYO0rAY62cSpIB30z6crBGUH3kYXaXmfYuTsjD0mbIUkrowNOVhspmmRGe5QRA-Qz9kfRXW_iqj9iQkmrbBLrVKNqu45vp6MuhYxwLbDXCHULMQsSu7K3sdL2QBGi5LtfRwr65bglGU4i2A9M3WY4evI53Q2BJIAwGvbu1sQsoOox0NrWezDfEui5rc5KxPBvBxYmPzYKvtg_EkfhFtEeun2_LOyJ8wj" style="">
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 h-screen overflow-y-auto">
+<div class="p-8 max-w-[1600px] mx-auto">
+<!-- Breadcrumbs & Header Section -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<nav class="flex items-center gap-2 text-on-surface-variant text-sm font-label mb-2">
+<span class="" style="">ADMIN CONTROL</span>
+<span class="text-xs" style="">/</span>
+<span class="font-bold text-primary" style="">USER DIRECTORY</span>
+</nav>
+<h2 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface" style="">User Management</h2>
+<p class="text-on-surface-variant mt-2 max-w-2xl" style="">Oversee institutional access, manage permission matrices, and audit user lifecycle states across all academic departments.</p>
+</div>
+<div class="flex gap-3">
+<div class="flex bg-surface-container rounded-xl p-1">
+<button class="bg-surface-container-lowest shadow-sm rounded-lg p-2 text-primary" style="">
+<span class="material-symbols-outlined" data-icon="view_list" style="">view_list</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-primary transition-colors" style="">
+<span class="material-symbols-outlined" data-icon="grid_view" style="">grid_view</span>
+</button>
+</div>
+<button class="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 rounded-xl text-on-surface-variant font-medium hover:bg-white transition-colors border-none" style="">
+<span class="material-symbols-outlined text-lg" data-icon="filter_list" style="">filter_list</span>
+<span class="" style="">Filters</span>
+</button>
+</div>
+</div>
+<!-- Stats/Bento Teaser for Context -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+<div class="col-span-1 bg-surface-container-low rounded-xl p-6 flex flex-col justify-between">
+<span class="font-label text-[10px] text-on-surface-variant font-bold tracking-wider" style="">TOTAL ACCOUNTS</span>
+<div class="mt-4">
+<span class="text-4xl font-headline font-bold text-on-surface" style="">12,482</span>
+<div class="text-xs text-tertiary font-medium mt-1 flex items-center" style="">
+<span class="material-symbols-outlined text-xs mr-1" style="">trending_up</span> +3% from last month
+                        </div>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container-low rounded-xl p-6 flex flex-col justify-between">
+<span class="font-label text-[10px] text-on-surface-variant font-bold tracking-wider" style="">ACTIVE NOW</span>
+<div class="mt-4">
+<span class="text-4xl font-headline font-bold text-on-surface" style="">3,109</span>
+<div class="flex -space-x-2 mt-2">
+<img alt="User" class="w-6 h-6 rounded-full border-2 border-surface-container-low" data-alt="Small avatar of a smiling young woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4a5E6JspWOxhnXrRS0ExT8OBeGmjfv8ArvbS6nGCabQa5ktOygM6KweJ1x_Ns6oPRZB7-wQxqF4gc8d6c3dM5sO2enUUm0X06pyiajs_4iJm2vEzFAJ0WVsVZ2e09moCFEGF8vW5uteCE2VmneY-a7kv2smlJPlpBn0IQpuAntv4Q3KmJyKHUnYc4tMEcIIBLUk49JCgC3rk_Clt8Uesuu0BdAoPqdzFm01zCjq7-HDfT1G0paOuGuFfSjEyaN9pvq9Z6n8nLRzFu" style="">
+<img alt="User" class="w-6 h-6 rounded-full border-2 border-surface-container-low" data-alt="Small avatar of a young man with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZ_XSGGm3M_U5KNjF6CzuIKcq1FZsvD55P6q_7H6pDuiBJwLyTaCP-WYLZZ68lLdmYWA954dZ8nUKwV8tse5coIj6BA73Mz5OLvOQgZoe--IF5jXJWcsECDpxQkCFTUFggMUG8HQcM8j0pk6CYy5_phLpxsIhl4UfKgDSV0_ijsVl9uOwu7mhDXItO0ew0do9gMbt8cgWqBxlhwRnjPi3gJSS9V_KzyakV8WrNBywxPD5Iyh4L8wGnyVD5Er6n5IwzRs1t-1TPVeud" style="">
+<img alt="User" class="w-6 h-6 rounded-full border-2 border-surface-container-low" data-alt="Small avatar of a middle-aged man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-Z-dI67bu8qhMY3FuVjHi3etruzmCDMr78hX-iBTYXuXhW8FeL3jSmF49NV8c2-MgNoR26Tl4s27eyuVSCHPqvb9YGUrEeXIksJ6kWwcFOuoY-8f6ItYMrIt2cEEKweitqfX-Nl7jHoJbNm0m6b_EDLlra3W7fVRRLb4yugWuhw8BxDzQH08G5IuxeAndful8_4fAZVre6rRJSqdMEy6UtyI_5cOVCbjP08cf70uw7KCJwBMCKKHqSHIwCQXreVwNxWxuV1KE0H4k" style="">
+<div class="w-6 h-6 rounded-full bg-primary-fixed-dim border-2 border-surface-container-low flex items-center justify-center text-[8px] font-bold" style="">+3k</div>
+</div>
+</div>
+</div>
+<div class="col-span-2 bg-secondary-fixed text-on-secondary-fixed rounded-xl p-6 relative overflow-hidden">
+<div class="relative z-10">
+<span class="font-label text-[10px] font-bold tracking-wider opacity-70" style="">SYSTEM HEALTH</span>
+<h4 class="text-xl font-headline font-bold mt-2" style="">Permission Consistency: 99.8%</h4>
+<p class="text-sm mt-1 opacity-80" style="">All registrar roles are currently synchronized with the LDAP directory.</p>
+<button class="mt-4 bg-on-secondary-fixed text-secondary-fixed text-xs font-bold py-2 px-4 rounded-full" style="">Run Integrity Audit</button>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-9xl opacity-10 pointer-events-none" data-icon="shield_check" style="">shield</span>
+</div>
+</div>
+<!-- Odoo-Style User List -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase" style="">
+<input class="rounded text-primary focus:ring-primary border-outline-variant" type="checkbox">
+</th>
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase" style="">Name</th>
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase" style="">Email</th>
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase" style="">Assigned Role</th>
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase" style="">Status</th>
+<th class="py-5 px-6 font-label text-[11px] font-bold text-on-surface-variant tracking-wider uppercase text-right" style="">Actions</th>
+</tr>
+</thead>
+<tbody class="bg-surface-container-lowest">
+<!-- User Row 1 -->
+<tr class="group hover:bg-slate-50 transition-colors">
+<td class="py-4 px-6 border-none" style="">
+<input class="rounded text-primary focus:ring-primary border-outline-variant" type="checkbox">
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="Portrait of a professional man in his 40s with a warm expression and short hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLfB8S3oKkSs8npZwsoPkCKjgRuejWKRU0gWk4FoXv7liZKaHYncczMWFWK5m54te7KTRDNoPmYMOZkplTFt1QXIgVQnd9TaEpH9d-FyTv5-EjUicH13JHKrFRSKkEtmdYLGrnLG-FeUB0Cvzf2aWNC-pQkQ1d7hKv6Wayp-bsDe5r86J5BwBGlr3ca343Tnadrjkp9D1j8KSlm_xJ85Fl0u9iy8LVlfjSo-35z_OndgFCLMxSOiRPgtFWaELKu7wPStFfygkiqSOu" style="">
+</div>
+<div>
+<div class="font-semibold text-on-surface" style="">Dr. Alistair Vance</div>
+<div class="text-xs text-on-surface-variant" style="">Faculty of Sciences</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-sm text-on-surface-variant" style="">a.vance@atelier-edu.org</td>
+<td class="py-4 px-6 border-none" style="">
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-[14px]" style="">school</span> Instructor
+                                </span>
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-sm font-medium text-on-surface" style="">Active</span>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-right" style="">
+<button class="text-primary hover:text-primary-container font-semibold text-sm transition-colors px-4 py-2 rounded-lg hover:bg-primary-fixed" style="">Manage Permissions</button>
+</td>
+</tr>
+<!-- User Row 2 -->
+<tr class="group hover:bg-slate-50 transition-colors">
+<td class="py-4 px-6 border-none" style="">
+<input class="rounded text-primary focus:ring-primary border-outline-variant" type="checkbox">
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="Portrait of a focused professional woman with glasses and dark hair tied back" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeWvIN5tHs_Dz1F_8_5Xa59VqPUDGS1xh61HMDP48t-PhTblH0yfhprTm3ioQwNZRvCSyUVfjPIWPbohuMojGdHkmMMQs9Js1u1mjHXD4UJoGMfPZ0Y04EsM870yfmT1NhDz7JPUPuh3Tt17SZUJQc6kSZ7TP4ogg-GlByKasCdtTgpJ66o9ORIBg5i5uHW5VTFRMIe5w9nS_LotcranDZ0dV6jOtB5IXEw6FzocCTKBK2ts7Wj57qLRJPNkagUvbsmdm1Ujki-3j6" style="">
+</div>
+<div>
+<div class="font-semibold text-on-surface" style="">Elena Rodriguez</div>
+<div class="text-xs text-on-surface-variant" style="">Administrative Office</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-sm text-on-surface-variant" style="">e.rodriguez@atelier-edu.org</td>
+<td class="py-4 px-6 border-none" style="">
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-[14px]" style="">admin_panel_settings</span> Admin
+                                </span>
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-sm font-medium text-on-surface" style="">Active</span>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-right" style="">
+<button class="text-primary hover:text-primary-container font-semibold text-sm transition-colors px-4 py-2 rounded-lg hover:bg-primary-fixed" style="">Manage Permissions</button>
+</td>
+</tr>
+<!-- User Row 3 -->
+<tr class="group hover:bg-slate-50 transition-colors">
+<td class="py-4 px-6 border-none" style="">
+<input class="rounded text-primary focus:ring-primary border-outline-variant" type="checkbox">
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="Smiling young male student in a library environment with warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjveOBWjcA9ndJRQ2m2t3gAlUGKKoc3xG72t1nzuo6JzkNHaWRN3tYGwrhg4GM0iyGh-yyF7Nd5StnPRHd3Yz7RW-1hkwy1f3N0LVreDmr3qJfH6cQGASiA0_Fi5Pn1uqmWRwAbqErSiuCF7LsgYKBRpOLM0ArVepIiYGJo4kSAhsiWffbKnz7UUm4m88m4ogOtBuvkik6zS7HdS9INtONqtoXwLELPbgC9ENN6BMqoUV291eqAwDNKqI8jxLRGvu7b7Tn4Xq80uim" style="">
+</div>
+<div>
+<div class="font-semibold text-on-surface" style="">Jordan Smith</div>
+<div class="text-xs text-on-surface-variant" style="">Undergraduate - Year 3</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-sm text-on-surface-variant" style="">j.smith@student.atelier-edu.org</td>
+<td class="py-4 px-6 border-none" style="">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-[14px]" style="">person</span> Student
+                                </span>
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="text-sm font-medium text-on-surface" style="">Active</span>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-right" style="">
+<button class="text-primary hover:text-primary-container font-semibold text-sm transition-colors px-4 py-2 rounded-lg hover:bg-primary-fixed" style="">Manage Permissions</button>
+</td>
+</tr>
+<!-- User Row 4 -->
+<tr class="group hover:bg-slate-50 transition-colors">
+<td class="py-4 px-6 border-none" style="">
+<input class="rounded text-primary focus:ring-primary border-outline-variant" type="checkbox">
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" data-alt="Portrait of a young woman with a focused, professional look in an academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd5Bzl8rKLwm6h8rcMqgIk7lrkpbuD3TGoP9I50y6CSe_lboOyimiUOT5bnpJRoGvVYazIPvqtHLnN20uIaHY9kCSgvUER0xauGPeNU5xFTxebkiryhJIaKhnyjW7oceoIveZQxFLCMOVdNtxtLxy37c_SRvz_4L5lNjnWHzxvWfE4z16Fs2TUqy4XzGStVlRbAtyErqsaySfKSAoYDY-Ss2Bg0up7jTEhFwXF73rY0sp9eikrSDyCxmS3DQ3vTJjsfhrVojdjcUdk" style="">
+</div>
+<div>
+<div class="font-semibold text-on-surface" style="">Sarah Chen</div>
+<div class="text-xs text-on-surface-variant" style="">Registrar's Office</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-sm text-on-surface-variant" style="">s.chen@atelier-edu.org</td>
+<td class="py-4 px-6 border-none" style="">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-[14px]" style="">assignment_ind</span> Registrar
+                                </span>
+</td>
+<td class="py-4 px-6 border-none" style="">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-sm font-medium text-on-surface" style="">Inactive</span>
+</div>
+</td>
+<td class="py-4 px-6 border-none text-right" style="">
+<button class="text-primary hover:text-primary-container font-semibold text-sm transition-colors px-4 py-2 rounded-lg hover:bg-primary-fixed" style="">Manage Permissions</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination / Footer Logic -->
+<div class="py-4 px-6 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant font-label">
+<div class="" style="">Showing 1 - 4 of 12,482 users</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-outline-variant opacity-50 cursor-not-allowed" style="">
+<span class="material-symbols-outlined text-sm" style="">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold" style="">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container transition-colors" style="">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container transition-colors" style="">3</button>
+<span class="flex items-end px-1 pb-1" style="">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container transition-colors" style="">3,121</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest border border-outline-variant hover:bg-surface-container transition-colors" style="">
+<span class="material-symbols-outlined text-sm" style="">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Asymmetric Support Section -->
+<div class="grid grid-cols-3 gap-8 mt-12">
+<div class="col-span-2 bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant/10">
+<h3 class="text-xl font-headline font-bold text-on-surface mb-4" style="">Quick Permission Templates</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-surface-container-low hover:bg-primary-fixed cursor-pointer transition-all border-l-4 border-primary">
+<div class="font-bold text-primary" style="">Senior Faculty</div>
+<p class="text-xs text-on-surface-variant mt-1" style="">Full access to grading, research modules, and department analytics.</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low hover:bg-secondary-fixed cursor-pointer transition-all border-l-4 border-secondary">
+<div class="font-bold text-secondary" style="">External Auditor</div>
+<p class="text-xs text-on-surface-variant mt-1" style="">Read-only access to academic records and financial statements.</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low hover:bg-tertiary-fixed cursor-pointer transition-all border-l-4 border-tertiary">
+<div class="font-bold text-tertiary" style="">Enrollment Officer</div>
+<p class="text-xs text-on-surface-variant mt-1" style="">Write access to student dossiers and registration waitlists.</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-low hover:bg-outline-variant/20 cursor-pointer transition-all border-l-4 border-outline">
+<div class="font-bold text-on-surface" style="">Custom Policy...</div>
+<p class="text-xs text-on-surface-variant mt-1" style="">Define granular access rules for specialized institutional staff.</p>
+</div>
+</div>
+</div>
+<div class="col-span-1 flex flex-col gap-4">
+<div class="flex-1 bg-primary-container text-on-primary-container rounded-2xl p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<h4 class="font-headline font-bold" style="">Need assistance?</h4>
+<p class="text-sm mt-2 opacity-90" style="">Ask the AI Assistant for help with complex permission inheritance issues.</p>
+<button class="mt-4 flex items-center gap-2 bg-primary-fixed text-primary px-4 py-2 rounded-full text-xs font-bold group-hover:scale-105 transition-transform" style="">
+<span class="material-symbols-outlined text-sm" data-icon="smart_toy" style="">smart_toy</span>
+                                Open Assistant
+                            </button>
+</div>
+<span class="material-symbols-outlined absolute -right-6 -top-6 text-[120px] opacity-10" data-icon="bolt" style="">bolt</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

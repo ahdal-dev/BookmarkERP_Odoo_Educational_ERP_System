@@ -1,0 +1,1088 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Officer Portal Templates
+    ========================
+    Admission management, petition review, and student directory for officers/professors
+    -->
+
+    <!-- Officer Dashboard -->
+    <template id="officer_dashboard" name="Officer Dashboard">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'dashboard'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="admission_stats.get('submitted', 0)"/></div>
+                        <div class="stat-label">New Applications</div>
+                    </div>
+                    <a href="/edu-portal/officer/admissions?state=submitted" class="stat-link">Review →</a>
+                </div>
+                
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="admission_stats.get('under_review', 0)"/></div>
+                        <div class="stat-label">Under Review</div>
+                    </div>
+                    <a href="/edu-portal/officer/admissions?state=under_review" class="stat-link">View →</a>
+                </div>
+                
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="petition_stats.get('pending_total', 0)"/></div>
+                        <div class="stat-label">Pending Petitions</div>
+                    </div>
+                    <a href="/edu-portal/officer/petitions" class="stat-link">Review →</a>
+                </div>
+                
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-value"><t t-esc="admission_stats.get('accepted', 0)"/></div>
+                        <div class="stat-label">Accepted</div>
+                    </div>
+                    <a href="/edu-portal/officer/admissions?state=accepted" class="stat-link">View →</a>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="section">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="action-grid">
+                    <a href="/edu-portal/officer/admissions/kanban" class="action-card">
+                        <span class="action-icon">📊</span>
+                        <span class="action-text">Admission Kanban</span>
+                    </a>
+                    <a href="/edu-portal/officer/petitions" class="action-card">
+                        <span class="action-icon">📝</span>
+                        <span class="action-text">Review Petitions</span>
+                    </a>
+                    <a href="/edu-portal/officer/students" class="action-card">
+                        <span class="action-icon">👥</span>
+                        <span class="action-text">Student Directory</span>
+                    </a>
+                    <a href="/edu-portal/officer/courses" class="action-card">
+                        <span class="action-icon">📚</span>
+                        <span class="action-text">Manage Courses</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="dashboard-columns">
+                <div class="dashboard-column">
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Recent Applications</h2>
+                            <a href="/edu-portal/officer/admissions" class="section-link">View All →</a>
+                        </div>
+                        <t t-if="recent_admissions">
+                            <div class="activity-list">
+                                <t t-foreach="recent_admissions" t-as="adm">
+                                    <a t-attf-href="/edu-portal/officer/admissions/#{adm.id}" class="activity-item">
+                                        <div class="activity-info">
+                                            <span class="activity-name"><t t-esc="adm.name"/></span>
+                                            <span class="activity-detail"><t t-esc="adm.program_id.name or 'No program'"/></span>
+                                        </div>
+                                        <span t-attf-class="status-badge status-#{adm.state}">
+                                            <t t-esc="adm.state"/>
+                                        </span>
+                                    </a>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <p class="text-muted">No recent applications</p>
+                        </t>
+                    </div>
+                </div>
+                
+                <div class="dashboard-column">
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Recent Petitions</h2>
+                            <a href="/edu-portal/officer/petitions" class="section-link">View All →</a>
+                        </div>
+                        <t t-if="recent_petitions">
+                            <div class="activity-list">
+                                <t t-foreach="recent_petitions" t-as="pet">
+                                    <a t-attf-href="/edu-portal/officer/petitions/#{pet.id}" class="activity-item">
+                                        <div class="activity-info">
+                                            <span class="activity-name"><t t-esc="pet.student_id.name"/></span>
+                                            <span class="activity-detail"><t t-esc="pet.subject"/></span>
+                                        </div>
+                                        <span t-attf-class="status-badge status-#{pet.state}">
+                                            <t t-esc="pet.state"/>
+                                        </span>
+                                    </a>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <p class="text-muted">No recent petitions</p>
+                        </t>
+                    </div>
+                </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Admissions List -->
+    <template id="officer_admissions_list" name="Admission Pipeline">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'admissions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- View Toggle -->
+            <div class="page-actions">
+                <div class="view-toggle">
+                    <a href="/edu-portal/officer/admissions" class="view-btn active">List</a>
+                    <a href="/edu-portal/officer/admissions/kanban" class="view-btn">Kanban</a>
+                </div>
+            </div>
+            
+            <!-- Search and Filters -->
+            <div class="filter-bar">
+                <form action="/edu-portal/officer/admissions" method="get" class="filter-form">
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Search by name, email, or reference..."
+                           t-att-value="search"/>
+                    <select name="state" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="submitted" t-att-selected="current_state == 'submitted'">Submitted</option>
+                        <option value="under_review" t-att-selected="current_state == 'under_review'">Under Review</option>
+                        <option value="accepted" t-att-selected="current_state == 'accepted'">Accepted</option>
+                        <option value="rejected" t-att-selected="current_state == 'rejected'">Rejected</option>
+                    </select>
+                    <select name="program" class="filter-select">
+                        <option value="">All Programs</option>
+                        <t t-foreach="programs" t-as="prog">
+                            <option t-att-value="prog.id" t-att-selected="current_program == prog.id">
+                                <t t-esc="prog.name"/>
+                            </option>
+                        </t>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+            
+            <!-- Status Tabs -->
+            <div class="filter-tabs">
+                <a href="/edu-portal/officer/admissions?state=all" 
+                   t-attf-class="filter-tab #{current_state == 'all' and 'active' or ''}">
+                    All <span class="badge"><t t-esc="status_counts.get('all', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/admissions?state=submitted" 
+                   t-attf-class="filter-tab #{current_state == 'submitted' and 'active' or ''}">
+                    New <span class="badge badge-primary"><t t-esc="status_counts.get('submitted', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/admissions?state=under_review" 
+                   t-attf-class="filter-tab #{current_state == 'under_review' and 'active' or ''}">
+                    In Review <span class="badge badge-warning"><t t-esc="status_counts.get('under_review', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/admissions?state=accepted" 
+                   t-attf-class="filter-tab #{current_state == 'accepted' and 'active' or ''}">
+                    Accepted <span class="badge badge-success"><t t-esc="status_counts.get('accepted', 0)"/></span>
+                </a>
+            </div>
+            
+            <!-- Admissions Table -->
+            <t t-if="admissions">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Applicant</th>
+                                <th>Email</th>
+                                <th>Program</th>
+                                <th>GPA</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="admissions" t-as="adm">
+                                <tr>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/officer/admissions/#{adm.id}">
+                                            <t t-esc="adm.reference"/>
+                                        </a>
+                                    </td>
+                                    <td><t t-esc="adm.name"/></td>
+                                    <td><t t-esc="adm.email"/></td>
+                                    <td><t t-esc="adm.program_id.name or '-'"/></td>
+                                    <td><t t-esc="adm.gpa" t-options='{"widget": "float", "precision": 2}'/></td>
+                                    <td>
+                                        <span t-attf-class="status-badge status-#{adm.state}">
+                                            <t t-esc="adm.state"/>
+                                        </span>
+                                    </td>
+                                    <td><t t-esc="adm.create_date" t-options='{"widget": "date"}'/></td>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/officer/admissions/#{adm.id}" class="btn btn-sm">Review</a>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/officer/admissions?page=#{page - 1}&amp;state=#{current_state}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/> (<t t-esc="total"/> total)</span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/officer/admissions?page=#{page + 1}&amp;state=#{current_state}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>No Applications Found</h3>
+                    <p>No applications match your current filters.</p>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Admissions Kanban -->
+    <template id="officer_admissions_kanban" name="Admission Kanban">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'admissions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- View Toggle -->
+            <div class="page-actions">
+                <div class="view-toggle">
+                    <a href="/edu-portal/officer/admissions" class="view-btn">List</a>
+                    <a href="/edu-portal/officer/admissions/kanban" class="view-btn active">Kanban</a>
+                </div>
+            </div>
+            
+            <!-- Kanban Board -->
+            <div class="kanban-board">
+                <t t-foreach="columns.items()" t-as="column">
+                    <div class="kanban-column">
+                        <div class="kanban-column-header">
+                            <h3><t t-esc="column[1].get('name')"/></h3>
+                            <span class="kanban-count"><t t-esc="len(column[1].get('items', []))"/></span>
+                        </div>
+                        <div class="kanban-cards">
+                            <t t-foreach="column[1].get('items', [])" t-as="item">
+                                <a t-attf-href="/edu-portal/officer/admissions/#{item.id}" class="kanban-card">
+                                    <div class="kanban-card-header">
+                                        <span class="kanban-ref"><t t-esc="item.reference"/></span>
+                                    </div>
+                                    <div class="kanban-card-body">
+                                        <strong><t t-esc="item.name"/></strong>
+                                        <p class="kanban-program"><t t-esc="item.program_id.name or 'No program'"/></p>
+                                    </div>
+                                    <div class="kanban-card-footer">
+                                        <span class="kanban-gpa">GPA: <t t-esc="item.gpa"/></span>
+                                    </div>
+                                </a>
+                            </t>
+                            <t t-if="not column[1].get('items')">
+                                <div class="kanban-empty">No items</div>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Admission Detail -->
+    <template id="officer_admission_detail" name="Application Detail">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'admissions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="detail-container">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <h2><t t-esc="admission.name"/></h2>
+                            <p class="detail-ref"><t t-esc="admission.reference"/></p>
+                        </div>
+                        <span t-attf-class="status-badge status-#{admission.state} large">
+                            <t t-esc="admission.state"/>
+                        </span>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Email</label>
+                            <span><t t-esc="admission.email"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Phone</label>
+                            <span><t t-esc="admission.phone"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>National ID</label>
+                            <span><t t-esc="admission.national_id"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Program</label>
+                            <span><t t-esc="admission.program_id.name or '-'"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>GPA</label>
+                            <span><t t-esc="admission.gpa"/> / 4.0</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Previous School</label>
+                            <span><t t-esc="admission.previous_school or '-'"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Application Date</label>
+                            <span><t t-esc="admission.application_date" t-options='{"widget": "datetime"}'/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Address</label>
+                            <span><t t-esc="admission.address or '-'"/></span>
+                        </div>
+                    </div>
+                    
+                    <t t-if="admission.transcript_document">
+                        <div class="detail-section">
+                            <h3>Documents</h3>
+                            <div class="document-preview">
+                                <a t-attf-href="/web/content/school.admission/#{admission.id}/transcript_document/#{admission.transcript_filename}?download=true" 
+                                   class="btn btn-secondary">
+                                    📎 Download <t t-esc="admission.transcript_filename or 'Document'"/>
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <t t-if="admission.notes">
+                        <div class="detail-section">
+                            <h3>Notes</h3>
+                            <p><t t-esc="admission.notes"/></p>
+                        </div>
+                    </t>
+                    
+                    <!-- Workflow Actions -->
+                    <div class="detail-section">
+                        <h3>Actions</h3>
+                        <div class="workflow-actions">
+                            <t t-if="admission.state == 'submitted'">
+                                <form t-attf-action="/edu-portal/officer/admissions/#{admission.id}/action" method="post" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="action" value="review"/>
+                                    <button type="submit" class="btn btn-warning">Start Review</button>
+                                </form>
+                            </t>
+                            <t t-if="admission.state in ['submitted', 'under_review']">
+                                <form t-attf-action="/edu-portal/officer/admissions/#{admission.id}/action" method="post" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="action" value="accept"/>
+                                    <button type="submit" class="btn btn-success">Accept</button>
+                                </form>
+                                <form t-attf-action="/edu-portal/officer/admissions/#{admission.id}/action" method="post" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="action" value="reject"/>
+                                    <button type="submit" class="btn btn-danger">Reject</button>
+                                </form>
+                            </t>
+                            <a href="/edu-portal/officer/admissions" class="btn btn-secondary">← Back to List</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Petitions List (Officer View) -->
+    <template id="officer_petitions_list" name="Petition Review">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'petitions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Status Tabs -->
+            <div class="filter-tabs">
+                <a href="/edu-portal/officer/petitions?state=pending" 
+                   t-attf-class="filter-tab #{current_state in ['pending', ''] and 'active' or ''}">
+                    Pending <span class="badge badge-warning"><t t-esc="status_counts.get('pending', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/petitions?state=approved" 
+                   t-attf-class="filter-tab #{current_state == 'approved' and 'active' or ''}">
+                    Approved <span class="badge badge-success"><t t-esc="status_counts.get('approved', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/petitions?state=rejected" 
+                   t-attf-class="filter-tab #{current_state == 'rejected' and 'active' or ''}">
+                    Rejected <span class="badge badge-danger"><t t-esc="status_counts.get('rejected', 0)"/></span>
+                </a>
+            </div>
+            
+            <!-- Petitions Table -->
+            <t t-if="petitions">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Student</th>
+                                <th>Type</th>
+                                <th>Subject</th>
+                                <th>Days Pending</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="petitions" t-as="pet">
+                                <tr t-attf-class="#{pet.days_pending > 5 and 'row-urgent' or ''}">
+                                    <td>
+                                        <a t-attf-href="/edu-portal/officer/petitions/#{pet.id}">
+                                            <t t-esc="pet.name"/>
+                                        </a>
+                                    </td>
+                                    <td><t t-esc="pet.student_id.name"/></td>
+                                    <td><t t-esc="pet.petition_type_id.name or '-'"/></td>
+                                    <td><t t-esc="pet.subject"/></td>
+                                    <td>
+                                        <span t-attf-class="#{pet.days_pending > 5 and 'text-danger' or ''}">
+                                            <t t-esc="pet.days_pending"/> days
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span t-attf-class="status-badge status-#{pet.state}">
+                                            <t t-esc="pet.state"/>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/officer/petitions/#{pet.id}" class="btn btn-sm btn-primary">Review</a>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/officer/petitions?page=#{page - 1}&amp;state=#{current_state}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/officer/petitions?page=#{page + 1}&amp;state=#{current_state}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No Petitions Found</h3>
+                    <p>No petitions match your current filters.</p>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Petition Detail (Officer View) -->
+    <template id="officer_petition_detail" name="Petition Review Detail">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'petitions'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="detail-container">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <h2><t t-esc="petition.subject"/></h2>
+                            <p class="detail-ref"><t t-esc="petition.name"/></p>
+                        </div>
+                        <span t-attf-class="status-badge status-#{petition.state} large">
+                            <t t-esc="petition.state"/>
+                        </span>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Student</label>
+                            <span><t t-esc="petition.student_id.name"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Petition Type</label>
+                            <span><t t-esc="petition.petition_type_id.name or '-'"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Submitted</label>
+                            <span><t t-esc="petition.submitted_date" t-options='{"widget": "datetime"}'/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Days Pending</label>
+                            <span t-attf-class="#{petition.days_pending > 5 and 'text-danger' or ''}">
+                                <t t-esc="petition.days_pending"/> days
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Justification</h3>
+                        <p class="description-text"><t t-esc="petition.description"/></p>
+                    </div>
+                    
+                    <t t-if="petition.attachment_ids">
+                        <div class="detail-section">
+                            <h3>Attachments (<t t-esc="len(petition.attachment_ids)"/>)</h3>
+                            <div class="attachment-list">
+                                <t t-foreach="petition.attachment_ids" t-as="att">
+                                    <div class="attachment-item">
+                                        <span class="attachment-icon">📎</span>
+                                        <span class="attachment-name"><t t-esc="att.name"/></span>
+                                        <a t-attf-href="/web/content/#{att.id}?download=true" class="attachment-download">Download</a>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <!-- Decision Form -->
+                    <t t-if="petition.state in ['submitted', 'under_review']">
+                        <div class="detail-section decision-section">
+                            <h3>Make Decision</h3>
+                            
+                            <div class="decision-actions">
+                                <!-- Start Review -->
+                                <t t-if="petition.state == 'submitted'">
+                                    <form t-attf-action="/edu-portal/officer/petitions/#{petition.id}/action" method="post" class="decision-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="action" value="review"/>
+                                        <button type="submit" class="btn btn-warning">Mark as Under Review</button>
+                                    </form>
+                                </t>
+                                
+                                <!-- Approve -->
+                                <form t-attf-action="/edu-portal/officer/petitions/#{petition.id}/action" method="post" class="decision-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="action" value="approve"/>
+                                    <div class="form-group">
+                                        <label>Comments (optional)</label>
+                                        <textarea name="comments" class="form-textarea" rows="2" placeholder="Add approval notes..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Approve Petition</button>
+                                </form>
+                                
+                                <!-- Reject -->
+                                <form t-attf-action="/edu-portal/officer/petitions/#{petition.id}/action" method="post" class="decision-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="action" value="reject"/>
+                                    <div class="form-group">
+                                        <label>Rejection Reason (required)</label>
+                                        <textarea name="rejection_reason" class="form-textarea" rows="2" placeholder="Explain why this petition is being rejected..." required="required"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">Reject Petition</button>
+                                </form>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <div class="detail-actions">
+                        <a href="/edu-portal/officer/petitions" class="btn btn-secondary">← Back to Petitions</a>
+                    </div>
+                </div>
+                
+                <!-- Student History Sidebar -->
+                <t t-if="student_history">
+                    <div class="detail-sidebar">
+                        <div class="sidebar-card">
+                            <h4>Student History</h4>
+                            <div class="history-list">
+                                <t t-foreach="student_history" t-as="hist">
+                                    <div class="history-item">
+                                        <span class="history-ref"><t t-esc="hist.name"/></span>
+                                        <span t-attf-class="status-badge status-#{hist.state} small">
+                                            <t t-esc="hist.state"/>
+                                        </span>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Students List -->
+    <template id="officer_students_list" name="Student Directory">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'students'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Search -->
+            <div class="search-bar">
+                <form action="/edu-portal/officer/students" method="get" class="search-form">
+                    <input type="text" name="search" class="search-input" 
+                           placeholder="Search by name, email, or ID..."
+                           t-att-value="search"/>
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+            </div>
+            
+            <!-- Students Table -->
+            <t t-if="students">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="students" t-as="student">
+                                <tr>
+                                    <td><t t-esc="student.name"/></td>
+                                    <td><t t-esc="student.email or student.login"/></td>
+                                    <td>
+                                        <t t-if="student.active">
+                                            <span class="status-badge status-active">Active</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="status-badge status-inactive">Inactive</span>
+                                        </t>
+                                        <t t-if="student.is_on_hold">
+                                            <span class="status-badge status-hold">On Hold</span>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <a t-attf-href="/edu-portal/officer/students/#{student.id}" class="btn btn-sm">View</a>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/officer/students?page=#{page - 1}&amp;search=#{search}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/officer/students?page=#{page + 1}&amp;search=#{search}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3>No Students Found</h3>
+                    <p>Try adjusting your search criteria.</p>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Student Detail (Officer View) -->
+    <template id="officer_student_detail" name="Student Profile">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'students'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <div class="detail-container">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <h2><t t-esc="student.name"/></h2>
+                            <p class="detail-ref"><t t-esc="student.login"/></p>
+                        </div>
+                        <div class="status-badges">
+                            <t t-if="student.active">
+                                <span class="status-badge status-active">Active</span>
+                            </t>
+                            <t t-else="">
+                                <span class="status-badge status-inactive">Inactive</span>
+                            </t>
+                            <t t-if="is_on_hold">
+                                <span class="status-badge status-hold">On Hold</span>
+                            </t>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Email</label>
+                            <span><t t-esc="student.email or '-'"/></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Login</label>
+                            <span><t t-esc="student.login"/></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Hold Toggle -->
+                    <div class="detail-section">
+                        <h3>Account Management</h3>
+                        <form t-attf-action="/edu-portal/officer/students/#{student.id}/toggle-hold" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <t t-if="is_on_hold">
+                                <button type="submit" class="btn btn-success">Remove Hold</button>
+                            </t>
+                            <t t-else="">
+                                <button type="submit" class="btn btn-warning">Place Hold</button>
+                            </t>
+                        </form>
+                    </div>
+                    
+                    <!-- Registrations -->
+                    <t t-if="registrations">
+                        <div class="detail-section">
+                            <h3>Course Registrations</h3>
+                            <div class="table-container">
+                                <table class="data-table small">
+                                    <thead>
+                                        <tr>
+                                            <th>Course</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="registrations[:10]" t-as="reg">
+                                            <tr>
+                                                <td><t t-esc="reg.course_code"/> - <t t-esc="reg.course_name"/></td>
+                                                <td>
+                                                    <span t-attf-class="status-badge status-#{reg.state}">
+                                                        <t t-esc="reg.state"/>
+                                                    </span>
+                                                </td>
+                                                <td><t t-esc="reg.registration_date" t-options='{"widget": "date"}'/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <!-- Petitions -->
+                    <t t-if="petitions">
+                        <div class="detail-section">
+                            <h3>Recent Petitions</h3>
+                            <div class="activity-list">
+                                <t t-foreach="petitions" t-as="pet">
+                                    <a t-attf-href="/edu-portal/officer/petitions/#{pet.id}" class="activity-item">
+                                        <div class="activity-info">
+                                            <span class="activity-name"><t t-esc="pet.name"/></span>
+                                            <span class="activity-detail"><t t-esc="pet.subject"/></span>
+                                        </div>
+                                        <span t-attf-class="status-badge status-#{pet.state}">
+                                            <t t-esc="pet.state"/>
+                                        </span>
+                                    </a>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                    
+                    <div class="detail-actions">
+                        <a href="/edu-portal/officer/students" class="btn btn-secondary">← Back to Directory</a>
+                    </div>
+                </div>
+            </div>
+            
+        </t>
+    </template>
+
+    <!-- Course Management List -->
+    <template id="officer_courses_list" name="Course Management">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'courses'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Success/Error Messages -->
+            <t t-if="success">
+                <div class="alert alert-success">
+                    <t t-esc="success"/>
+                </div>
+            </t>
+            <t t-if="error">
+                <div class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+            </t>
+            
+            <!-- Page Header with Add Button -->
+            <div class="page-header">
+                <h1 class="page-title">Course Management</h1>
+                <a href="/edu-portal/officer/courses/new" class="btn btn-primary">+ Add Course</a>
+            </div>
+            
+            <!-- Search and Filters -->
+            <div class="filter-bar">
+                <form action="/edu-portal/officer/courses" method="get" class="filter-form">
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Search by name, code, or instructor..."
+                           t-att-value="search"/>
+                    <select name="status" class="filter-select">
+                        <option value="active" t-att-selected="current_status == 'active'">Active Courses</option>
+                        <option value="inactive" t-att-selected="current_status == 'inactive'">Archived Courses</option>
+                        <option value="all" t-att-selected="current_status == 'all'">All Courses</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+            
+            <!-- Status Tabs -->
+            <div class="filter-tabs">
+                <a href="/edu-portal/officer/courses?status=active" 
+                   t-attf-class="filter-tab #{current_status == 'active' and 'active' or ''}">
+                    Active <span class="badge"><t t-esc="status_counts.get('active', 0)"/></span>
+                </a>
+                <a href="/edu-portal/officer/courses?status=inactive" 
+                   t-attf-class="filter-tab #{current_status == 'inactive' and 'active' or ''}">
+                    Archived <span class="badge badge-secondary"><t t-esc="status_counts.get('inactive', 0)"/></span>
+                </a>
+                <span class="filter-tab-divider">|</span>
+                <span class="filter-tab-info">
+                    <span class="badge badge-success"><t t-esc="status_counts.get('open', 0)"/></span> Open Registration
+                    <span class="badge badge-danger" style="margin-left: 8px;"><t t-esc="status_counts.get('closed', 0)"/></span> Closed
+                </span>
+            </div>
+            
+            <!-- Courses Table -->
+            <t t-if="courses">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Instructor</th>
+                                <th>Seats</th>
+                                <th>Semester</th>
+                                <th>Registration</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="courses" t-as="course">
+                                <tr>
+                                    <td><strong><t t-esc="course.code"/></strong></td>
+                                    <td><t t-esc="course.name"/></td>
+                                    <td><t t-esc="course.instructor or '-'"/></td>
+                                    <td>
+                                        <span t-attf-class="badge #{course.available_seats > 5 and 'badge-success' or (course.available_seats > 0 and 'badge-warning' or 'badge-danger')}">
+                                            <t t-esc="course.available_seats"/>/<t t-esc="course.total_seats"/>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <t t-if="course.semester">
+                                            <t t-esc="course.semester.capitalize()"/> <t t-esc="course.year"/>
+                                        </t>
+                                        <t t-else="">-</t>
+                                    </td>
+                                    <td>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/toggle-status" method="post" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" t-attf-class="btn btn-sm #{course.registration_open and 'btn-success' or 'btn-danger'}">
+                                                <t t-if="course.registration_open">Open</t>
+                                                <t t-else="">Closed</t>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <t t-if="course.active">
+                                            <span class="badge badge-success">Active</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-secondary">Archived</span>
+                                        </t>
+                                    </td>
+                                    <td class="action-cell">
+                                        <a t-attf-href="/edu-portal/officer/courses/#{course.id}/edit" class="btn btn-sm btn-outline-primary" title="Edit">✏️</a>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/toggle-active" method="post" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" t-att-title="course.active and 'Archive' or 'Restore'">
+                                                <t t-if="course.active">📦</t>
+                                                <t t-else="">♻️</t>
+                                            </button>
+                                        </form>
+                                        <form t-attf-action="/edu-portal/officer/courses/#{course.id}/delete" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this course? This cannot be undone.');">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">🗑️</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <t t-if="total_pages > 1">
+                    <div class="pagination">
+                        <t t-if="page > 1">
+                            <a t-attf-href="/edu-portal/officer/courses?page=#{page - 1}&amp;status=#{current_status}&amp;search=#{search}" class="page-link">← Previous</a>
+                        </t>
+                        <span class="page-info">Page <t t-esc="page"/> of <t t-esc="total_pages"/></span>
+                        <t t-if="page &lt; total_pages">
+                            <a t-attf-href="/edu-portal/officer/courses?page=#{page + 1}&amp;status=#{current_status}&amp;search=#{search}" class="page-link">Next →</a>
+                        </t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="empty-state">
+                    <p>No courses found.</p>
+                    <a href="/edu-portal/officer/courses/new" class="btn btn-primary">Create First Course</a>
+                </div>
+            </t>
+            
+        </t>
+    </template>
+
+    <!-- Course Create/Edit Form -->
+    <template id="officer_course_form" name="Course Form">
+        <t t-set="is_officer" t-value="True"/>
+        <t t-set="dashboard_url" t-value="'/edu-portal/officer/dashboard'"/>
+        <t t-set="active_menu" t-value="'courses'"/>
+        <t t-call="edu_portal_gateway.portal_layout">
+            
+            <!-- Error Message -->
+            <t t-if="error">
+                <div class="alert alert-danger">
+                    <t t-esc="error"/>
+                </div>
+            </t>
+            
+            <!-- Form Card -->
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>
+                        <t t-if="is_edit">Edit Course: <t t-esc="course.code"/></t>
+                        <t t-else="">Create New Course</t>
+                    </h2>
+                </div>
+                
+                <form t-attf-action="#{is_edit and '/edu-portal/officer/courses/' + str(course.id) + '/update' or '/edu-portal/officer/courses/create'}" method="post" class="portal-form">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="code">Course Code *</label>
+                            <input type="text" id="code" name="code" class="form-control" 
+                                   t-att-value="course.code if course else ''" required="" placeholder="e.g., CS101"/>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label for="name">Course Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" 
+                                   t-att-value="course.name if course else ''" required="" placeholder="e.g., Introduction to Computer Science"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" 
+                                  placeholder="Course description..."><t t-if="course"><t t-esc="course.description or ''"/></t></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="instructor">Instructor</label>
+                            <input type="text" id="instructor" name="instructor" class="form-control" 
+                                   t-att-value="course.instructor if course else ''" placeholder="e.g., Dr. Smith"/>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="schedule">Schedule</label>
+                            <input type="text" id="schedule" name="schedule" class="form-control" 
+                                   t-att-value="course.schedule if course else ''" placeholder="e.g., MWF 10:00-11:00"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="total_seats">Total Seats</label>
+                            <input type="number" id="total_seats" name="total_seats" class="form-control" 
+                                   t-att-value="course.total_seats if course else 30" min="1"/>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="credits">Credits</label>
+                            <input type="number" id="credits" name="credits" class="form-control" 
+                                   t-att-value="course.credits if course else 3" min="1" max="12"/>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="year">Year</label>
+                            <input type="number" id="year" name="year" class="form-control" 
+                                   t-att-value="course.year if course else 2026" min="2020" max="2030"/>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="semester">Semester</label>
+                            <select id="semester" name="semester" class="form-control">
+                                <t t-foreach="semesters" t-as="sem">
+                                    <option t-att-value="sem[0]" t-att-selected="course and course.semester == sem[0]">
+                                        <t t-esc="sem[1]"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-check" style="margin-top: 32px;">
+                                <input type="checkbox" id="registration_open" name="registration_open" class="form-check-input"
+                                       t-att-checked="course.registration_open if course else False"/>
+                                <label for="registration_open" class="form-check-label">Registration Open</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <a href="/edu-portal/officer/courses" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <t t-if="is_edit">Update Course</t>
+                            <t t-else="">Create Course</t>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+        </t>
+    </template>
+
+</odoo>

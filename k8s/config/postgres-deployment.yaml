@@ -1,0 +1,156 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: default
+  labels:
+    app: edu-erp
+    component: postgres-db
+    version: v1
+  annotations:
+    description: "PostgreSQL database backend for Odoo ERP"
+spec:
+  replicas: 1  # PostgreSQL should typically run as a single instance or use StatefulSet
+  strategy:
+    type: Recreate  # Recreate strategy for databases (not RollingUpdate)
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: postgres-db
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: postgres-db
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5432"
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: sql
+          containerPort: 5432
+          protocol: TCP
+
+        # ====================================================================
+        # Environment Variables - Injected from Secrets
+        # ====================================================================
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: edu-erp-secrets
+              key: DB_NAME
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: TZ
+          value: "Africa/Cairo"
+
+        # ====================================================================
+        # Resource Requests & Limits
+        # ====================================================================
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+        # ====================================================================
+        # Liveness Probe - Checks if PostgreSQL is running
+        # ====================================================================
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -h 127.0.0.1
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+        # ====================================================================
+        # Readiness Probe - Checks if PostgreSQL is ready to accept connections
+        # ====================================================================
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -h 127.0.0.1
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+          successThreshold: 1
+
+        # ====================================================================
+        # Volume Mounts
+        # ====================================================================
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        - name: tmp
+          mountPath: /tmp
+
+        # ====================================================================
+        # Security Context
+        # ====================================================================
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+
+      # ====================================================================
+      # Pod-level Security Context
+      # ====================================================================
+      securityContext:
+        fsGroup: 999
+
+      # ====================================================================
+      # Service Account
+      # ====================================================================
+      serviceAccountName: postgres-sa
+
+      # ====================================================================
+      # Volumes
+      # ====================================================================
+      volumes:
+      - name: postgres-data
+        emptyDir: {}  # In production, use PersistentVolume
+      - name: postgres-initdb
+        configMap:
+          name: postgres-initdb
+      - name: tmp
+        emptyDir: {}
+
+      # ====================================================================
+      # Restart Policy
+      # ====================================================================
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+      # DNS Configuration
+      dnsPolicy: ClusterFirst

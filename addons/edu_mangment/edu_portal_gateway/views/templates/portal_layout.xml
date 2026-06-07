@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 
+    Portal Layout Template
+    ======================
+    Base layout for all Educational Portal pages.
+    Provides consistent navigation, sidebar, and footer across all portal views.
+    -->
+
+    <!-- Main Portal Layout -->
+    <template id="portal_layout" name="Educational Portal Layout">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title><t t-esc="page_name"/> - Zewail City Educational ERP</title>
+                <link rel="stylesheet" href="/edu_portal_gateway/static/src/css/portal.css"/>
+            </t>
+            
+            <div class="edu-portal-wrapper">
+                <!-- Sidebar Navigation -->
+                <nav class="edu-portal-sidebar" id="portalSidebar">
+                    <div class="sidebar-header">
+                        <div class="brand-logo">
+                            <span class="brand-icon">🎓</span>
+                            <span class="brand-text">Academic ERP</span>
+                        </div>
+                        <span class="sidebar-subtitle">Management Suite</span>
+                    </div>
+                    
+                    <div class="sidebar-content">
+                        <ul class="sidebar-nav">
+                            <!-- Dashboard Link (all roles) -->
+                            <li class="nav-item">
+                                <a t-attf-href="#{dashboard_url or '/edu-portal'}" 
+                                   t-attf-class="nav-link #{active_menu == 'dashboard' and 'active' or ''}">
+                                    <span class="nav-icon">📊</span>
+                                    <span class="nav-text">Dashboard</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Student Navigation -->
+                            <t t-if="is_student">
+                                <li class="nav-item">
+                                    <a href="/edu-portal/student/petitions" 
+                                       t-attf-class="nav-link #{active_menu == 'petitions' and 'active' or ''}">
+                                        <span class="nav-icon">📝</span>
+                                        <span class="nav-text">Petitions</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/student/courses" 
+                                       t-attf-class="nav-link #{active_menu == 'courses' and 'active' or ''}">
+                                        <span class="nav-icon">📚</span>
+                                        <span class="nav-text">Course Catalog</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/student/cart" 
+                                       t-attf-class="nav-link #{active_menu == 'cart' and 'active' or ''}">
+                                        <span class="nav-icon">🛒</span>
+                                        <span class="nav-text">Registration Cart</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/student/registrations" 
+                                       t-attf-class="nav-link #{active_menu == 'registrations' and 'active' or ''}">
+                                        <span class="nav-icon">✅</span>
+                                        <span class="nav-text">My Registrations</span>
+                                    </a>
+                                </li>
+                            </t>
+                            
+                            <!-- Officer Navigation -->
+                            <t t-if="is_officer">
+                                <li class="nav-item">
+                                    <a href="/edu-portal/officer/admissions" 
+                                       t-attf-class="nav-link #{active_menu == 'admissions' and 'active' or ''}">
+                                        <span class="nav-icon">📋</span>
+                                        <span class="nav-text">Admissions</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/officer/petitions" 
+                                       t-attf-class="nav-link #{active_menu == 'petitions' and 'active' or ''}">
+                                        <span class="nav-icon">📝</span>
+                                        <span class="nav-text">Petition Review</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/officer/students" 
+                                       t-attf-class="nav-link #{active_menu == 'students' and 'active' or ''}">
+                                        <span class="nav-icon">👥</span>
+                                        <span class="nav-text">Student Directory</span>
+                                    </a>
+                                </li>
+                            </t>
+                            
+                            <!-- Admin Navigation -->
+                            <t t-if="is_admin">
+                                <li class="nav-item">
+                                    <a href="/edu-portal/admin/users" 
+                                       t-attf-class="nav-link #{active_menu == 'users' and 'active' or ''}">
+                                        <span class="nav-icon">👤</span>
+                                        <span class="nav-text">User Management</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/admin/courses" 
+                                       t-attf-class="nav-link #{active_menu == 'courses' and 'active' or ''}">
+                                        <span class="nav-icon">📚</span>
+                                        <span class="nav-text">Courses</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/admin/settings" 
+                                       t-attf-class="nav-link #{active_menu == 'settings' and 'active' or ''}">
+                                        <span class="nav-icon">⚙️</span>
+                                        <span class="nav-text">Settings</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="/edu-portal/admin/reports" 
+                                       t-attf-class="nav-link #{active_menu == 'reports' and 'active' or ''}">
+                                        <span class="nav-icon">📈</span>
+                                        <span class="nav-text">Reports</span>
+                                    </a>
+                                </li>
+                            </t>
+                        </ul>
+                    </div>
+                    
+                    <div class="sidebar-footer">
+                        <a href="/edu-portal/help" class="nav-link">
+                            <span class="nav-icon">❓</span>
+                            <span class="nav-text">Help Center</span>
+                        </a>
+                        <a href="/edu-portal/logout" class="nav-link logout-link">
+                            <span class="nav-icon">🚪</span>
+                            <span class="nav-text">Logout</span>
+                        </a>
+                    </div>
+                </nav>
+                
+                <!-- Main Content Area -->
+                <main class="edu-portal-main">
+                    <!-- Top Header -->
+                    <header class="portal-header">
+                        <div class="header-left">
+                            <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+                            <h1 class="page-title"><t t-esc="page_name"/></h1>
+                        </div>
+                        <div class="header-right">
+                            <div class="user-info">
+                                <span class="user-name"><t t-esc="user.name"/></span>
+                                <span class="user-role">
+                                    <t t-if="is_admin">Administrator</t>
+                                    <t t-elif="is_officer">Officer</t>
+                                    <t t-elif="is_student">Student</t>
+                                </span>
+                            </div>
+                            <div class="user-avatar">
+                                <t t-esc="user.name[:2].upper()"/>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <!-- Alert Messages -->
+                    <div class="portal-alerts">
+                        <t t-if="success">
+                            <div class="alert alert-success">
+                                <span class="alert-icon">✓</span>
+                                <span class="alert-text"><t t-esc="success"/></span>
+                                <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                            </div>
+                        </t>
+                        <t t-if="error">
+                            <div class="alert alert-error">
+                                <span class="alert-icon">!</span>
+                                <span class="alert-text"><t t-esc="error"/></span>
+                                <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                            </div>
+                        </t>
+                    </div>
+                    
+                    <!-- Page Content -->
+                    <div class="portal-content">
+                        <t t-raw="0"/>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <footer class="portal-footer">
+                        <div class="footer-content">
+                            <span>Academic ERP | Management Suite v4.2.0</span>
+                            <span class="footer-links">
+                                <a href="/privacy-policy">Privacy Policy</a>
+                                <a href="/terms">Terms of Service</a>
+                                <a href="/help">Help &amp; Support</a>
+                            </span>
+                        </div>
+                    </footer>
+                </main>
+            </div>
+            
+            <script src="/edu_portal_gateway/static/src/js/portal.js"/>
+        </t>
+    </template>
+
+    <!-- Access Denied Page -->
+    <template id="portal_access_denied" name="Access Denied">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <title>Access Denied - Educational ERP</title>
+                <link rel="stylesheet" href="/edu_portal_gateway/static/src/css/portal.css"/>
+            </t>
+            <div class="error-page">
+                <div class="error-content">
+                    <div class="error-icon">🔒</div>
+                    <h1>Access Denied</h1>
+                    <p><t t-esc="error_message or 'You do not have permission to access this page.'"/></p>
+                    <div class="error-actions">
+                        <a href="/edu-portal" class="btn btn-primary">Go to Portal</a>
+                        <a href="/edu/login" class="btn btn-secondary">Login</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- 404 Not Found Page -->
+    <template id="portal_not_found" name="Page Not Found">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <title>Page Not Found - Educational ERP</title>
+                <link rel="stylesheet" href="/edu_portal_gateway/static/src/css/portal.css"/>
+            </t>
+            <div class="error-page">
+                <div class="error-content">
+                    <div class="error-icon">🔍</div>
+                    <h1>Page Not Found</h1>
+                    <p>The page you're looking for doesn't exist or has been moved.</p>
+                    <div class="error-actions">
+                        <a href="/edu-portal" class="btn btn-primary">Go to Portal</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>

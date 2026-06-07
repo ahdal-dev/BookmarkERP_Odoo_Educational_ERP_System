@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Educational Portal Gateway - Record Rules
+    
+    These rules enforce row-level security to ensure:
+    1. Students can only access their own data (US 02.04)
+    2. Officers can access all student records
+    3. Admins have unrestricted access
+    -->
+
+    <!-- =============================================== -->
+    <!-- PETITION RECORD RULES                          -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can only see their own petitions -->
+    <record id="rule_student_petition_own" model="ir.rule">
+        <field name="name">Students: Own Petitions Only</field>
+        <field name="model_id" ref="edu_mang_petition.model_student_petition"/>
+        <field name="domain_force">[('student_id', '=', user.partner_id.id)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Officers: Can see all petitions -->
+    <record id="rule_officer_petition_all" model="ir.rule">
+        <field name="name">Officers: All Petitions</field>
+        <field name="model_id" ref="edu_mang_petition.model_student_petition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Admins: Full access to petitions -->
+    <record id="rule_admin_petition_all" model="ir.rule">
+        <field name="name">Admins: Full Petition Access</field>
+        <field name="model_id" ref="edu_mang_petition.model_student_petition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- CART RECORD RULES                              -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can only see/modify their own cart -->
+    <record id="rule_student_cart_own" model="ir.rule">
+        <field name="name">Students: Own Cart Only</field>
+        <field name="model_id" ref="custom_registration.model_education_cart"/>
+        <field name="domain_force">[('student_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Officers: Can view all carts (read-only) -->
+    <record id="rule_officer_cart_read" model="ir.rule">
+        <field name="name">Officers: View All Carts</field>
+        <field name="model_id" ref="custom_registration.model_education_cart"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- REGISTRATION RECORD RULES                      -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can only see their own registrations -->
+    <record id="rule_student_registration_own" model="ir.rule">
+        <field name="name">Students: Own Registrations Only</field>
+        <field name="model_id" ref="custom_registration.model_education_registration"/>
+        <field name="domain_force">[('student_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Officers: Full access to registrations -->
+    <record id="rule_officer_registration_all" model="ir.rule">
+        <field name="name">Officers: All Registrations</field>
+        <field name="model_id" ref="custom_registration.model_education_registration"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- COURSE RECORD RULES                            -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can read all active courses -->
+    <record id="rule_student_course_active" model="ir.rule">
+        <field name="name">Students: Active Courses Only</field>
+        <field name="model_id" ref="custom_registration.model_education_course"/>
+        <field name="domain_force">[('active', '=', True)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Officers: Full course access -->
+    <record id="rule_officer_course_all" model="ir.rule">
+        <field name="name">Officers: All Courses</field>
+        <field name="model_id" ref="custom_registration.model_education_course"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- ADMISSION RECORD RULES                         -->
+    <!-- =============================================== -->
+
+    <!-- Officers: Full admission access -->
+    <record id="rule_officer_admission_all" model="ir.rule">
+        <field name="name">Officers: All Admissions</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Admins: Full admission access -->
+    <record id="rule_admin_admission_all" model="ir.rule">
+        <field name="name">Admins: Full Admission Access</field>
+        <field name="model_id" ref="edu_mang_admission.model_school_admission"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- USER RECORD RULES (Portal Context)             -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can read limited user data for other students in same courses -->
+    <!-- Note: Primary user rules are in edu_mang_auth -->
+    <record id="rule_student_users_self" model="ir.rule">
+        <field name="name">Portal Students: Own User Only</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="domain_force">[('id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- =============================================== -->
+    <!-- ATTACHMENT RECORD RULES                        -->
+    <!-- =============================================== -->
+
+    <!-- Students: Can access attachments on their own records -->
+    <record id="rule_student_attachment_own" model="ir.rule">
+        <field name="name">Students: Own Attachments</field>
+        <field name="model_id" ref="base.model_ir_attachment"/>
+        <field name="domain_force">[
+            '|',
+            ('create_uid', '=', user.id),
+            '&amp;',
+            ('res_model', '=', 'student.petition'),
+            ('res_id', 'in', [p.id for p in user.env['student.petition'].sudo().search([('student_id', '=', user.partner_id.id)])])
+        ]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_student'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Officers: Can access all petition attachments -->
+    <record id="rule_officer_attachment_petitions" model="ir.rule">
+        <field name="name">Officers: Petition Attachments</field>
+        <field name="model_id" ref="base.model_ir_attachment"/>
+        <field name="domain_force">[('res_model', 'in', ['student.petition', 'school.admission'])]</field>
+        <field name="groups" eval="[(4, ref('edu_mang_auth.group_erp_admission_officer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

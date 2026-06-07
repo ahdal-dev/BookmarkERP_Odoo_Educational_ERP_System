@@ -1,0 +1,161 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Login - Intellectual Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Public_Sans:wght@400;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#d9dadb",
+              "surface-container-highest": "#e1e3e4",
+              "outline-variant": "#d1c3ca",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#191c1d",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#bac3ff",
+              "error": "#ba1a1a",
+              "on-secondary-fixed-variant": "#394378",
+              "surface-container-high": "#e7e8e9",
+              "secondary-fixed": "#dee0ff",
+              "on-secondary-container": "#434d83",
+              "primary-container": "#714b67",
+              "inverse-surface": "#2e3132",
+              "surface-variant": "#e1e3e4",
+              "primary": "#57344f",
+              "on-tertiary-container": "#c0d5a0",
+              "inverse-on-surface": "#f0f1f2",
+              "surface-tint": "#79526f",
+              "primary-fixed-dim": "#e9b8d9",
+              "on-secondary-fixed": "#0b164a",
+              "secondary": "#515b92",
+              "background": "#f8f9fa",
+              "on-surface-variant": "#4e444a",
+              "on-primary-fixed": "#2f1029",
+              "on-tertiary": "#ffffff",
+              "surface-container-low": "#f3f4f5",
+              "outline": "#80747a",
+              "tertiary-fixed-dim": "#b9ce9a",
+              "tertiary": "#34451e",
+              "secondary-container": "#b7c0fe",
+              "on-primary-container": "#f0bfe0",
+              "on-error": "#ffffff",
+              "surface": "#f8f9fa",
+              "on-error-container": "#93000a",
+              "on-surface": "#191c1d",
+              "tertiary-container": "#4b5d33",
+              "primary-fixed": "#ffd7f1",
+              "on-primary-fixed-variant": "#5f3b56",
+              "on-tertiary-fixed-variant": "#3b4c24",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#d5eab4",
+              "surface-container": "#edeeef",
+              "inverse-primary": "#e9b8d9",
+              "on-tertiary-fixed": "#112000",
+              "surface-bright": "#f8f9fa"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Public Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-academic-gradient {
+            background: radial-gradient(circle at top right, #f3f4f5 0%, #f8f9fa 100%);
+        }
+        .login-card-shadow {
+            box-shadow: 0 20px 40px rgba(25, 28, 29, 0.06);
+        }
+        .cta-gradient {
+            background: linear-gradient(135deg, #57344f 0%, #714b67 100%);
+        }
+    </style>
+</head>
+<body class="bg-academic-gradient font-body text-on-surface min-h-screen flex items-center justify-center p-6">
+<div class="w-full max-w-md">
+<!-- Logo/Branding Header -->
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center w-16 h-16 bg-surface-container-highest rounded-xl mb-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="account_balance" style="">account_balance</span>
+</div>
+<h1 class="font-headline text-3xl font-extrabold tracking-tight text-primary" style="">Edu Management</h1>
+<p class="font-label text-xs uppercase tracking-widest text-on-surface-variant mt-2" style="">Academic ERP Suite</p>
+</div>
+<!-- Main Login Card -->
+<div class="bg-surface-container-lowest p-10 rounded-xl login-card-shadow border border-outline-variant/10">
+<div class="mb-8">
+<h2 class="font-headline text-xl font-bold text-on-surface" style="">Welcome back</h2>
+<p class="text-on-surface-variant text-sm mt-1" style="">Please enter your credentials to access the portal.</p>
+</div>
+<form action="#" class="space-y-6" method="POST">
+<!-- Email/ID Field -->
+<div class="space-y-2">
+<label class="font-label text-[0.75rem] font-bold uppercase tracking-wider text-on-surface-variant block" for="email" style="">Email/Student ID</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="alternate_email" style="">alternate_email</span>
+</div>
+<input class="block w-full pl-11 pr-4 py-3 bg-surface-container-low border-transparent rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" id="email" name="email" placeholder="e.g. STU-2024-001" type="text">
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-label text-[0.75rem] font-bold uppercase tracking-wider text-on-surface-variant block" for="password" style="">Password</label>
+<a class="text-xs font-semibold text-primary hover:text-primary-container transition-colors" href="#" style="">Forgot Password?</a>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="lock" style="">lock</span>
+</div>
+<input class="block w-full pl-11 pr-4 py-3 bg-surface-container-low border-transparent rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" id="password" name="password" placeholder="••••••••" type="password">
+</div>
+</div>
+<!-- Login Button -->
+<button class="cta-gradient w-full py-4 rounded-full text-on-primary font-headline font-bold text-sm tracking-wide shadow-lg shadow-primary/10 hover:shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2 group" type="submit" style="">
+                    Log in
+                    <span class="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1" data-icon="arrow_forward" style="">arrow_forward</span>
+</button>
+</form>
+<div class="mt-8 pt-8 border-t border-surface-container-high text-center">
+<p class="text-sm text-on-surface-variant" style="">
+                    Not yet a student? 
+                    <a class="text-primary font-bold hover:underline decoration-2 underline-offset-4 ml-1" href="#" style="">Apply Now</a>
+</p>
+</div>
+</div>
+<!-- Footer / Security Note -->
+<div class="mt-12 flex flex-col items-center gap-6">
+<div class="flex items-center gap-3 px-4 py-2 bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="verified_user" style="">verified_user</span>
+<span class="font-label text-[0.65rem] font-bold uppercase tracking-tighter text-on-surface-variant" style="">Secure AES-256 Encrypted Portal</span>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center grayscale opacity-50">
+<img alt="US" class="w-5 h-auto rounded-sm" data-alt="Small crisp icon of the United States flag signifying language selection" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkdAzm23Px2migIMGC3dwG0IXUkPjKFQDjFUGLmHJuqoZ26DtJrZgIAcPonPBAKU6TtgVMhUC_NimswmxVSFDH4oVX6ZgaijzLzn20M0oSErXNQJvlMs8Im-VgxEJee_snGeynmAmoocXH3jMp0LZRyzfd5aAaeFIK5Rifay_0tE5Qy5kxsDqUf_QrvygSv46DV4BXxnAOxNpbON00hGzqPndP48xtf7MxMvLtZrVlP58LKXAgFhEoi-FEjZHo5HOpHBZy9q6PXhPU" style="">
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center grayscale opacity-50">
+<img alt="FR" class="w-5 h-auto rounded-sm" data-alt="Small crisp icon of the French flag signifying alternative language selection" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBd4tyNaCLDzUmUEC3sT6vsgBb3MrkJ0bWmkNB44YaU4oK-JxkJY4dnwkwRyD13EVjPZ9jMSNjc16bEcC0v4nDzTxf4MdruXKQOoassi9U379f3DHia_5nctDw8UkUMuPcCJbL_xREzw6lmKzLNqqMbWUh8PkLzwVxw3r7zywo7nPKuEOEhcNXWgO1AIjYXuaZ0kRWXJ8NvI2bMf4Aq8HnJuXNgGi1xpx2_iSKJ7jbMmpKeRSdN64GwRgcZdDqG9hqBVPwalfi0eERi" style="">
+</div>
+</div>
+</div>
+</div>
+<!-- Background Decoration -->
+<div class="fixed top-0 right-0 -z-10 opacity-10 pointer-events-none overflow-hidden">
+<span class="material-symbols-outlined text-[40rem] rotate-12 translate-x-1/3 -translate-y-1/4 text-primary" data-icon="auto_stories" style="">auto_stories</span>
+</div>
+</body></html>

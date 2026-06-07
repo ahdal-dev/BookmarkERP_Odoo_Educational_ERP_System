@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Educational Portal Gateway App Menu
+    ====================================
+    Defines the main app launcher entry for the Educational Portal.
+    -->
+
+    <!-- URL Action to open the portal (must be defined BEFORE menuitem references it) -->
+    <record id="action_open_edu_portal" model="ir.actions.act_url">
+        <field name="name">Open Educational Portal</field>
+        <field name="url">/edu-portal</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Portal Users Action -->
+    <record id="action_edu_portal_users" model="ir.actions.act_window">
+        <field name="name">Portal Users</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('groups_id.name', 'in', ['ERP Student', 'ERP Admin', 'ERP Admission Officer'])]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Educational Portal Users
+            </p>
+            <p>
+                View all users who have access to the Educational Portal.
+            </p>
+        </field>
+    </record>
+
+    <!-- Main App Menu (appears in app launcher) -->
+    <menuitem id="menu_edu_portal_root"
+              name="Educational Portal"
+              sequence="1"/>
+
+    <!-- Submenu items for backend navigation -->
+    <menuitem id="menu_edu_portal_go_to_portal"
+              name="Open Portal"
+              parent="menu_edu_portal_root"
+              action="action_open_edu_portal"
+              sequence="10"/>
+
+    <menuitem id="menu_edu_portal_users"
+              name="Portal Users"
+              parent="menu_edu_portal_root"
+              action="action_edu_portal_users"
+              sequence="20"/>
+
+</odoo>

@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+
+WORKDIR /STUDENT PERFORMANCE SERVICE
+
+
+COPY requirements.txt .
+
+RUN pip install --default-timeout=1000 --retries 5 --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["uvicorn", "run:app", "--host", "0.0.0.0", "--port", "5000"]

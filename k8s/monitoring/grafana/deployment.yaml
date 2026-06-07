@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: grafana
+    tier: observability
+    version: v11
+  annotations:
+    description: "Grafana visualization platform for Educational ERP monitoring dashboards"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # Recreate required for RWO PVC
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: grafana
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: grafana
+        tier: observability
+    spec:
+      # ================================================================
+      # Init Container — Fix volume permissions for Grafana user (472)
+      # ================================================================
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ['sh', '-c', 'chown -R 472:472 /var/lib/grafana']
+          volumeMounts:
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+
+      # ================================================================
+      # Main Container
+      # ================================================================
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.0.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: web
+              containerPort: 3000
+              protocol: TCP
+
+          # ==============================================================
+          # Environment Variables
+          # ==============================================================
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"    # Change on first login
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://localhost:3000"
+            - name: GF_INSTALL_PLUGINS
+              value: ""
+            # Provisioning paths
+            - name: GF_PATHS_PROVISIONING
+              value: "/etc/grafana/provisioning"
+
+          # ==============================================================
+          # Resource Limits
+          # ==============================================================
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+
+          # ==============================================================
+          # Health Probes
+          # ==============================================================
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # ==============================================================
+          # Volume Mounts
+          # ==============================================================
+          volumeMounts:
+            # Persistent data (SQLite DB, sessions, plugins)
+            - name: grafana-data
+              mountPath: /var/lib/grafana
+
+            # Auto-provisioned Prometheus datasource
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+
+            # Dashboard provider configuration
+            - name: grafana-dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+              readOnly: true
+
+            # Pre-built dashboard JSON files
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards
+              readOnly: true
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 472      # grafana user
+            allowPrivilegeEscalation: false
+
+      # ================================================================
+      # Volumes
+      # ================================================================
+      volumes:
+        - name: grafana-data
+          persistentVolumeClaim:
+            claimName: grafana-data-pvc
+
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+
+        - name: grafana-dashboard-provider
+          configMap:
+            name: grafana-dashboards-provider
+            items:
+              - key: dashboards.yaml
+                path: dashboards.yaml
+
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards-provider
+            items:
+              - key: edu-erp-dashboard.json
+                path: edu-erp-dashboard.json
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
