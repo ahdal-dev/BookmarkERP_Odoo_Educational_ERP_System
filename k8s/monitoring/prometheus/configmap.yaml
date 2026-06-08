@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: prometheus
+    tier: observability
+  annotations:
+    description: "Prometheus scrape configuration for Educational ERP services"
+data:
+  prometheus.yml: |
+    # ================================================================
+    # Prometheus Configuration — Educational ERP Observability
+    # ================================================================
+    global:
+      scrape_interval: 15s        # Default scrape interval
+      scrape_timeout: 10s         # Timeout per scrape
+      evaluation_interval: 15s    # Rule evaluation frequency
+
+      external_labels:
+        cluster: 'edu-erp-k8s'
+        environment: 'production'
+
+    # ================================================================
+    # Scrape Jobs
+    # ================================================================
+    scrape_configs:
+
+      # --------------------------------------------------------------
+      # Job 1: Prometheus Self-Monitoring
+      # --------------------------------------------------------------
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+            labels:
+              service: 'prometheus'
+
+      # --------------------------------------------------------------
+      # Job 2: FastAPI Gateway (/metrics via instrumentator)
+      # --------------------------------------------------------------
+      - job_name: 'fastapi-gateway'
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+        static_configs:
+          - targets: ['fastapi-service.default.svc.cluster.local:8000']
+            labels:
+              service: 'fastapi-gateway'
+              component: 'api-gateway'
+
+      # --------------------------------------------------------------
+      # Job 3: OCR Microservice (/metrics via instrumentator)
+      # --------------------------------------------------------------
+      - job_name: 'ocr-service'
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+        static_configs:
+          - targets: ['ocr-service.default.svc.cluster.local:5000']
+            labels:
+              service: 'ocr-service'
+              component: 'ocr-processor'
+
+      # --------------------------------------------------------------
+      # Job 4: Nginx Gateway (via nginx-prometheus-exporter)
+      # --------------------------------------------------------------
+      - job_name: 'nginx-gateway'
+        metrics_path: '/metrics'
+        scrape_interval: 15s
+        static_configs:
+          - targets: ['nginx-exporter-service.default.svc.cluster.local:9113']
+            labels:
+              service: 'nginx-gateway'
+              component: 'reverse-proxy'
+
+      # --------------------------------------------------------------
+      # Job 5: Odoo ERP (basic up/down via blackbox-style probe)
+      # Health check — Odoo doesn't expose native Prometheus metrics.
+      # We monitor it indirectly through Nginx upstream metrics and
+      # this basic availability probe.
+      # --------------------------------------------------------------
+      - job_name: 'odoo-erp'
+        metrics_path: '/web/health'
+        scrape_interval: 30s
+        scrape_timeout: 15s
+        static_configs:
+          - targets: ['odoo-service.default.svc.cluster.local:8069']
+            labels:
+              service: 'odoo-erp'
+              component: 'erp-backend'

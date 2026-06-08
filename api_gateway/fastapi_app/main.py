@@ -43,7 +43,7 @@ from enum import Enum
 
 # Environment Configuration
 OCR_SERVICE_URL = os.getenv("OCR_SERVICE_URL", "http://ocr_microservice:5000")
-ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8069")
+ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8081")
 ODOO_DB = os.getenv("ODOO_DB", "edu_demo_new")
 ODOO_USERNAME = os.getenv("ODOO_USERNAME", "admin")
 ODOO_PASSWORD = os.getenv("ODOO_PASSWORD", "admin")

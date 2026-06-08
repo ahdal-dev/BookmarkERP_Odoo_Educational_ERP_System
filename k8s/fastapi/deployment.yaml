@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment
+  namespace: default
+  labels:
+    app: edu-erp
+    component: fastapi-gateway
+    version: v1
+  annotations:
+    description: "FastAPI API Gateway for Educational ERP microservices orchestration"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: fastapi-gateway
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: fastapi-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Pod disruption budget for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - fastapi-gateway
+              topologyKey: kubernetes.io/hostname
+
+      containers:
+      - name: fastapi
+        image: fastapi-gateway:latest  # Update with your registry/image
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+
+        # ====================================================================
+        # Environment Variables - Injected from ConfigMap & Secrets
+        # ====================================================================
+        envFrom:
+        - configMapRef:
+            name: edu-erp-config
+        - secretRef:
+            name: edu-erp-secrets
+
+        env:
+        # Override specific values if needed
+        - name: FASTAPI_HOST
+          value: "0.0.0.0"
+        - name: FASTAPI_PORT
+          value: "8000"
+
+        # ====================================================================
+        # Resource Requests & Limits (for proper scheduling and stability)
+        # ====================================================================
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+        # ====================================================================
+        # Liveness Probe - Detects if pod is still running
+        # ====================================================================
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+        # ====================================================================
+        # Readiness Probe - Detects if pod is ready for traffic
+        # ====================================================================
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+          successThreshold: 1
+
+        # ====================================================================
+        # Volume Mounts
+        # ====================================================================
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: tmp
+          mountPath: /tmp
+
+        # ====================================================================
+        # Security Context
+        # ====================================================================
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+
+      # ====================================================================
+      # Pod-level Security Context
+      # ====================================================================
+      securityContext:
+        fsGroup: 1000
+        seLinuxOptions:
+          level: "s0:c123,c456"
+
+      # ====================================================================
+      # Service Account
+      # ====================================================================
+      serviceAccountName: fastapi-sa
+
+      # ====================================================================
+      # Volumes
+      # ====================================================================
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+
+      # ====================================================================
+      # Restart Policy
+      # ====================================================================
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+      # DNS Configuration for service discovery
+      dnsPolicy: ClusterFirst
