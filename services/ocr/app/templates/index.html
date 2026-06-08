@@ -4,6 +4,70 @@
     <meta charset="UTF-8">
     <title>OCR Microservice</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .upload-section {
+            margin-bottom: 30px;
+        }
+        .file-input-wrapper {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-yolo {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-yolo:hover {
+            background-color: #c0392b;
+        }
+        .btn-mistral {
+            background-color: #27ae60;
+            color: white;
+        }
+        .btn-mistral:hover {
+            background-color: #229954;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .spinner {
             display: none;
             border: 8px solid #f3f3f3;
@@ -18,66 +82,256 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .field {
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            font-weight: bold;
+        }
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .results-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        .result-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 15px;
         }
+        .method-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .method-badge.yolo {
+            background-color: #fadbd8;
+            color: #c0392b;
+        }
+        .method-badge.mistral {
+            background-color: #d5f4e6;
+            color: #229954;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .field {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #3498db;
+        }
         .field h3 {
+            margin-top: 0;
             display: inline-block;
             margin-right: 10px;
+            color: #2c3e50;
         }
         .field p {
             display: inline-block;
             font-weight: bold;
+            color: #333;
+            word-break: break-all;
+        }
+        .error-section {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 4px;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
-    <h1>Upload ID Card</h1>
-    <form id="uploadForm" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <input type="submit" value="Upload & Process">
-    </form>
+    <div class="container">
+        <h1>OCR Document Detection</h1>
+        
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.bmp,.tiff,.webp,.pdf" required>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-yolo" id="yoloBtn" onclick="processWithYOLO()">
+                    🎯 Detect with YOLO
+                </button>
+                <button class="btn-mistral" id="mistralBtn" onclick="processWithMistral()">
+                    🔍 Detect with Mistral
+                </button>
+            </div>
+            
+            <div class="status-message info" id="statusMessage"></div>
+        </div>
 
-    <div class="spinner" id="spinner"></div>
+        <div class="spinner" id="spinner"></div>
 
-    <div id="result">
-        {% if result %}
-            <h2>Extracted Fields:</h2>
-            {% for key, value in result.items() %}
-                <div class="field">
-                    <h3>{{ key }}:</h3>
-                    <p>{{ value }}</p>
-                </div>
-            {% endfor %}
-        {% endif %}
+        <div class="results-section" id="resultSection" style="display: none;">
+            <div id="result"></div>
+        </div>
     </div>
 
     <script>
-        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const yoloBtn = document.getElementById('yoloBtn');
+        const mistralBtn = document.getElementById('mistralBtn');
         const spinner = document.getElementById('spinner');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultSection = document.getElementById('resultSection');
         const resultDiv = document.getElementById('result');
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); // prevent default form submission
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.style.display = 'block';
+        }
 
-            spinner.style.display = 'block'; // show spinner
-            resultDiv.innerHTML = ''; // clear previous results
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
 
-            const formData = new FormData(form);
+        function enableButtons() {
+            yoloBtn.disabled = false;
+            mistralBtn.disabled = false;
+        }
 
-            fetch('/ocr', {
+        function disableButtons() {
+            yoloBtn.disabled = true;
+            mistralBtn.disabled = true;
+        }
+
+        function formatResult(result, method) {
+            let html = '<div class="result-header">';
+            
+            if (method === 'yolo') {
+                html += '<span class="method-badge yolo">YOLO Detection</span>';
+            } else if (method === 'mistral') {
+                html += '<span class="method-badge mistral">Mistral OCR</span>';
+            }
+            
+            html += '</div>';
+
+            if (result.error) {
+                html += `<div class="error-section"><strong>Error:</strong> ${result.error}</div>`;
+            } else {
+                html += '<h2>Extracted Data:</h2>';
+                
+                // Check if it's structured extraction result
+                if (result.extracted_data) {
+                    html += `<div class="field"><h3>Document Type:</h3><p>${result.document_type || 'N/A'}</p></div>`;
+                    
+                    // Handle array of results (multi-page)
+                    if (Array.isArray(result.extracted_data)) {
+                        result.extracted_data.forEach((pageData, index) => {
+                            html += `<h3>Page ${index + 1}:</h3>`;
+                            if (typeof pageData === 'object') {
+                                Object.entries(pageData).forEach(([key, value]) => {
+                                    html += `<div class="field"><h3>${key}:</h3><p>${value}</p></div>`;
+                                });
+                            } else {
+                                html += `<div class="field"><p>${pageData}</p></div>`;
+                            }
+                        });
+                    } else if (typeof result.extracted_data === 'object') {
+                        Object.entries(result.extracted_data).forEach(([key, value]) => {
+                            html += `<div class="field"><h3>${key}:</h3><p>${value}</p></div>`;
+                        });
+                    }
+                    
+                    if (result.pages_processed) {
+                        html += `<div class="field"><h3>Pages Processed:</h3><p>${result.pages_processed}</p></div>`;
+                    }
+                } else {
+                    // General extraction result
+                    Object.entries(result).forEach(([key, value]) => {
+                        if (key !== 'detection_method') {
+                            html += `<div class="field"><h3>${key}:</h3><p>${JSON.stringify(value)}</p></div>`;
+                        }
+                    });
+                }
+            }
+
+            return html;
+        }
+
+        function processFile(endpoint, method) {
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showStatus('Please select a file first', 'error');
+                return;
+            }
+
+            disableButtons();
+            spinner.style.display = 'block';
+            resultSection.style.display = 'none';
+            hideStatus();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(endpoint, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
-            .then(html => {
-                spinner.style.display = 'none'; // hide spinner
-                document.body.innerHTML = html; // replace page content with response
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                
+                if (data.error || (data.result && data.result.error)) {
+                    const error = data.error || data.result.error;
+                    showStatus(`Error: ${error}`, 'error');
+                    resultDiv.innerHTML = `<div class="error-section"><strong>Error:</strong> ${error}</div>`;
+                } else {
+                    showStatus('Processing completed successfully', 'success');
+                    const result = data.result || data;
+                    resultDiv.innerHTML = formatResult(result, method);
+                }
+                
+                resultSection.style.display = 'block';
+                enableButtons();
             })
             .catch(err => {
                 spinner.style.display = 'none';
-                alert('Error: ' + err);
+                enableButtons();
+                showStatus(`Error: ${err.message}`, 'error');
+                console.error('Error:', err);
             });
+        }
+
+        function processWithYOLO() {
+            showStatus('Processing with YOLO...', 'info');
+            processFile('/ocr/yolo', 'yolo');
+        }
+
+        function processWithMistral() {
+            showStatus('Processing with Mistral...', 'info');
+            processFile('/ocr/mistral', 'mistral');
+        }
+
+        // Optional: Validate file on change
+        fileInput.addEventListener('change', function() {
+            if (this.files[0]) {
+                hideStatus();
+            }
         });
     </script>
 </body>
