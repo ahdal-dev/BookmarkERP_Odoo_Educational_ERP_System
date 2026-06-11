@@ -18,7 +18,7 @@ name: "📊 Test & Coverage"
 
 on:
   push:
-    branches: "!*main"
+    branches: ["!main"]
     paths:
       - "api_gateway/fastapi_app/**"
       - "services/**"

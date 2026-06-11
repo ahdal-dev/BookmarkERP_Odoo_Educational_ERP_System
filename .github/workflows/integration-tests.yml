@@ -10,7 +10,7 @@ name: "🔗 Integration Tests"
 
 on:
   push:
-    branches: "!main"
+    branches: ["!main"]
     paths:
       - "api_gateway/fastapi_app/**"
       - "addons/edu_mangment/**"
