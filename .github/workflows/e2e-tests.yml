@@ -8,7 +8,7 @@ on:
       - "api_gateway/**"
       - "services/**"
       - "addons/**"
-      - "docker-compose.yml"
+      
       - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
     inputs:
