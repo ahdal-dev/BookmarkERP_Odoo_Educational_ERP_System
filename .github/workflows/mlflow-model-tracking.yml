@@ -23,7 +23,7 @@ name: "📊 MLflow Model Tracking"
 
 on:
   push:
-    branches: ["!main"]
+    branches-ignore: [main]
     paths:
       - "services/**"
       - "tests/**"

@@ -10,7 +10,7 @@ name: "🧪 Unit Tests"
 
 on:
   push:
-    branches: ["!main"]
+    branches-ignore: [main]
     paths:
       - "api_gateway/fastapi_app/**"
       - "services/ocr/**"
