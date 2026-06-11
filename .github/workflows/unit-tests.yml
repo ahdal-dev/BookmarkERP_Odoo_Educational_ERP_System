@@ -58,7 +58,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-unit-${{ hashFiles('tests/requirements-test.txt', 'api_gateway/fastapi_app/requirements.txt') }}
+          key: ${{ runner.os }}-pip-unit-${{ hashFiles('api_gateway/fastapi_app/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-unit-
             ${{ runner.os }}-pip-
