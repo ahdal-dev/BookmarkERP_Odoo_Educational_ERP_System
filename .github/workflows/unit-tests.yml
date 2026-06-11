@@ -11,7 +11,7 @@ name: "🧪 Unit Tests"
 on:
   workflow_call: {}
   push:
-    branches: ["*!main","feature/**"]
+    branches: ["*!main"]
     paths:
       - "api_gateway/fastapi_app/**"
       - "services/ocr/**"
@@ -20,7 +20,7 @@ on:
       - "tests/requirements-test.txt"
       - ".github/workflows/unit-tests.yml"
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - "api_gateway/fastapi_app/**"
       - "services/ocr/**"
@@ -68,8 +68,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r api_gateway/fastapi_app/requirements.txt
-          pip install -r tests/requirements-test.txt
-
+          
       # ── Run unit tests ────────────────────────────────────────────────────
       - name: Run unit tests
         run: |
