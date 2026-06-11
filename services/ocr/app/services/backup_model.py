@@ -235,114 +235,49 @@ def force_convert_numerals(obj):
 print("✅ OCR & extraction functions ready!")
 
 PROMPTS = {
-    "national_id": """Extract all text from the following OCR output of an Egyptian National ID card.
-Return JSON with: full_name, national_id, date_of_birth, gender, address, issue_date, expiry_date.
-JSON only.""",
+    "national_id": """You are a data extraction assistant. Extract information from the following OCR output of an Egyptian National ID card.
+Return a single JSON object with these exact keys: full_name, national_id, date_of_birth, gender, address, issue_date, expiry_date.
+Use null for any missing or unclear values.
+Use YYYY-MM-DD for dates when possible.
+Do not include markdown, explanations, or extra fields. JSON only.""",
 
-    "passport": """Extract all text from the following OCR output of a passport.
-Return JSON with: full_name, passport_number, nationality, date_of_birth, gender, issue_date, expiry_date, mrz_line1, mrz_line2.
-JSON only.""",
+    "passport": """You are a data extraction assistant. Extract information from the following OCR output of a passport document.
+Return a single JSON object with these exact keys: full_name, passport_number, nationality, date_of_birth, gender, issue_date, expiry_date, mrz_line1, mrz_line2.
+Use null for any missing or unclear values.
+Use YYYY-MM-DD for dates when possible.
+Do not include markdown, explanations, or extra fields. JSON only.""",
 
+    "thanawiya_amma": """You are a specialized extractor for Egyptian Thanawiya Amma secondary school certificates.
+Analyze the OCR text and return a single JSON object with these exact keys:
+student_name, seat_number, national_id, school, educational_administration, directorate, first_language, second_language, subjects, non_counted_subjects, total_score, status, certificate_number, has_barcode, has_photo, has_official_stamp.
+- subjects: array of objects with exact keys subject, score, max_score.
+- non_counted_subjects: array of objects with exact keys subject, result.
+- total_score: use only the total score written explicitly in the document; do not calculate it from subject scores.
+- status: use pass or fail.
+- has_barcode, has_photo, has_official_stamp: true or false.
 
-"thanawiya_amma": """أنت نظام متخصص في استخراج البيانات من شهادة الثانوية العامة المصرية.
+For score lines like ٦٠١٣٠ or 60130, interpret them as score/max_score.
+Do not treat the first number in the subject table as the total score unless the document explicitly labels it as the total.
+If a field is missing or unclear, use null.
+Do not include markdown, explanations, or extra fields. JSON only.""",
 
-المهمة:
-تحليل نص OCR لشهادة الثانوية العامة واستخراج البيانات بدقة.
+    "ig_transcript": """Extract all data from the following OCR output of an IGCSE/Cambridge transcript.
+Return a single JSON object with these exact keys: student_name, center_number, candidate_number, exam_session, subjects.
+- subjects: array of objects with exact keys name, grade, mark.
+Use null for any missing or unclear values.
+Do not include markdown, explanations, or extra fields. JSON only.""",
 
-قواعد مهمة:
+    "american_transcript": """Extract all data from the following OCR output of an American school transcript.
+Return a single JSON object with these exact keys: student_name, school, grade_level, gpa, courses, graduation_date.
+- courses: array of objects with exact keys name, grade, credits.
+Use null for any missing or unclear values.
+Use YYYY-MM-DD for dates when possible.
+Do not include markdown, explanations, or extra fields. JSON only.""",
 
-1) تنسيق الدرجات في الجدول غالباً يكون بهذا الشكل:
-٦٠١٣٠
-٤٠١٢٠
-٥٠١٢٥
-
-وهذا يعني:
-الدرجة / الدرجة النهائية
-
-مثال:
-٦٠١٣٠ → الدرجة = 60 ، الدرجة_النهائية = 130
-٤٠١٢٠ → الدرجة = 40 ، الدرجة_النهائية = 120
-٥٠١٢٥ → الدرجة = 50 ، الدرجة_النهائية = 125
-
-2) لا تعتبر أول رقم في الجدول هو المجموع.
-غالباً يظهر المجموع في الجدول كرقم مثل:
-٣٠١٢٥
-
-لكن هذا ليس المجموع الحقيقي.
-
-3) المجموع الحقيقي يكون مكتوب صراحة في الشهادة مثل:
-المجموع: 250
-أو
-المجموع الكلي: 250
-
-4) لا تحسب المجموع من المواد.
-استخرج فقط الرقم المكتوب كمجموع في الوثيقة.
-
-5) المواد التالية لا تضاف للمجموع:
-- التربية الدينية
-- التربية الوطنية
-
-إذا كانت النتيجة مكتوبة "إجتياز" فاستخرجها كالتالي:
-
-{
-"المادة": "التربية الدينية",
-"النتيجة": "إجتياز"
-}
-
-6) إذا كان النص غير واضح ضع القيمة null.
-
-استخرج البيانات التالية:
-
-البيانات الشخصية:
-- اسم الطالب
-- رقم الجلوس
-- الرقم القومي
-- المدرسة
-- الإدارة التعليمية
-- المديرية
-- اللغة الأولى
-- اللغة الثانية
-
-الدرجات:
-استخرج قائمة المواد مع:
-
-{
-"المادة": "",
-"الدرجة": "",
-"الدرجة_النهائية": ""
-}
-
-المواد غير المضافة للمجموع:
-
-{
-"المادة": "",
-"النتيجة": "إجتياز"
-}
-
-الإجمالي:
-- المجموع_الكلي
-- الحالة (ناجح / راسب)
-
-معلومات إضافية:
-- رقم الشهادة
-- يوجد باركود (true/false)
-- يوجد صورة (true/false)
-- يوجد ختم رسمي (true/false)
-
-أعد النتيجة في JSON فقط بدون أي شرح.
-""",
-
-"ig_transcript": """Extract all data from the following OCR output of an IGCSE/Cambridge transcript.
-Return JSON with: student_name, center_number, candidate_number, subjects (array with name, grade, mark), exam_session.
-JSON only.""",
-
-"american_transcript": """Extract all data from the following OCR output of an American school transcript.
-Return JSON with: student_name, school, grade_level, gpa, courses (array with name, grade, credits), graduation_date.
-JSON only.""",
-
-"detect": """Based on the following OCR text, determine the document type.
+    "detect": """Based on the following OCR text, determine the document type.
 Reply with ONLY one of these exact words:
-thanawiya_amma, national_id, passport, ig_transcript, american_transcript""",
+thanawiya_amma, national_id, passport, ig_transcript, american_transcript.
+Do not add any extra text.""",
 }
 print("✅ Prompts loaded")
 
@@ -377,13 +312,11 @@ def detect_doc_type(ocr_text):
         ]
         
         try:
-            # Try with client.chat() method (newer API)
             response = client.chat(
                 model="mistral-large-latest",
                 messages=messages
             )
         except (AttributeError, TypeError):
-            # Fallback to client.chat.complete() (older API)
             try:
                 response = client.chat.complete(
                     model="mistral-large-latest",
@@ -412,85 +345,9 @@ def detect_doc_type(ocr_text):
 
 
 
-# ════════════════════════════════════════════════════
-# 📂 SET YOUR FILE PATH HERE
-# ════════════════════════════════════════════════════
-# FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"  # ← Change this to your file path
-# # ════════════════════════════════════════════════════
 
-# if not os.path.exists(FILE_PATH):
-#     print(f"❌ File not found: {FILE_PATH}")
-# else:
-#     print(f"📂 Processing: {FILE_PATH}\n")
-
-#     # ── Step 1: Run Mistral OCR ──
-#     if is_pdf(FILE_PATH):
-#         print("📄 PDF detected — running Mistral OCR...")
-#         pages = ocr_pdf(FILE_PATH)
-#     else:
-#         print("🖼️ Image detected — running Mistral OCR...")
-#         pages = ocr_image(FILE_PATH)
-
-#     # Combine all page markdown
-#     full_text = ""
-#     for page in pages:
-#         full_text += f"\n\n## Page {page.index + 1}\n\n{page.markdown}"
-#         print(f"  ✅ Page {page.index + 1} OCR complete")
-
-#     print(f"\n📝 Total pages processed: {len(pages)}")
-
-#     # ── Step 2: Auto-detect document type ──
-#     print("\n🔍 Auto-detecting document type...")
-#     doc_type = detect_doc_type(full_text)
-
-#     if doc_type:
-#         print(f"📄 Detected: {doc_type}")
-#     else:
-#         doc_type = prompt_doc_type()
-#         print(f"📄 Selected: {doc_type}")
-
-#     # ── Step 3: Structured extraction ──
-#     print(f"\n📋 Extracting structured data as '{doc_type}'...")
-
-#     if len(pages) == 1:
-#         result, raw = extract_structured(full_text, PROMPTS[doc_type])
-#         result = force_convert_numerals(result)
-
-#         print("\n" + "=" * 60)
-#         print("📊 EXTRACTED DATA (ERP Auto-Fill Ready)")
-#         print("=" * 60)
-#         print(json.dumps(result, ensure_ascii=False, indent=2))
-
-#         print("\n" + "-" * 60)
-#         print("🔤 Raw OCR Markdown:")
-#         print("-" * 60)
-#         print(full_text)
-#     else:
-#         # Process each page separately for multi-page PDFs
-#         all_results = []
-#         for page in pages:
-#             page_text = page.markdown
-#             result, raw = extract_structured(page_text, PROMPTS[doc_type])
-#             result = force_convert_numerals(result)
-#             all_results.append(result)
-#             print(f"  ✅ Page {page.index + 1} structured")
-
-#         print("\n" + "=" * 60)
-#         print("📊 EXTRACTED DATA — ALL PAGES (ERP Auto-Fill Ready)")
-#         print("=" * 60)
-#         for i, res in enumerate(all_results):
-#             print(f"\n━━━ Page {i + 1} ━━━")
-#             print(json.dumps(res, ensure_ascii=False, indent=2))
-
-#         print("\n" + "-" * 60)
-#         print("🔤 Raw OCR Markdown:")
-#         print("-" * 60)
-#         print(full_text)
 if __name__ == "__main__":
 
-    # ════════════════════════════════════════════════════
-    # 📂 SET YOUR FILE PATH HERE
-    # ════════════════════════════════════════════════════
     FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"
     # ════════════════════════════════════════════════════
 
@@ -500,7 +357,6 @@ if __name__ == "__main__":
     else:
         print(f"📂 Processing: {FILE_PATH}\n")
 
-        # ── Step 1: Run Mistral OCR ──
         if is_pdf(FILE_PATH):
             print("📄 PDF detected — running Mistral OCR...")
             pages = ocr_pdf(FILE_PATH)
