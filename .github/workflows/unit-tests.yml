@@ -17,16 +17,14 @@ on:
       - "services/ocr/**"
       - "tests/unit/**"
       - "tests/conftest.py"
-      - "tests/requirements-test.txt"
+      
       - ".github/workflows/unit-tests.yml"
   pull_request:
     branches: [main]
     paths:
       - "api_gateway/fastapi_app/**"
       - "services/ocr/**"
-      - "tests/unit/**"
-      - "tests/conftest.py"
-      - "tests/requirements-test.txt"
+      
 
 concurrency:
   group: unit-tests-${{ github.ref }}
