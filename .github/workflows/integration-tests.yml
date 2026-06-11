@@ -15,17 +15,17 @@ on:
     paths:
       - "api_gateway/fastapi_app/**"
       - "addons/edu_mangment/**"
-      - "tests/integration/**"
-      - "tests/conftest.py"
+      - "Tests/integration/**"
+      - "Tests/conftest.py"
       - ".github/workflows/integration-tests.yml"
   pull_request:
     branches: [main, develop]
     paths:
       - "api_gateway/fastapi_app/**"
       - "addons/edu_mangment/**"
-      - "tests/integration/**"
-      - "tests/conftest.py"
-      
+      - "Tests/integration/**"
+      - "Tests/conftest.py"
+      - ".github/workflows/integration-tests.yml"
 concurrency:
   group: integration-tests-${{ github.ref }}
   cancel-in-progress: true
@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-integration-${{ hashFiles('api_gateway/fastapi_app/requirements.txt') }}
+          key: ${{ runner.os }}-pip-integration-${{ hashFiles('api_gateway/fastapi_app/requirements.txt', 'Tests/requirements-test.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-integration-
             ${{ runner.os }}-pip-
@@ -61,10 +61,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r api_gateway/fastapi_app/requirements.txt
-          
+          pip install -r Tests/requirements-test.txt
       - name: Run FastAPI integration tests
         run: |
-          pytest tests/integration/ \
+          pytest Tests/integration/ \
             -v \
             --tb=short \
             -m integration \
