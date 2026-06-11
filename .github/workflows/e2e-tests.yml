@@ -11,17 +11,8 @@ on:
       - "addons/**"
       
       - ".github/workflows/e2e-tests.yml"
-  workflow_dispatch:
-    inputs:
-      gateway_url:
-        description: "Gateway base URL (leave empty for local Docker)"
-        required: false
-        default: ""
-      skip_ui_tests:
-        description: "Skip Playwright UI tests"
-        required: false
-        type: boolean
-        default: false
+  pull_request:
+    branches: [main]
 
 concurrency:
   group: e2e-tests-${{ github.ref }}
