@@ -9,6 +9,7 @@
 name: "🔗 Integration Tests"
 
 on:
+  workflow_call: {}
   push:
     branches: "!main"
     paths:
