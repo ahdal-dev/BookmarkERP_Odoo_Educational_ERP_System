@@ -40,7 +40,8 @@ concurrency:
   cancel-in-progress: false  # Let tracking complete
 
 env:
-  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'file:///tmp/mlflow' }}
+  MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN || '' }}
   MLFLOW_EXPERIMENT_NAME: "Odoo_ERP_Services"
   ARTIFACTS_PATH: mlflow_artifacts
 
@@ -80,6 +81,7 @@ jobs:
           python scripts/mlflow_init_experiments.py
 
       - name: Upload MLflow artifacts directory
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -123,6 +125,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -134,6 +137,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
         
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -180,6 +184,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -191,6 +196,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
          
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -237,6 +243,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -248,6 +255,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
           
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -293,6 +301,7 @@ jobs:
           pip install mlflow==2.10.2 pandas plotly pyyaml
 
       - name: Download MLflow artifacts
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -308,6 +317,7 @@ jobs:
           python scripts/mlflow_generate_report.py
         env:
           MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
           
       - name: Upload MLflow report
         uses: actions/upload-artifact@v4
@@ -319,6 +329,7 @@ jobs:
           retention-days: 90
 
       - name: Upload final MLflow database
+        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-final-db
