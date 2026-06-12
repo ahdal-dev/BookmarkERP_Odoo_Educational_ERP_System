@@ -180,7 +180,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r services/Grade Predictor Service/requirements.txt
+          pip install -r "services/Grade Predictor Service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
