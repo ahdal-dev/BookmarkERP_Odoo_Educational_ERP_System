@@ -71,7 +71,7 @@ def create_experiment_structure():
 def initialize_global_run():
     """Create a global run to track overall pipeline execution."""
     
-    exp_id = mlflow.get_experiment_by_name("System_Integration").experiment_id
+    exp_id = mlflow.get_experiment_by_name("System_Integration")
     
     with mlflow.start_run(experiment_id=exp_id, run_name="Pipeline_Initialization") as run:
         mlflow.log_param("pipeline_name", "MLflow Model Tracking")
