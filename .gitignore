@@ -27,6 +27,7 @@ config/odoo.conf
 *.dump
 *.sql
 *.zip
+mlflow.db
 
 # IDE
 .vscode/
