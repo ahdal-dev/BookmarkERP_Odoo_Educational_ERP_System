@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Super Admin Dashboard - RAG ChatBot</title>
+  <link rel="icon" href="https://i.pinimg.com/1200x/c4/dd/47/c4dd475a926160c734876937ce9aafe4.jpg" type="image/png" />
+  <style>
+    /* ===== Base (matches Welcome page) ===== */
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      line-height:1.6;
+      color:#E9E7F1;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(151,71,255,0.35), transparent 60%),
+        radial-gradient(1200px 800px at 110% 10%, rgba(82,0,204,0.35), transparent 60%),
+        linear-gradient(145deg, #0f0b17 0%, #1a1226 40%, #241437 100%);
+      min-height:100vh;
+    }
+
+    /* ===== Navbar (same layout/look as screenshot) ===== */
+    .navbar{
+      background:rgba(24,16,37,0.7);
+      backdrop-filter:blur(12px);
+      padding:1rem 2rem;
+      position:fixed; top:0; width:100%; z-index:1000;
+      box-shadow:0 2px 14px rgba(0,0,0,0.35);
+    }
+    .nav-container{
+      max-width:1200px; margin:0 auto;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .logo-wrapper{display:flex; align-items:center; gap:10px;}
+    .logo-image{height:40px;width:40px;border-radius:50%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.4);}
+    .logo-text{font-size:1.4rem;font-weight:bold;color:#B18CFF;}
+
+    .nav-links{display:flex; list-style:none; gap:2rem; align-items:center;}
+    .nav-links a{
+      text-decoration:none; color:#E9E7F1; font-weight:500; transition:color .3s ease;
+    }
+    .nav-links a:hover{color:#B18CFF;}
+    .cta-button{
+      background:linear-gradient(135deg,#8a2be2,#5b19a6);
+      color:#fff; padding:.75rem 1.5rem; border-radius:25px;
+      text-decoration:none; font-weight:600; transition:transform .3s ease; border:0; cursor:pointer;
+    }
+    .cta-button:hover{transform:translateY(-2px);}
+
+    /* ===== Page layout ===== */
+    .container{max-width:1200px; margin:0 auto; padding:2rem;}
+    .main{padding-top:90px;}
+    .header{text-align:center; margin-bottom:1rem;}
+    .welcome-message{
+      font-size:2.4rem; font-weight:800; letter-spacing:.3px; margin-bottom:.5rem;
+      background:linear-gradient(135deg,#ffffff,#d8c9ff);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .subtitle{color:#c9c4d6;}
+
+    /* quick actions row beneath header */
+    .actions-bar{
+      display:flex; justify-content:flex-end; gap:12px; margin: 0 0 1.2rem 0;
+    }
+
+    .panel{
+      background:rgba(255,255,255,0.05);
+      border-radius:20px; padding:1.5rem;
+      box-shadow:0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .panel + .panel{margin-top:2.5rem;}
+
+    .panel.user-info{text-align:center;}
+    .info-grid{
+      display:grid; gap:1.25rem;
+      grid-template-columns:repeat(auto-fit, minmax(260px, 320px));
+      justify-content:center; justify-items:stretch;
+    }
+    .info-item{
+      text-align:center; background:rgba(255,255,255,0.08);
+      border-radius:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);
+      padding:1.1rem;
+    }
+    .info-label{color:#B18CFF;font-weight:700;margin-bottom:.6rem;font-size:1.05rem;}
+    .info-value{color:#fff;font-size:1.25rem;font-weight:700;word-break:break-word;}
+
+    .section-title{text-align:center;font-size:2rem;margin-bottom:1.5rem;color:#fff;}
+    .organizations-section{margin-bottom:2rem;}
+    .organizations-grid{display:grid; gap:1.5rem; grid-template-columns:repeat(auto-fill, minmax(340px,1fr));}
+
+    .org-card{
+      background:rgba(255,255,255,0.05);
+      border-radius:16px; padding:1.2rem; cursor:pointer;
+      transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .org-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,0.35);background:rgba(255,255,255,0.08);}
+    .org-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;}
+    .org-name{font-size:1.2rem;font-weight:800;color:#fff;}
+    .org-actions{display:flex;gap:.5rem;}
+    .org-btn{
+      background:rgba(255,255,255,0.10); color:#fff; border:0;
+      padding:.45rem .9rem; border-radius:20px; font-weight:600; cursor:pointer;
+      transition:background .2s ease; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .org-btn:hover{background:rgba(255,255,255,0.18);}
+    .org-btn.danger{background:rgba(230,69,101,0.9);}
+    .org-btn.danger:hover{background:rgba(230,69,101,1);}
+    .org-btn.restore{background:#5b19a6 ;}
+    .org-btn.restore:hover{background: #8a2be2;}
+
+    .org-description{color:#c9c4d6;margin-bottom:.8rem;font-style:italic;}
+    .org-stats{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+    .stat-item{ text-align:center; background:rgba(255,255,255,0.08); padding:.7rem; border-radius:10px; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
+    .stat-number{font-size:1.4rem;font-weight:800;color:#B18CFF;}
+    .stat-label{font-size:.9rem;color:#c9c4d6;}
+
+    .message{padding:1rem;border-radius:12px;margin-bottom:1rem;text-align:center;display:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
+    .message.success{color:#47d27e;background:rgba(71,210,126,0.12);}
+    .message.error{color:#f37e7e;background:rgba(243,126,126,0.12);}
+    .loading{text-align:center;padding:2rem;color:#b9b3c9;}
+    .spinner{border:3px solid rgba(255,255,255,0.25);border-top:3px solid #B18CFF;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 1rem;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* Modals */
+    .modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(10,6,16,0.6);backdrop-filter:blur(10px);align-items:center;justify-content:center;}
+    .modal.open{display:flex;}
+    .modal-content{
+      width:100%;max-width:560px;background:rgba(26,18,38,0.95);
+      border-radius:20px;box-shadow:0 30px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
+      padding:26px;color:#E9E7F1;position:relative;
+    }
+    .close{position:absolute;top:12px;right:16px;font-size:22px;color:#c9c4d6;cursor:pointer;border:0;background:transparent;}
+    .close:hover{color:#fff;}
+    .modal h2{text-align:center;margin-bottom:1rem;color:#fff;}
+    .form-group{margin:14px 0;}
+    .form-group label{display:block;margin-bottom:6px;color:#c9c4d6;}
+    .form-group input,.form-group textarea{
+      width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.06);color:#fff;
+    }
+    .form-group input::placeholder,.form-group textarea::placeholder{color:#b9b3c9;}
+    .modal-actions{display:flex;gap:1rem;justify-content:center;margin-top:1rem;}
+
+    .users-list{max-height:420px;overflow-y:auto;margin-top:1rem;}
+    .user-item{background:rgba(255,255,255,0.08);padding:1rem;border-radius:12px;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
+    .user-username{font-weight:800;color:#fff;}
+    .user-role{color:#c9c4d6;font-size:.9rem;}
+    .user-created{color:#9a94aa;font-size:.85rem;}
+
+    /* Wider details modal */
+    #orgDetailsModal .modal-content{
+      width:92vw;max-width:900px;max-height:90vh;overflow:hidden;background:#1b1530;
+      box-shadow:0 40px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.10);
+    }
+    #orgDetailsContent{max-height:calc(90vh - 120px);overflow:auto;padding-right:6px;}
+    #orgDetailsModal .info-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:1.25rem;align-items:stretch;}
+
+    .modal-open, .modal-open body{overflow:hidden;}
+
+    @media (max-width:768px){
+      .nav-links{gap:1rem;}
+      .organizations-grid{grid-template-columns:1fr;}
+      .modal-content{max-width:94vw;}
+      #orgDetailsModal .info-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar (logo left, links + purple CTA right) -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo-wrapper">
+        <img src="https://i.pinimg.com/1200x/c4/dd/47/c4dd475a926160c734876937ce9aafe4.jpg" alt="RAG ChatBot" class="logo-image">
+        <div class="logo-text">RAG ChatBot</div>
+      </div>
+      <ul class="nav-links">
+        <li style="cursor: pointer;"><a onclick="showCreateOrgModal()">Create Organization</a></li>
+        <li style="cursor: pointer;"><a href="#" onclick="logout()">Logout</a></li>
+
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="container">
+      <div class="header">
+        <h1 class="welcome-message">Super Admin Dashboard</h1>
+        <p class="subtitle">Manage all organizations and users across the platform</p>
+      </div>
+
+
+      <div id="message" class="message"></div>
+
+      <!-- Super admin info -->
+      <section class="panel user-info">
+        <h2>Super Admin Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Username</div>
+            <div class="info-value" id="username">Loading...</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Role</div>
+            <div class="info-value" id="role">Loading...</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">User ID</div>
+            <div class="info-value" id="userid">Loading...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Organizations -->
+      <section class="organizations-section panel" id="activeSection">
+        <h2 class="section-title">Active Organizations</h2>
+        <div id="organizationsGrid" class="organizations-grid">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading organizations...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inactive Organizations -->
+      <section class="organizations-section panel" id="inactiveSection" style="display:none;">
+        <h2 class="section-title">Inactive Organizations</h2>
+        <div id="inactiveGrid" class="organizations-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Create Organization Modal -->
+  <div id="createOrgModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button class="close" onclick="closeModal('createOrgModal')">&times;</button>
+      <h2>Create New Organization</h2>
+      <form id="createOrgForm">
+        <div class="form-group">
+          <label for="orgName">Organization Name</label>
+          <input type="text" id="orgName" name="orgName" required placeholder="Enter organization name"/>
+        </div>
+        <div class="form-group">
+          <label for="orgDescription">Description</label>
+          <textarea id="orgDescription" name="orgDescription" rows="3" placeholder="Enter organization description"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cta-button" onclick="closeModal('createOrgModal')">Cancel</button>
+          <button type="submit" class="cta-button">Create Organization</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Organization Details Modal -->
+  <div id="orgDetailsModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button class="close" onclick="closeModal('orgDetailsModal')">&times;</button>
+      <h2 id="orgDetailsTitle">Organization Details</h2>
+      <div id="orgDetailsContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading organization details...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Admin Modal -->
+  <div id="addAdminModal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button class="close" onclick="closeModal('addAdminModal')">&times;</button>
+      <h2>Add Admin to Organization</h2>
+      <form id="addAdminForm">
+        <div class="form-group">
+          <label for="adminUsername">Username</label>
+          <input type="text" id="adminUsername" name="adminUsername" required placeholder="Enter username"/>
+        </div>
+        <div class="form-group">
+          <label for="adminEmail">Email</label>
+          <input type="email" id="adminEmail" name="adminEmail" required placeholder="Enter email"/>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="cta-button" onclick="closeModal('addAdminModal')">Cancel</button>
+          <button type="submit" class="cta-button">Add Admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentOrgId = null;
+    let organizations = [];
+
+    // Modal helpers
+    function showModal(id){
+      document.getElementById(id).classList.add('open');
+      document.documentElement.classList.add('modal-open');
+    }
+    function closeModal(id){
+      document.getElementById(id).classList.remove('open');
+      document.documentElement.classList.remove('modal-open');
+    }
+
+    function showMessage(message, type){
+      const el = document.getElementById('message');
+      el.textContent = message;
+      el.className = `message ${type}`;
+      el.style.display = 'block';
+      if(type === 'success'){ setTimeout(()=>{ el.style.display='none'; }, 3000); }
+    }
+
+    function loadUserInfo(){
+      const userStr = sessionStorage.getItem('user');
+      if(!userStr){
+        showMessage('No user information found. Please log in again.', 'error');
+        setTimeout(()=>{ window.location.href='/login'; }, 1500);
+        return;
+      }
+      try{
+        const user = JSON.parse(userStr);
+        if(user.role !== 'super-admin'){
+          showMessage('Access denied. Super-admin privileges required.', 'error');
+          setTimeout(()=>{ window.location.href='/login'; }, 1500);
+          return;
+        }
+        document.getElementById('username').textContent = user.username || 'N/A';
+        document.getElementById('role').textContent = user.role || 'N/A';
+        document.getElementById('userid').textContent = user.id || 'N/A';
+        loadOrganizations();
+      }catch(e){
+        console.error(e);
+        showMessage('Error loading user information.', 'error');
+      }
+    }
+
+    // Fetch role counts for active org display
+    async function updateOrgRoleCounts() {
+      try {
+        const roleCounts = await Promise.all(
+          organizations.map(async (org) => {
+            try {
+              const res = await fetch(`/admin/super-admin/organizations/${org.id}/users`);
+              if (!res.ok) throw new Error('users fetch failed');
+              const users = await res.json();
+              return {
+                id: org.id,
+                adminCount: users.filter(u => u.role === 'admin').length,
+                userCount : users.filter(u => u.role === 'user').length
+              };
+            } catch {
+              return { id: org.id, adminCount: org.admin_count || 0, userCount: org.user_count || 0 };
+            }
+          })
+        );
+        organizations = organizations.map(org => {
+          const rc = roleCounts.find(x => x.id === org.id);
+          return { ...org, _admin_count: rc?.adminCount ?? 0, _user_count: rc?.userCount ?? 0 };
+        });
+      } catch (e) {
+        console.error('Error computing role counts:', e);
+      }
+    }
+
+    async function loadOrganizations(){
+      try{
+        const res = await fetch('/admin/super-admin/organizations/all');
+        if(!res.ok) throw new Error('Failed to load organizations');
+        organizations = await res.json();
+        await updateOrgRoleCounts();
+        displayOrganizations();
+      }catch(e){
+        console.error(e);
+        showMessage('Failed to load organizations.', 'error');
+      }
+    }
+
+    // Card renderer — hides stats for inactive cards
+    function orgCardHTML(org, {inactive=false} = {}){
+      const adminCount = org._admin_count ?? 0;
+      const userCount  = org._user_count  ?? 0;
+
+      const actions = inactive
+        ? `<button class="org-btn restore" onclick="event.stopPropagation(); restoreOrganization('${org.id}')">↩️ Restore</button>`
+        : `
+          <button class="org-btn" onclick="event.stopPropagation(); showAddAdminModal('${org.id}')">➕ Add Admin</button>
+          <button class="org-btn danger" onclick="event.stopPropagation(); deleteOrganization('${org.id}')">🗑 Delete</button>
+        `;
+
+      const statsHTML = inactive ? "" : `
+        <div class="org-stats">
+          <div class="stat-item"><div class="stat-number">${adminCount}</div><div class="stat-label">Admins</div></div>
+          <div class="stat-item"><div class="stat-number">${userCount}</div><div class="stat-label">Users</div></div>
+        </div>`;
+
+      return `
+        <div class="org-card" onclick="showOrgDetails('${org.id}')">
+          <div class="org-header">
+            <div class="org-name">${org.name}</div>
+            <div class="org-actions">${actions}</div>
+          </div>
+          <div class="org-description">${org.description || 'No description'}</div>
+          ${statsHTML}
+        </div>`;
+    }
+
+    function displayOrganizations(){
+      const activeGrid   = document.getElementById('organizationsGrid');
+      const inactiveGrid = document.getElementById('inactiveGrid');
+      const inactiveSec  = document.getElementById('inactiveSection');
+
+      const activeOrgs   = organizations.filter(o => o.is_active !== false);
+      const inactiveOrgs = organizations.filter(o => o.is_active === false);
+
+      activeGrid.innerHTML = activeOrgs.length
+        ? activeOrgs.map(o => orgCardHTML(o, {inactive:false})).join('')
+        : `<div class="loading"><p>No active organizations. Create one!</p></div>`;
+
+      if(!inactiveOrgs.length){
+        inactiveSec.style.display = 'none';
+        inactiveGrid.innerHTML = '';
+      } else {
+        inactiveSec.style.display = 'block';
+        inactiveGrid.innerHTML = inactiveOrgs.map(o => orgCardHTML(o, {inactive:true})).join('');
+      }
+    }
+
+    async function showOrgDetails(orgId){
+      currentOrgId = orgId;
+      const org = organizations.find(o=>o.id===orgId);
+      if(!org) return;
+
+      document.getElementById('orgDetailsTitle').textContent = `${org.name} - Details`;
+      document.getElementById('orgDetailsContent').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading organization details...</p>
+        </div>`;
+      showModal('orgDetailsModal');
+
+      try{
+        const res = await fetch(`/admin/super-admin/organizations/${orgId}/users`);
+        if(!res.ok) throw new Error('Failed to load users');
+        const users = await res.json();
+        displayOrgUsers(users, org);
+      }catch(e){
+        console.error(e);
+        document.getElementById('orgDetailsContent').innerHTML =
+          `<div class="message error" style="display:block">Failed to load organization users.</div>`;
+      }
+    }
+
+    function displayOrgUsers(users, org){
+      const content = document.getElementById('orgDetailsContent');
+      content.innerHTML = `
+        <div class="info-grid" style="margin-bottom:1rem;">
+          <div class="info-item"><div class="info-label">Organization Name</div><div class="info-value">${org.name}</div></div>
+          <div class="info-item"><div class="info-label">Description</div><div class="info-value">${org.description || 'No description'}</div></div>
+          <div class="info-item"><div class="info-label">Total Users</div><div class="info-value">${users.filter(u=>u.role==='user').length}</div></div>
+          <div class="info-item"><div class="info-label">Admins</div><div class="info-value">${users.filter(u=>u.role==='admin').length}</div></div>
+        </div>
+
+        <h3 style="margin:.5rem 0 1rem; font-weight:800;">Users in Organization</h3>
+        <div class="users-list">
+          ${
+            users.length ? users.map(user => `
+              <div class="user-item">
+                <div class="user-info">
+                  <div class="user-username">${user.username}</div>
+                  <div class="user-role">Role: ${user.role}</div>
+                  <div class="user-created">Created: ${user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</div>
+                </div>
+                <button class="org-btn danger" onclick="deleteUser('${user.id}')">🗑 Delete</button>
+              </div>
+            `).join('') : `<p style="text-align:center; color:#c9c4d6;">No users found in this organization.</p>`
+          }
+        </div>`;
+    }
+
+    async function createOrganization(formData){
+      try{
+        const res = await fetch('/admin/super-admin/organizations',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            name: formData.get('orgName'),
+            description: formData.get('orgDescription')
+          })
+        });
+        if(!res.ok){ const err = await res.json(); throw new Error(err.detail || 'Failed to create organization'); }
+        const result = await res.json();
+        showMessage(`Organization "${result.name}" created successfully!`, 'success');
+        closeModal('createOrgModal');
+        document.getElementById('createOrgForm').reset();
+        loadOrganizations();
+      }catch(e){ console.error(e); showMessage(e.message,'error'); }
+    }
+
+    function showAddAdminModal(orgId){ currentOrgId = orgId; showModal('addAdminModal'); }
+
+    async function addAdminToOrganization(formData){
+      try{
+        const res = await fetch(`/admin/super-admin/organizations/${currentOrgId}/admins`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            username: formData.get('adminUsername'),
+            email: formData.get('adminEmail'),
+            role: 'admin',
+            organization_id: currentOrgId
+          })
+        });
+        if(!res.ok){ const err = await res.json(); throw new Error(err.detail || 'Failed to add admin'); }
+        const result = await res.json();
+        showMessage(`Admin "${result.username}" added successfully! A temporary password will be emailed.`, 'success');
+        closeModal('addAdminModal');
+        document.getElementById('addAdminForm').reset();
+        if(document.getElementById('orgDetailsModal').classList.contains('open')) showOrgDetails(currentOrgId);
+        loadOrganizations();
+      }catch(e){ console.error(e); showMessage(e.message,'error'); }
+    }
+
+    async function deleteOrganization(orgId){
+      if(!confirm('Deactivate this organization? This will hide it and set is_active = false.')) return;
+      try{
+        const res = await fetch(`/admin/super-admin/organizations/${orgId}`, { method:'DELETE' });
+        if(!res.ok){ const err = await res.json(); throw new Error(err.detail || 'Failed to deactivate organization'); }
+        const result = await res.json();
+        showMessage(result.message || 'Organization deactivated.', 'success');
+        loadOrganizations();
+      }catch(e){ console.error(e); showMessage(e.message,'error'); }
+    }
+
+    async function restoreOrganization(orgId){
+      try{
+        let res = await fetch(`/admin/super-admin/organizations/${orgId}/restore`, { method:'POST' });
+        if(!res.ok){
+          res = await fetch(`/admin/super-admin/organizations/${orgId}`, {
+            method:'PATCH',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ is_active:true })
+          });
+        }
+        if(!res.ok){
+          const err = await res.json().catch(()=>({detail:'Failed to restore'}));
+          throw new Error(err.detail || 'Failed to restore organization');
+        }
+        showMessage('Organization restored successfully!', 'success');
+        loadOrganizations();
+      }catch(e){ console.error(e); showMessage(e.message,'error'); }
+    }
+
+    async function deleteUser(userId){
+      if(!confirm('Delete this user? This action cannot be undone.')) return;
+      try{
+        const res = await fetch(`/admin/super-admin/users/${userId}`, { method:'DELETE' });
+        if(!res.ok){ const err = await res.json(); throw new Error(err.detail || 'Failed to delete user'); }
+        const result = await res.json();
+        showMessage(result.message, 'success');
+        showOrgDetails(currentOrgId);
+        loadOrganizations();
+      }catch(e){ console.error(e); showMessage(e.message,'error'); }
+    }
+
+    function logout(){
+      sessionStorage.removeItem('user');
+      showMessage('Logging out...', 'success');
+      setTimeout(()=>{ window.location.href = '/'; }, 800);
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadUserInfo();
+      document.getElementById('createOrgForm').addEventListener('submit', (e)=>{
+        e.preventDefault(); createOrganization(new FormData(e.target));
+      });
+      document.getElementById('addAdminForm').addEventListener('submit', (e)=>{
+        e.preventDefault(); addAdminToOrganization(new FormData(e.target));
+      });
+    });
+
+    // close modal by clicking overlay
+    window.addEventListener('click', (e)=>{
+      if(e.target.classList && e.target.classList.contains('modal')){
+        e.target.classList.remove('open');
+        document.documentElement.classList.remove('modal-open');
+      }
+    });
+
+    // helper
+    function showCreateOrgModal(){ showModal('createOrgModal'); }
+  </script>
+</body>
+</html>
