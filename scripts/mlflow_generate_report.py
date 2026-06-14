@@ -12,9 +12,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-
+MLFLOW_URI = os.environ["MLFLOW_TRACKING_URI"]
 # Configure MLflow
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow"))
+mlflow.set_tracking_uri(MLFLOW_URI)
 
 def get_all_experiments():
     """Retrieve all tracked experiments."""
