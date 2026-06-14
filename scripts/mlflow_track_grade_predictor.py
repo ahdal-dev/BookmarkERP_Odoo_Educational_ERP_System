@@ -14,7 +14,16 @@ from datetime import datetime
 import sys
 
 # Configure MLflow
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow"))
+tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow")
+mlflow.set_tracking_uri(tracking_uri)
+
+# Ensure local file-based tracking storage exists when using a local URI.
+if tracking_uri.startswith("file://"):
+    local_mlflow_path = tracking_uri[len("file://"):]
+    if local_mlflow_path:
+        os.makedirs(local_mlflow_path, exist_ok=True)
+
+print(f"Using MLflow tracking URI: {tracking_uri}")
 
 def generate_test_data():
     """Generate sample test data for grade prediction."""

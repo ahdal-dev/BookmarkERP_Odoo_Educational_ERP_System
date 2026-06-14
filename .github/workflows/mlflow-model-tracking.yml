@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false  # Let tracking complete
 
 env:
-  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'file:///tmp/mlflow' }}
   ARTIFACTS_PATH: mlflow_artifacts
 
 jobs:
@@ -95,11 +95,11 @@ jobs:
           pip install -r "services/Student Perfromance Service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      # - name: Download MLflow artifacts from setup
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: mlflow-tracking-db
-      #     path: /tmp/mlflow
+      - name: Download MLflow artifacts from setup
+        uses: actions/download-artifact@v4
+        with:
+          name: mlflow-tracking-db
+          path: /tmp/mlflow
 
       - name: Run Student Performance tests with MLflow tracking
         run: |
@@ -150,11 +150,11 @@ jobs:
           pip install -r "services/grade_predictor_service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      # - name: Download MLflow artifacts from setup
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: mlflow-tracking-db
-      #     path: /tmp/mlflow
+      - name: Download MLflow artifacts from setup
+        uses: actions/download-artifact@v4
+        with:
+          name: mlflow-tracking-db
+          path: /tmp/mlflow
 
       - name: Run Grade Predictor tests with MLflow tracking
         run: |
@@ -207,11 +207,11 @@ jobs:
           pip install -r services/ocr/requirements.txt
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      # - name: Download MLflow artifacts from setup
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: mlflow-tracking-db
-      #     path: /tmp/mlflow
+      - name: Download MLflow artifacts from setup
+        uses: actions/download-artifact@v4
+        with:
+          name: mlflow-tracking-db
+          path: /tmp/mlflow
 
       - name: Run OCR tests with MLflow tracking
         run: |
@@ -262,11 +262,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow==2.10.2 pandas plotly pyyaml
 
-      # - name: Download MLflow artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: mlflow-tracking-db
-      #     path: /tmp/mlflow
+      - name: Download MLflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mlflow-tracking-db
+          path: /tmp/mlflow
 
       # - name: Download all test results
       #   uses: actions/download-artifact@v4
