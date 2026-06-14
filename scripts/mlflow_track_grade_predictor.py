@@ -155,12 +155,17 @@ def track_grade_predictor():
     print()
     
     # Get experiment
-    exp = mlflow.get_experiment_by_name("Grade_Predictor_Service")
+    experiment_name = "Grade_Predictor_Service"
+
+    exp = mlflow.get_experiment_by_name(experiment_name)
+
     if exp is None:
-        print("❌ Grade_Predictor_Service experiment not found")
-        return False
-    
-    exp_id = exp.experiment_id
+        print(f"Creating experiment: {experiment_name}")
+        exp_id = mlflow.create_experiment(experiment_name)
+    else:
+        exp_id = exp.experiment_id
+
+    mlflow.set_experiment(experiment_name)
     
     # Try to import the actual model
     try:

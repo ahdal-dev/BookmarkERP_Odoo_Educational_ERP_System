@@ -18,8 +18,7 @@ concurrency:
   cancel-in-progress: false  # Let tracking complete
 
 env:
-  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'file:///tmp/mlflow' }}
-  MLFLOW_EXPERIMENT_NAME: "Odoo_ERP_Services"
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
   ARTIFACTS_PATH: mlflow_artifacts
 
 jobs:
@@ -97,7 +96,6 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
-        # if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -153,7 +151,6 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
-        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -210,7 +207,6 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
-        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -266,7 +262,6 @@ jobs:
           pip install mlflow==2.10.2 pandas plotly pyyaml
 
       - name: Download MLflow artifacts
-        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -294,7 +289,6 @@ jobs:
           retention-days: 90
 
       - name: Upload final MLflow database
-        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-final-db

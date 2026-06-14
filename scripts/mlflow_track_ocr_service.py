@@ -103,12 +103,17 @@ def track_ocr_service():
     print()
     
     # Get experiment
-    exp = mlflow.get_experiment_by_name("OCR_Service")
+    experiment_name = "OCR_Service"
+
+    exp = mlflow.get_experiment_by_name(experiment_name)
+
     if exp is None:
-        print("❌ OCR_Service experiment not found")
-        return False
-    
-    exp_id = exp.experiment_id
+        print(f"Creating experiment: {experiment_name}")
+        exp_id = mlflow.create_experiment(experiment_name)
+    else:
+        exp_id = exp.experiment_id
+
+    mlflow.set_experiment(experiment_name)
     
     # Generate test scenarios
     scenarios = generate_test_scenarios()
