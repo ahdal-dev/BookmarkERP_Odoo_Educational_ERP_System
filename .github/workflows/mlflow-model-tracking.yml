@@ -140,14 +140,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-gpa-${{ hashFiles('services/Grade Predictor Service/requirements.txt') }}
+          key: ${{ runner.os }}-pip-gpa-${{ hashFiles('services/grade_predictor_service/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-gpa-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r "services/Grade Predictor Service/requirements.txt"
+          pip install -r "services/grade_predictor_service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
       # - name: Download MLflow artifacts from setup
@@ -164,7 +164,7 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
           MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
          
-          
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
