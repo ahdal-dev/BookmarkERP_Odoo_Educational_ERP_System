@@ -1,25 +1,4 @@
-# ============================================================================
-# MLflow Model Tracking & Results Pipeline
-# ============================================================================
-# Comprehensive workflow that:
-#   1. Sets up MLflow tracking server
-#   2. Runs all service tests and logs metrics
-#   3. Tracks model performance across all microservices
-#   4. Saves model artifacts and results
-#   5. Generates MLflow reports and dashboards
-#   6. Archives results for historical analysis
-#
-# Services Tracked:
-#   - Student Performance Service (GPA predictions, risk scoring)
-#   - Grade Predictor Service (grade classification)
-#   - OCR Service (text extraction accuracy)
-#
-# Required GitHub Secrets (Optional - can use local file storage):
-#   MLFLOW_TRACKING_URI    — Remote MLflow server (e.g., Databricks, custom)
-#   MLFLOW_TRACKING_TOKEN  — Authentication token for remote server
-# ============================================================================
-
-name: "📊 MLflow Model Tracking"
+name: "MLflow Model Tracking"
 
 on:
   push:
@@ -32,25 +11,21 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "0 2 * * 0"  # Weekly on Sundays at 2 AM UTC
-  workflow_dispatch:
-
+    - cron: "0 2 * * 0" # Weekly on Sundays at 2 AM UTC
+  
 concurrency:
   group: mlflow-tracking-${{ github.ref }}
   cancel-in-progress: false  # Let tracking complete
 
 env:
   MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'file:///tmp/mlflow' }}
-  MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN || '' }}
   MLFLOW_EXPERIMENT_NAME: "Odoo_ERP_Services"
   ARTIFACTS_PATH: mlflow_artifacts
 
 jobs:
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 1: Setup MLflow Server & Initialize Experiments
-  # ════════════════════════════════════════════════════════════════════════════
   setup-mlflow:
-    name: "🔧 Setup MLflow Tracking"
+    name: "Setup MLflow Tracking"
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -88,27 +63,25 @@ jobs:
           path: /tmp/mlflow
           retention-days: 90
 
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 2: Student Performance Service — Model Evaluation
-  # ════════════════════════════════════════════════════════════════════════════
   student-performance-tracking:
-    name: "📈 Student Performance Service"
+    name: "Student Performance Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    strategy:
-      matrix:
-        python-version: ["3.11"]
+    # strategy:
+    #   matrix:
+    #     python-version: ["3.11"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
@@ -147,27 +120,25 @@ jobs:
           path: reports/student_performance/
           retention-days: 90
 
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 3: Grade Predictor Service — Model Evaluation
-  # ════════════════════════════════════════════════════════════════════════════
   grade-predictor-tracking:
-    name: "🎓 Grade Predictor Service"
+    name: "Grade Predictor Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    strategy:
-      matrix:
-        python-version: ["3.11"]
+    # strategy:
+    #   matrix:
+    #     python-version: ["3.11"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
@@ -206,27 +177,25 @@ jobs:
           path: reports/grade_predictor/
           retention-days: 90
 
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 4: OCR Service — Model Evaluation & Metrics
-  # ════════════════════════════════════════════════════════════════════════════
   ocr-service-tracking:
-    name: "🔍 OCR Service"
+    name: "OCR Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    strategy:
-      matrix:
-        python-version: ["3.11"]
+    # strategy:
+    #   matrix:
+    #     python-version: ["3.11"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
@@ -265,11 +234,9 @@ jobs:
           path: reports/ocr_service/
           retention-days: 90
 
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 5: Generate MLflow Report & Dashboard
-  # ════════════════════════════════════════════════════════════════════════════
   generate-mlflow-report:
-    name: "📊 Generate MLflow Report"
+    name: "Generate MLflow Report"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs:
@@ -336,16 +303,13 @@ jobs:
           path: /tmp/mlflow
           retention-days: 90
 
-  # ════════════════════════════════════════════════════════════════════════════
   # JOB 6: Archive Results for Historical Analysis
-  # ════════════════════════════════════════════════════════════════════════════
   archive-results:
-    name: "📦 Archive Results"
+    name: "Archive Results"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: generate-mlflow-report
-    if: success()
-
+   
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -380,7 +344,7 @@ jobs:
 
       - name: Print summary
         run: |
-          echo "📊 MLflow Tracking Complete"
+          echo "MLflow Tracking Complete"
           echo "Run ID: ${{ github.run_id }}"
           echo "Run Number: ${{ github.run_number }}"
           echo "Timestamp: $(date -Iseconds)"

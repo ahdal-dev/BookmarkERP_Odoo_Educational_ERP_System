@@ -68,11 +68,18 @@ def track_student_performance():
     print("=" * 70)
     print()
     
-    # Get experiment
     exp = mlflow.get_experiment_by_name("Student_Performance_Service")
+
     if exp is None:
-        print("❌ Student_Performance_Service experiment not found")
-        return False
+        exp_id = mlflow.create_experiment(
+            "Student_Performance_Service"
+        )
+    else:
+        exp_id = exp.experiment_id
+    
+
+
+    
     
     exp_id = exp.experiment_id
     
