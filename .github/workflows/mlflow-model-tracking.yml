@@ -55,6 +55,7 @@ jobs:
           python scripts/mlflow_init_experiments.py
 
       - name: Upload MLflow artifacts directory
+        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -96,6 +97,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -151,6 +153,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -208,6 +211,7 @@ jobs:
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Download MLflow artifacts from setup
+        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
@@ -238,7 +242,7 @@ jobs:
       - student-performance-tracking
       - grade-predictor-tracking
       - ocr-service-tracking
-    if: always()
+    
 
     steps:
       - name: Checkout repository
@@ -263,6 +267,7 @@ jobs:
           pip install mlflow==2.10.2 pandas plotly pyyaml
 
       - name: Download MLflow artifacts
+        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/download-artifact@v4
         with:
           name: mlflow-tracking-db
