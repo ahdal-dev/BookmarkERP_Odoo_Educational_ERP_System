@@ -68,20 +68,18 @@ def track_student_performance():
     print("=" * 70)
     print()
     
-    exp = mlflow.get_experiment_by_name("Student_Performance_Service")
+    # Get or create experiment
+    experiment_name = "Student_Performance_Service"
+
+    exp = mlflow.get_experiment_by_name(experiment_name)
 
     if exp is None:
-        exp_id = mlflow.create_experiment(
-            "Student_Performance_Service"
-        )
+        print(f"Creating experiment: {experiment_name}")
+        exp_id = mlflow.create_experiment(experiment_name)
     else:
         exp_id = exp.experiment_id
-    
 
-
-    
-    
-    exp_id = exp.experiment_id
+    mlflow.set_experiment(experiment_name)
     
     # Try to import the predictor
     try:
