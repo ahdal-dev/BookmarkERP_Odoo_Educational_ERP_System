@@ -51,10 +51,12 @@ def extract_metrics_summary():
         
         # Get latest run
         latest_run = runs.iloc[-1]
-        
+
         metrics = {}
-        if latest_run.data.metrics:
-            metrics = latest_run.data.metrics
+        metric_cols = [c for c in runs.columns if c.startswith("metrics.")]
+
+        for col in metric_cols:
+            metrics[col.replace("metrics.", "")] = latest_run[col]
         
         summary[exp_name] = {
             "run_id": latest_run.run_id,
