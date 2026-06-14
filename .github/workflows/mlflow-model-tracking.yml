@@ -8,21 +8,26 @@ on:
       - "tests/**"
       - ".github/workflows/mlflow-model-tracking.yml"
       - "scripts/mlflow_*.py"
+
   pull_request:
     branches: [main]
+
   schedule:
-    - cron: "0 2 * * 0" # Weekly on Sundays at 2 AM UTC
-  
+    - cron: "0 2 * * 0"
+
 concurrency:
   group: mlflow-tracking-${{ github.ref }}
-  cancel-in-progress: false  # Let tracking complete
+  cancel-in-progress: false
 
 env:
-  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI || 'file:///tmp/mlflow' }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
   ARTIFACTS_PATH: mlflow_artifacts
 
 jobs:
-  # JOB 1: Setup MLflow Server & Initialize Experiments
+
+# =========================================================
+# JOB 1 - Setup / sanity check MLflow connection
+# =========================================================
   setup-mlflow:
     name: "Setup MLflow Tracking"
     runs-on: ubuntu-latest
@@ -37,58 +42,48 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-mlflow-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-mlflow-
-
-      - name: Install MLflow and dependencies
+      - name: Install MLflow
         run: |
           python -m pip install --upgrade pip
           pip install mlflow==2.10.2 pyyaml
 
-      - name: Initialize MLflow experiments
+      - name: Validate MLflow connection
         run: |
-          python scripts/mlflow_init_experiments.py
+          python - << 'EOF'
+          import mlflow
+          import os
 
-      - name: Upload MLflow artifacts directory
-        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlflow-tracking-db
-          path: /tmp/mlflow
-          retention-days: 90
+          uri = os.environ["MLFLOW_TRACKING_URI"]
+          mlflow.set_tracking_uri(uri)
 
-  # JOB 2: Student Performance Service — Model Evaluation
+          print("Using MLflow:", uri)
+
+          # simple validation
+          try:
+              exp = mlflow.get_experiment_by_name("ci-validation")
+              if exp is None:
+                  mlflow.create_experiment("ci-validation")
+              print("MLflow connection OK")
+          except Exception as e:
+              raise RuntimeError(f"MLflow connection failed: {e}")
+          EOF
+
+# =========================================================
+# JOB 2 - Student Performance
+# =========================================================
   student-performance-tracking:
     name: "Student Performance Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    # strategy:
-    #   matrix:
-    #     python-version: ["3.11"]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-perf-${{ hashFiles('services/Student Perfromance Service/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-perf-
 
       - name: Install dependencies
         run: |
@@ -96,55 +91,29 @@ jobs:
           pip install -r "services/Student Perfromance Service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      - name: Download MLflow artifacts from setup
-        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
-        uses: actions/download-artifact@v4
-        with:
-          name: mlflow-tracking-db
-          path: /tmp/mlflow
-
-      - name: Run Student Performance tests with MLflow tracking
+      - name: Run tracking
         run: |
           python scripts/mlflow_track_student_performance.py
         env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
-          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
-          
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: student-perf-results
-          path: reports/student_performance/
-          retention-days: 90
 
-  # JOB 3: Grade Predictor Service — Model Evaluation
+# =========================================================
+# JOB 3 - Grade Predictor
+# =========================================================
   grade-predictor-tracking:
     name: "Grade Predictor Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    # strategy:
-    #   matrix:
-    #     python-version: ["3.11"]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-gpa-${{ hashFiles('services/grade_predictor_service/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-gpa-
 
       - name: Install dependencies
         run: |
@@ -152,57 +121,29 @@ jobs:
           pip install -r "services/grade_predictor_service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      - name: Download MLflow artifacts from setup
-        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
-        uses: actions/download-artifact@v4
-        with:
-          name: mlflow-tracking-db
-          path: /tmp/mlflow
-
-      - name: Run Grade Predictor tests with MLflow tracking
+      - name: Run tracking
         run: |
           python scripts/mlflow_track_grade_predictor.py
         env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
-          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
-         
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: grade-predictor-results
-          path: reports/grade_predictor/
-          retention-days: 90
-
-  # JOB 4: OCR Service — Model Evaluation & Metrics
+# =========================================================
+# JOB 4 - OCR Service
+# =========================================================
   ocr-service-tracking:
     name: "OCR Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: setup-mlflow
 
-    # strategy:
-    #   matrix:
-    #     python-version: ["3.11"]
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-ocr-${{ hashFiles('services/ocr/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-ocr-
 
       - name: Install dependencies
         run: |
@@ -210,30 +151,16 @@ jobs:
           pip install -r services/ocr/requirements.txt
           pip install mlflow==2.10.2 pytest pytest-cov
 
-      - name: Download MLflow artifacts from setup
-        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
-        uses: actions/download-artifact@v4
-        with:
-          name: mlflow-tracking-db
-          path: /tmp/mlflow
-
-      - name: Run OCR tests with MLflow tracking
+      - name: Run tracking
         run: |
           python scripts/mlflow_track_ocr_service.py
         env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
-          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
-          
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ocr-service-results
-          path: reports/ocr_service/
-          retention-days: 90
 
-  # JOB 5: Generate MLflow Report & Dashboard
+# =========================================================
+# JOB 5 - Generate Report (READS from MLflow server)
+# =========================================================
   generate-mlflow-report:
     name: "Generate MLflow Report"
     runs-on: ubuntu-latest
@@ -242,50 +169,27 @@ jobs:
       - student-performance-tracking
       - grade-predictor-tracking
       - ocr-service-tracking
-    
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-report-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-report-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mlflow==2.10.2 pandas plotly pyyaml
+          pip install mlflow pandas plotly pyyaml
 
-      - name: Download MLflow artifacts
-        if: startsWith(env.MLFLOW_TRACKING_URI, 'file://')
-        uses: actions/download-artifact@v4
-        with:
-          name: mlflow-tracking-db
-          path: /tmp/mlflow
-
-      # - name: Download all test results
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     path: test-results/
-
-      - name: Generate comprehensive MLflow report
+      - name: Generate report
         run: |
           python scripts/mlflow_generate_report.py
         env:
-          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
-          MLFLOW_TRACKING_TOKEN: ${{ env.MLFLOW_TRACKING_TOKEN }}
-          
-      - name: Upload MLflow report
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+      - name: Upload report
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-report
@@ -294,46 +198,24 @@ jobs:
             mlflow_metrics_summary.json
           retention-days: 90
 
-      - name: Upload final MLflow database
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlflow-final-db
-          path: /tmp/mlflow
-          retention-days: 90
-
-  # JOB 6: Archive Results for Historical Analysis
+# =========================================================
+# JOB 6 - Archive results (optional local reporting only)
+# =========================================================
   archive-results:
     name: "Archive Results"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: generate-mlflow-report
-   
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml
-
-      # - name: Download all artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     path: artifacts/
+      - uses: actions/checkout@v4
 
       - name: Create archive
         run: |
           mkdir -p model_results_archive
-          tar -czf "model_results_archive/results_${{ github.run_number }}_${{ github.run_id }}.tar.gz" artifacts/
-          ls -lh model_results_archive/
+          tar -czf model_results_archive/results_${{ github.run_number }}.tar.gz .
 
-      - name: Upload archive to GitHub
+      - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
           name: model-results-archive-${{ github.run_number }}
@@ -346,5 +228,3 @@ jobs:
           echo "Run ID: ${{ github.run_id }}"
           echo "Run Number: ${{ github.run_number }}"
           echo "Timestamp: $(date -Iseconds)"
-          echo ""
-          echo "✅ All model tracking and archiving complete!"
