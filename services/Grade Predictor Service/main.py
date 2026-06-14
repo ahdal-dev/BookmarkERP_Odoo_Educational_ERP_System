@@ -9,9 +9,10 @@ import os
 
 app = FastAPI()
 
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(BASE_DIR, "..", "models", "gpa_predictor.pkl")
 # Load model once
-model_path = "models/gpa_predictor.pkl"
+# model_path = "models/gpa_predictor.pkl"
 if os.path.exists(model_path):
     try:
         bundle = joblib.load(model_path)
