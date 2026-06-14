@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-MLflow Experiment Initialization Script (OPTIMIZED)
+MLflow Experiment Initialization Script
 
-Fast initialization for remote MLflow tracking server.
-Creates experiments only if they don't exist.
-No training/logging operations included.
+Initializes MLflow experiments and runs for all microservices.
+Creates organized experiment structure for tracking model performance.
 """
 
 import mlflow
@@ -12,133 +11,119 @@ import os
 import json
 from datetime import datetime
 
+# Configure MLflow
+mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow"))
+experiment_name = os.getenv("MLFLOW_EXPERIMENT_NAME", "Odoo_ERP_Services")
 
-# -----------------------------
-# CONFIG
-# -----------------------------
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")
-EXPERIMENT_GROUP_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "Odoo_ERP_Services")
-
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-
-
-# -----------------------------
-# EXPERIMENT DEFINITIONS
-# -----------------------------
-EXPERIMENTS = {
-    "Student_Performance_Service": {
-        "description": "Student performance prediction and risk assessment",
-        "tags": {
-            "model_type": "regression",
-            "service": "student_performance",
-            "domain": "education",
+def create_experiment_structure():
+    """Create MLflow experiment hierarchy for all services."""
+    
+    experiments = {
+        "Student_Performance_Service": {
+            "description": "Student performance prediction and risk assessment",
+            "tags": ["model_type:regression", "service:student_performance", "domain:education"],
         },
-    },
-    "Grade_Predictor_Service": {
-        "description": "Grade prediction and classification",
-        "tags": {
-            "model_type": "classification",
-            "service": "grade_predictor",
-            "domain": "education",
+        "Grade_Predictor_Service": {
+            "description": "Grade prediction and classification",
+            "tags": ["model_type:classification", "service:grade_predictor", "domain:education"],
         },
-    },
-    "OCR_Service": {
-        "description": "Optical Character Recognition and document extraction",
-        "tags": {
-            "model_type": "ocr",
-            "service": "ocr",
-            "domain": "document_processing",
+        "OCR_Service": {
+            "description": "Optical Character Recognition and document extraction",
+            "tags": ["model_type:ocr", "service:ocr", "domain:document_processing"],
         },
-    },
-    "System_Integration": {
-        "description": "Cross-service integration tests and performance",
-        "tags": {
-            "model_type": "integration",
-            "service": "system",
-            "domain": "integration",
+        "System_Integration": {
+            "description": "Cross-service integration tests and performance",
+            "tags": ["model_type:integration", "service:system", "domain:integration"],
         },
-    },
-}
-
-
-# -----------------------------
-# MAIN LOGIC (OPTIMIZED)
-# -----------------------------
-def create_experiments_fast():
-    """
-    Fast experiment creation using a single MLflow API call.
-    """
-
-    print("\n🔍 Fetching existing experiments from MLflow server...")
-
-    # 🔥 ONE network call instead of 4+
-    existing_experiments = mlflow.search_experiments()
-    existing_map = {exp.name: exp.experiment_id for exp in existing_experiments}
-
-    print(f"📊 Found {len(existing_map)} existing experiments\n")
-
+    }
+    
     created_experiments = {}
-
-    for name, config in EXPERIMENTS.items():
-
-        if name in existing_map:
-            print(f"📌 Exists: {name} (ID: {existing_map[name]})")
-            exp_id = existing_map[name]
-
-        else:
-            print(f"🆕 Creating: {name}")
-
-            exp_id = mlflow.create_experiment(
-                name=name,
-                tags=config["tags"]
-            )
-
-            print(f"   ✅ Created with ID: {exp_id}")
-
-        created_experiments[name] = {
-            "id": exp_id,
-            "name": name,
-            "description": config["description"],
-            "tags": config["tags"],
-        }
-
+    
+    for exp_name, config in experiments.items():
+        try:
+            # Check if experiment exists
+            exp = mlflow.get_experiment_by_name(exp_name)
+            
+            if exp is None:
+                # Create new experiment
+                exp_id = mlflow.create_experiment(
+                    name=exp_name,
+                    tags=config["tags"]
+                )
+                exp = mlflow.get_experiment(exp_id)
+                print(f"✅ Created experiment: {exp_name} (ID: {exp_id})")
+            else:
+                print(f"📌 Experiment exists: {exp_name} (ID: {exp.experiment_id})")
+            
+            created_experiments[exp_name] = {
+                "id": exp.experiment_id,
+                "name": exp.name,
+                "description": config["description"],
+                "tags": config["tags"]
+            }
+            
+        except Exception as e:
+            print(f"❌ Error creating experiment {exp_name}: {str(e)}")
+    
     return created_experiments
 
 
-# -----------------------------
-# SAVE METADATA ONLY
-# -----------------------------
-def save_experiment_metadata(experiments: dict):
-    os.makedirs("reports", exist_ok=True)
+def initialize_global_run():
+    """Create a global run to track overall pipeline execution."""
+    
+    exp_id = mlflow.get_experiment_by_name("System_Integration")
+    
+    with mlflow.start_run(experiment_id=exp_id, run_name="Pipeline_Initialization") as run:
+        mlflow.log_param("pipeline_name", "MLflow Model Tracking")
+        mlflow.log_param("git_commit", os.getenv("GITHUB_SHA", "N/A"))
+        mlflow.log_param("git_branch", os.getenv("GITHUB_REF", "N/A"))
+        mlflow.log_param("run_id", os.getenv("GITHUB_RUN_ID", "N/A"))
+        mlflow.log_param("workflow", "mlflow-model-tracking")
+        
+        mlflow.log_metric("pipeline_start_timestamp", datetime.now().timestamp())
+        
+        print(f"✅ Global run initialized: {run.info.run_id}")
 
+
+def create_tags_file(experiments):
+    """Create a JSON file with experiment tags for reference."""
+    
+    os.makedirs("reports", exist_ok=True)
+    
     output = {
         "timestamp": datetime.now().isoformat(),
-        "tracking_uri": MLFLOW_TRACKING_URI,
-        "experiments": experiments,
+        "experiments": experiments
     }
-
+    
     with open("reports/mlflow_experiments.json", "w") as f:
         json.dump(output, f, indent=2)
+    
+    print(f"✅ Experiment tags saved to reports/mlflow_experiments.json")
 
-    print("\n💾 Saved experiment metadata to reports/mlflow_experiments.json")
 
-
-# -----------------------------
-# MAIN
-# -----------------------------
 def main():
+    """Main initialization function."""
+    
     print("=" * 70)
-    print("🚀 MLflow Experiment Initialization (FAST MODE)")
+    print("🔧 MLflow Experiment Initialization")
     print("=" * 70)
-
-    experiments = create_experiments_fast()
-
-    save_experiment_metadata(experiments)
-
-    print("\n" + "=" * 70)
-    print("✅ MLflow initialization completed successfully")
-    print("⚡ Optimized for remote tracking server (low latency)")
-    print("=" * 70 + "\n")
+    print()
+    
+    # Create experiment structure
+    experiments = create_experiment_structure()
+    print()
+    
+    # Initialize global tracking run
+    initialize_global_run()
+    print()
+    
+    # Save tags reference
+    create_tags_file(experiments)
+    print()
+    
+    print("=" * 70)
+    print("✅ MLflow initialization complete!")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
