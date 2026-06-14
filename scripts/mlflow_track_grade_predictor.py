@@ -173,8 +173,21 @@ def track_grade_predictor():
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services', 'grade_predector'))
         import joblib
         
-        model = joblib.load("../services/grade_predictor_service/models/gpa_predictor.pkl")
-        print("✅ Grade predictor model imported successfully")
+        from pathlib import Path
+        import joblib
+
+        BASE_DIR = Path(__file__).resolve().parent
+
+        MODEL_PATH = BASE_DIR.parent / "services" / "grade_predictor_service" / "models" / "gpa_predictor.pkl"
+
+        if MODEL_PATH.exists():
+            model = joblib.load(MODEL_PATH)
+            print("✅ Model loaded successfully")
+            use_actual_model = True
+        else:
+            print(f"⚠️ Model not found at {MODEL_PATH}")
+            use_actual_model = False
+        # print("✅ Grade predictor model imported successfully")
         use_actual_model = True
     except Exception as e:
         print(f"⚠️  Could not import actual model: {str(e)}")
