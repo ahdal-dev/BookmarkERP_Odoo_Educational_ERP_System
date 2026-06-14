@@ -21,67 +21,21 @@ concurrency:
 
 env:
   MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-  ARTIFACTS_PATH: mlflow_artifacts
 
+# =========================================================
+# JOB 1 - Student Performance
+# =========================================================
 jobs:
 
-# =========================================================
-# JOB 1 - Setup / sanity check MLflow connection
-# =========================================================
-  setup-mlflow:
-    name: "Setup MLflow Tracking"
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install MLflow
-        run: |
-          python -m pip install --upgrade pip
-          pip install mlflow==2.10.2 pyyaml
-
-      - name: Validate MLflow connection
-        run: |
-          python - << 'EOF'
-          import mlflow
-          import os
-
-          uri = os.environ["MLFLOW_TRACKING_URI"]
-          mlflow.set_tracking_uri(uri)
-
-          print("Using MLflow:", uri)
-
-          # simple validation
-          try:
-              exp = mlflow.get_experiment_by_name("ci-validation")
-              if exp is None:
-                  mlflow.create_experiment("ci-validation")
-              print("MLflow connection OK")
-          except Exception as e:
-              raise RuntimeError(f"MLflow connection failed: {e}")
-          EOF
-
-# =========================================================
-# JOB 2 - Student Performance
-# =========================================================
   student-performance-tracking:
     name: "Student Performance Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: setup-mlflow
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -99,19 +53,17 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
 # =========================================================
-# JOB 3 - Grade Predictor
+# JOB 2 - Grade Predictor
 # =========================================================
   grade-predictor-tracking:
     name: "Grade Predictor Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: setup-mlflow
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -129,19 +81,17 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
 # =========================================================
-# JOB 4 - OCR Service
+# JOB 3 - OCR Service
 # =========================================================
   ocr-service-tracking:
     name: "OCR Service"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: setup-mlflow
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -159,7 +109,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
 # =========================================================
-# JOB 5 - Generate Report (READS from MLflow server)
+# JOB 4 - Generate Report
 # =========================================================
   generate-mlflow-report:
     name: "Generate MLflow Report"
@@ -173,8 +123,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -199,7 +148,7 @@ jobs:
           retention-days: 90
 
 # =========================================================
-# JOB 6 - Archive results (optional local reporting only)
+# JOB 5 - Archive ONLY report outputs
 # =========================================================
   archive-results:
     name: "Archive Results"
@@ -213,7 +162,8 @@ jobs:
       - name: Create archive
         run: |
           mkdir -p model_results_archive
-          tar -czf model_results_archive/results_${{ github.run_number }}.tar.gz .
+          tar -czf model_results_archive/report_${{ github.run_number }}.tar.gz \
+            mlflow_report.html mlflow_metrics_summary.json || true
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
