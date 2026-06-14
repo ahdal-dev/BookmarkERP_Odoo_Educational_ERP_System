@@ -56,7 +56,6 @@ jobs:
           python scripts/mlflow_init_experiments.py
 
       - name: Upload MLflow artifacts directory
-        if: contains(env.MLFLOW_TRACKING_URI, 'file://')
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-tracking-db
