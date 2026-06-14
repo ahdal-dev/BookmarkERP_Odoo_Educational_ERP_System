@@ -28,7 +28,7 @@ print(f"Using MLflow tracking URI: {tracking_uri}")
 def generate_test_data():
     """Generate sample test data for grade prediction."""
     
-    # Grade mappings
+    # Grade mappings 
     grade_map = {
         0: "A", 1: "A-", 2: "B", 3: "B+", 4: "B-",
         5: "C", 6: "C+", 7: "C-", 8: "F"
