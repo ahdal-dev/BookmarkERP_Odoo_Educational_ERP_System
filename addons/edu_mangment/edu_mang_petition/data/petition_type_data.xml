@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="petition_type_grade_appeal" model="petition.type">
+        <field name="name">Grade Appeal</field>
+        <field name="code">GRADE_APPEAL</field>
+        <field name="sequence">10</field>
+        <field name="requires_approval">True</field>
+    </record>
+    <record id="petition_type_late_registration" model="petition.type">
+        <field name="name">Late Registration</field>
+        <field name="code">LATE_REG</field>
+        <field name="sequence">20</field>
+        <field name="requires_approval">True</field>
+    </record>
+    <record id="petition_type_course_exception" model="petition.type">
+        <field name="name">Course Exception</field>
+        <field name="code">COURSE_EXCEPTION</field>
+        <field name="sequence">30</field>
+        <field name="requires_approval">True</field>
+    </record>
+    <record id="petition_type_prerequisite_waiver" model="petition.type">
+        <field name="name">Prerequisite Waiver</field>
+        <field name="code">PREREQ_WAIVER</field>
+        <field name="sequence">40</field>
+        <field name="requires_approval">True</field>
+    </record>
+    <record id="petition_type_other" model="petition.type">
+        <field name="name">Other</field>
+        <field name="code">OTHER</field>
+        <field name="sequence">100</field>
+        <field name="requires_approval">True</field>
+    </record>
+</odoo>

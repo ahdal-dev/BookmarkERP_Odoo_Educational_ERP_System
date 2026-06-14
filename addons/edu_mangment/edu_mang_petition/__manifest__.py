@@ -17,6 +17,7 @@
     'security/petition_security.xml',
     'security/ir.model.access.csv',
     'views/petition_type_views.xml',
+    'data/petition_type_data.xml',
     'views/petition_views.xml',
     'views/menus.xml',
 ],
