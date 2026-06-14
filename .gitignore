@@ -63,3 +63,6 @@ api_gateway/nginx/ssl/*.pem
 # odoo/
 
 
+# MLflow tracking artifacts
+mlartifacts/
+

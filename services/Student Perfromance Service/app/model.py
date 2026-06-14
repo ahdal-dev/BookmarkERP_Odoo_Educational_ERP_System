@@ -1,3 +1,3 @@
 import joblib
 
-model = joblib.load("models/student_performance.pkl")
+model = joblib.load("../models/student_performance.pkl")
