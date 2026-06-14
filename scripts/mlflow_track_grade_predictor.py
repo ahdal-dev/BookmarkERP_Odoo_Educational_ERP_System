@@ -173,7 +173,7 @@ def track_grade_predictor():
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services', 'grade_predector'))
         import joblib
         
-        model = joblib.load("../services/Grade Predictor Service/models/gpa_predictor.pkl")
+        model = joblib.load("../services/grade_predictor_service/models/gpa_predictor.pkl")
         print("✅ Grade predictor model imported successfully")
         use_actual_model = True
     except Exception as e:
