@@ -42,12 +42,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r "services/Student Perfromance Service/requirements.txt"
+          pip install -r "services/student_performance_service/requirements.txt"
           pip install mlflow==2.10.2 pytest pytest-cov
 
       - name: Run tracking
         run: |
-          python scripts/mlflow_track_student_performance.py
+          python services/student_performance_service/app/train.py
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
@@ -75,7 +75,7 @@ jobs:
 
       - name: Run tracking
         run: |
-          python scripts/mlflow_track_grade_predictor.py
+          python services/grade_predictor_service/train.py
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}

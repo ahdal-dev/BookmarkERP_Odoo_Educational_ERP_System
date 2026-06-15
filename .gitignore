@@ -65,4 +65,5 @@ api_gateway/nginx/ssl/*.pem
 
 # MLflow tracking artifacts
 mlartifacts/
+mlruns/
 
