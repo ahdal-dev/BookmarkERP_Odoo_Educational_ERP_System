@@ -193,7 +193,7 @@ async def ocr_yolo(request: Request, file: UploadFile = File(...)):
 async def ocr_mistral(
     request: Request,
     file: UploadFile = File(...),
-    doc_type: str = Query(None, description="Document type: thanawiya_amma, national_id, passport, ig_transcript, american_transcript. If None, will auto-detect.")
+    doc_type: str = Query(None, description="Document type: thanawiya_amma, national_id, passport, birth_certificate, ig_transcript, american_transcript. If None, will auto-detect.")
 ):
     """
     Process uploaded image/PDF with Mistral OCR and extract structured data based on document type.
@@ -201,6 +201,7 @@ async def ocr_mistral(
     Supported document types:
     - national_id: Egyptian National ID
     - passport: Passport document
+    - birth_certificate: Birth certificate
     - thanawiya_amma: Egyptian Thanawiya Amma transcript
     - ig_transcript: IGCSE/Cambridge transcript
     - american_transcript: American school transcript

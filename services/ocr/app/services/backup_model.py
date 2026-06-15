@@ -247,6 +247,13 @@ Use null for any missing or unclear values.
 Use YYYY-MM-DD for dates when possible.
 Do not include markdown, explanations, or extra fields. JSON only.""",
 
+    "birth_certificate": """You are a data extraction assistant. Extract information from the following OCR output of a birth certificate.
+Return a single JSON object with these exact keys: child_name, father_name, mother_name, date_of_birth, place_of_birth, gender, registration_number, issue_date, authority, address, additional_details.
+- additional_details: include any other meaningful fields present in the certificate, such as document type, issuing city, governorate, serial number, or notes.
+Use null for any missing or unclear values.
+Use YYYY-MM-DD for dates when possible.
+Do not include markdown, explanations, or extra fields. JSON only.""",
+
     "thanawiya_amma": """You are a specialized extractor for Egyptian Thanawiya Amma secondary school certificates.
 Analyze the OCR text and return a single JSON object with these exact keys:
 student_name, seat_number, national_id, school, educational_administration, directorate, first_language, second_language, subjects, non_counted_subjects, total_score, status, certificate_number, has_barcode, has_photo, has_official_stamp.
@@ -276,7 +283,7 @@ Do not include markdown, explanations, or extra fields. JSON only.""",
 
     "detect": """Based on the following OCR text, determine the document type.
 Reply with ONLY one of these exact words:
-thanawiya_amma, national_id, passport, ig_transcript, american_transcript.
+thanawiya_amma, national_id, passport, birth_certificate, ig_transcript, american_transcript.
 Do not add any extra text.""",
 }
 print("✅ Prompts loaded")
@@ -286,16 +293,18 @@ def prompt_doc_type():
     print("⚠️ Could not auto-detect type. Choose manually:")
     print("  1 = national_id")
     print("  2 = passport")
-    print("  3 = thanawiya_amma")
-    print("  4 = ig_transcript")
-    print("  5 = american_transcript")
+    print("  3 = birth_certificate")
+    print("  4 = thanawiya_amma")
+    print("  5 = ig_transcript")
+    print("  6 = american_transcript")
     choice = input("Enter number: ").strip()
     return {
         "1": "national_id",
         "2": "passport",
-        "3": "thanawiya_amma",
-        "4": "ig_transcript",
-        "5": "american_transcript",
+        "3": "birth_certificate",
+        "4": "thanawiya_amma",
+        "5": "ig_transcript",
+        "6": "american_transcript",
     }.get(choice, "national_id")
 
 
@@ -303,14 +312,14 @@ def detect_doc_type(ocr_text):
     """Auto-detect document type from OCR text using Mistral Chat."""
     if not client:
         raise RuntimeError("Mistral client not initialized. Please install mistralai: pip install mistralai>=0.0.7")
-    
+
     try:
         logger.info("Detecting document type...")
-        
+
         messages = [
             {"role": "user", "content": f"{PROMPTS['detect']}\n\n--- OCR Text ---\n{ocr_text}"}
         ]
-        
+
         try:
             response = client.chat(
                 model="mistral-large-latest",
@@ -331,7 +340,7 @@ def detect_doc_type(ocr_text):
         logger.info(f"Detection result: {detected}")
         
         # Clean up — the model may wrap in quotes or add punctuation
-        for valid in ["thanawiya_amma", "national_id", "passport", "ig_transcript", "american_transcript"]:
+        for valid in ["thanawiya_amma", "national_id", "passport", "birth_certificate", "ig_transcript", "american_transcript"]:
             if valid in detected:
                 logger.info(f"Document type identified as: {valid}")
                 return valid

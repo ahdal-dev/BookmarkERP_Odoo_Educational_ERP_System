@@ -22,7 +22,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 
 BASE_DIR = Path(__file__).resolve().parent
-REPO_ROOT = BASE_DIR.parents[2]
+REPO_ROOT = BASE_DIR.parents[3]
+
 TRANSCRIPTS_PATH = REPO_ROOT / "data" / "transcripts.json"
 
 MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI")
