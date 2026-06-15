@@ -1,0 +1,133 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 440px;
+  max-width: 95vw;
+  background: var(--color-bg-white);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  z-index: 910;
+  overflow: hidden;
+  animation: fadeInScale 0.25s ease both;
+}
+
+.topBorder {
+  height: 4px;
+  background: var(--color-lime);
+}
+
+.content {
+  padding: 28px 32px 32px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.input,
+.select {
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: var(--color-primary-black);
+  outline: none;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-lime);
+  box-shadow: 0 0 0 3px rgba(76, 175, 39, 0.12);
+}
+
+.select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border-light);
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitBtn {
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary-black);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submitBtn:hover {
+  background: #333;
+}

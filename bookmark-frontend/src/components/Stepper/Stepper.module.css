@@ -1,0 +1,98 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 24px 0;
+  flex-wrap: wrap;
+}
+
+.stepGroup {
+  display: flex;
+  align-items: center;
+}
+
+.line {
+  width: 60px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+.lineSolid {
+  background: var(--color-primary-black);
+}
+
+.lineDashed {
+  background: repeating-linear-gradient(
+    to right,
+    var(--color-lime) 0,
+    var(--color-lime) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.completed {
+  background: var(--color-primary-black);
+}
+
+.active {
+  background: var(--color-lime);
+}
+
+.future {
+  background: #d1d1c7;
+}
+
+.number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.labelWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepLabel {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stepTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-primary-black);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .line {
+    width: 30px;
+  }
+
+  .labelWrap {
+    display: none;
+  }
+}

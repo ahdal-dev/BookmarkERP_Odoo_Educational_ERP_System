@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AppTile from '../../components/AppTile/AppTile';
 import AddModulesModal from '../../components/AddModulesModal/AddModulesModal';
@@ -85,16 +86,26 @@ const MODULES = [
   { key: 'portal-gateway', label: 'Portal Gateway', icon: <PortalGatewayIcon />, description: 'Secure portal routing' },
 ];
 
+const MODULE_ROUTES = {
+  registration: '/registration',
+  admission: '/admin/admissions',
+  authentication: '/admin/users',
+  petition: '/petitions/new',
+  website: '/admin/settings/registration-rules',
+  'portal-gateway': '/apply/documents',
+};
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const odooBackendUrl = import.meta.env.VITE_ODOO_URL || 'http://localhost:8081';
 
   const handleModuleClick = (moduleKey) => {
-    // In production, navigate to the module's sub-page
-    console.log(`Navigate to module: ${moduleKey}`);
+    const route = MODULE_ROUTES[moduleKey];
+    if (route) navigate(route);
   };
 
   const handleLogout = async () => {
