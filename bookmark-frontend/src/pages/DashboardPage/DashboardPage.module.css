@@ -1,0 +1,305 @@
+/* ============================================================
+   DASHBOARD PAGE — App Launcher Styles
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: #f9f8f3;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e3db;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.smallLogo {
+  display: flex;
+  align-items: center;
+}
+
+.headerBrand {
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: #4caf27;
+  line-height: 1;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backendBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid #e5e3db;
+  border-radius: 10px;
+  background: transparent;
+  color: #4a4a45;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.backendBtn:hover {
+  border-color: #4caf27;
+  color: #4caf27;
+  background: #f0fae8;
+}
+
+/* ===== AVATAR ===== */
+.avatarWrap {
+  position: relative;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #0d0d0d;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.avatar:hover {
+  box-shadow: 0 0 0 3px rgba(76, 175, 39, 0.2);
+}
+
+.avatarInitial {
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.statusDot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4caf27;
+  border: 2px solid white;
+}
+
+/* ===== DROPDOWN ===== */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+  min-width: 200px;
+  overflow: hidden;
+  animation: dropIn 0.2s ease;
+  z-index: 200;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdownName {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0d0d0d;
+}
+
+.dropdownEmail {
+  font-size: 12px;
+  color: #7a7a72;
+}
+
+.dropdownDivider {
+  border: none;
+  border-top: 1px solid #e5e3db;
+  margin: 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  color: #4a4a45;
+  transition: all 0.15s;
+}
+
+.dropdownItem:hover {
+  background: #f9f8f3;
+  color: #e8613a;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 40px 100px;
+}
+
+.titleSection {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.titleWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.title {
+  font-size: 34px;
+  font-weight: 800;
+  color: #0d0d0d;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #7a7a72;
+}
+
+/* ===== MODULE GRID ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 720px;
+  width: 100%;
+}
+
+.gridItem {
+  animation: tileIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes tileIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== FAB ===== */
+.fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  background: #0d0d0d;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(13, 13, 13, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 90;
+}
+
+.fab:hover {
+  background: #4caf27;
+  box-shadow: 0 8px 32px rgba(76, 175, 39, 0.35);
+  transform: translateY(-2px);
+}
+
+.fab:active {
+  transform: translateY(0);
+}
+
+.fabLabel {
+  white-space: nowrap;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 20px;
+  }
+
+  .main {
+    padding: 40px 20px 100px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .fab {
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+  }
+
+  .backendBtn span {
+    display: none;
+  }
+}
