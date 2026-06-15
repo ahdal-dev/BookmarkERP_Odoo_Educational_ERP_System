@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --default-timeout=1000 --retries 5 --no-cache-dir -r requirements.txt
+
+# Copy the service code and the pre-trained model artifacts in ./models
+# (generate them once with `python train.py` before building the image).
+COPY . .
+
+EXPOSE 5000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
