@@ -12,6 +12,11 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
+try:
+    import dvc.api
+    DVC_AVAILABLE = True
+except Exception:
+    DVC_AVAILABLE = False
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -142,11 +147,26 @@ def main():
     print(f"Using MLflow tracking URI: {MLFLOW_URI}")
     print(f"Loading transcripts from {TRANSCRIPTS_PATH}")
 
-    if not TRANSCRIPTS_PATH.exists():
-        raise FileNotFoundError(f"Transcript data not found at {TRANSCRIPTS_PATH}")
-
-    with open(TRANSCRIPTS_PATH, "r", encoding="utf-8") as f:
-        transcripts = json.load(f)
+    transcripts_path = TRANSCRIPTS_PATH
+    if transcripts_path.exists():
+        with open(transcripts_path, "r", encoding="utf-8") as f:
+            transcripts = json.load(f)
+    else:
+        dvc_file = transcripts_path.with_name(f"{transcripts_path.name}.dvc")
+        if DVC_AVAILABLE and dvc_file.exists():
+            print(f"Transcript file missing, attempting DVC load from {dvc_file}")
+            try:
+                with dvc.api.open(str(transcripts_path.relative_to(REPO_ROOT)), repo=str(REPO_ROOT)) as f:
+                    transcripts = json.load(f)
+            except Exception as e:
+                raise FileNotFoundError(
+                    f"Transcript data not found at {transcripts_path}. DVC file exists but could not load it: {e}"
+                ) from e
+        else:
+            raise FileNotFoundError(
+                f"Transcript data not found at {transcripts_path}."
+                f" Ensure data/transcripts.json is present or run `dvc pull {dvc_file}` if using DVC."
+            )
 
     X, y = build_training_dataset(transcripts)
     X_train, X_test, y_train, y_test = train_test_split(
