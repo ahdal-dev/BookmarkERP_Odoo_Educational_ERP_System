@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAG ChatBot - Welcome</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html {
+        scroll-behavior: smooth;
+      } 
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #E9E7F1;
+        background: radial-gradient(1200px 600px at 20% -10%, rgba(151, 71, 255, 0.35), transparent 60%),
+          radial-gradient(1200px 800px at 110% 10%, rgba(82, 0, 204, 0.35), transparent 60%),
+          linear-gradient(145deg, #0f0b17 0%, #1a1226 40%, #241437 100%);
+        min-height: 100vh;
+      }
+
+      /* Navigation */
+      .navbar {
+        background: rgba(24, 16, 37, 0.7);
+        backdrop-filter: blur(12px);
+        padding: 1rem 2rem;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #B18CFF;
+      }
+
+      .nav-links {
+        display: flex;
+        list-style: none;
+        gap: 2rem;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: #E9E7F1;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        color: #B18CFF;
+      }
+
+      .cta-button {
+        background: linear-gradient(135deg, #8a2be2, #5b19a6);
+        color: #fff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.3s ease;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+      }
+      /* Logo styling */
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* space between image and text */
+}
+
+.logo-image {
+  height: 40px;   /* adjust size */
+  width: 40px;
+  border-radius: 50%; /* makes it round */
+  object-fit: cover;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.logo-text {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #B18CFF;
+}
+
+
+      /* Main Content */
+      .main-content {
+        padding-top: 80px;
+        min-height: 100vh;
+      }
+
+      .hero-section {
+        padding: 6rem 2rem 4rem 2rem;
+        color: #fff;
+      }
+      .hero-wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        align-items: center;
+        gap: 2rem;
+      }
+      .hero-left { text-align: left; }
+      .hero-right {
+        position: relative;
+        height: 420px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+        background: url('https://i.pinimg.com/1200x/1c/44/f8/1c44f8914b9f20e13b6168a2c2be3586.jpg') center/cover no-repeat;
+      }
+      .hero-right::after{ content:''; position:absolute; inset:0; background: radial-gradient(60% 60% at 35% 40%, rgba(138,43,226,0.25), transparent 60%);}      
+
+      .hero-title {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+      }
+
+      .hero-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 1rem 2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .btn-primary {
+        background: #fff;
+        color: #5b19a6;
+      }
+
+      .btn-primary:hover {
+        background: transparent;
+        color: white;
+        border-color: white;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: #fff;
+        border-color: #ffffff;
+      }
+
+      .btn-secondary:hover {
+        background: white;
+        color: #5b19a6;
+      }
+
+      /* Features Section */
+      .features-section {
+        background: #140f1e;
+        padding: 4rem 2rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 3rem;
+        color: #E9E7F1;
+      }
+
+      .features-rail {
+        display: flex;
+        gap: 2rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        scroll-snap-type: x mandatory;
+      }
+      .features-rail::-webkit-scrollbar { display: none; }
+      .features-track {
+        display: flex;
+        gap: 2rem;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        min-width: 320px;
+        max-width: 360px;
+        scroll-snap-align: start;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        background: rgba(255,255,255,0.08);
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #B18CFF;
+      }
+
+      .feature-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+
+      .feature-description {
+        color: #c9c4d6;
+        line-height: 1.6;
+      }
+      /* Rich lists inside cards/sections */
+      .feature-list,
+      .about-list {
+        margin-top: 8px;
+        padding-left: 1.2rem;
+        text-align: left;
+        color: #c9c4d6;
+      }
+      .feature-list li,
+      .about-list li { margin: 6px 0; }
+
+      /* About Section */
+      .about-section {
+        background: #0f0b17;
+        padding: 4rem 2rem;
+      }
+
+      .about-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: center;
+      }
+
+      .about-text h3 {
+        font-size: 2.2rem;
+        margin-bottom: 1.5rem;
+        color: #fff;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff, #fff); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .about-text p {
+        color: #E9E7F1;
+        line-height: 1.8;
+        margin-bottom: 1.2rem;
+        font-size: 1.05rem;
+      }
+
+      .about-text strong {
+        color: #B18CFF;
+        font-weight: 600;
+      }
+
+      .about-text ul {
+        margin: 1.2rem 0;
+        padding-left: 1.5rem;
+      }
+
+      .about-text li {
+        color: #c9c4d6;
+        margin: 0.8rem 0;
+        line-height: 1.6;
+        font-size: 1rem;
+      }
+
+      .about-text li strong {
+        color: #B18CFF;
+        font-weight: 600;
+      }
+
+      .about-image {
+        text-align: center;
+      }
+
+      .about-image img {
+        max-width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+
+      /* Footer */
+      .footer {
+        background: #0d0a14;
+        color: #c9c4d6;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      /* Login Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 6, 16, 0.6);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .login-modal {
+        width: 100%;
+        max-width: 460px;
+        background: rgba(26, 18, 38, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
+        padding: 28px;
+        color: #E9E7F1;
+      }
+
+      .login-modal .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .login-modal .header h3 { color: #ffffff; }
+
+      .close-btn {
+        background: transparent;
+        border: none;
+        color: #c9c4d6;
+        font-size: 22px;
+        cursor: pointer;
+      }
+
+      .login-modal .form-group { margin: 14px 0; }
+      .login-modal label { display: block; margin-bottom: 6px; color: #c9c4d6; }
+      .login-modal input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+      }
+      .login-modal input::placeholder { color: #b9b3c9; }
+
+      .login-modal .login-btn {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(135deg, #8a2be2, #5b19a6);
+        margin-top: 10px;
+      }
+
+      .modal-message { margin: 10px 0; text-align: center; }
+      .modal-message.success { color: #47d27e; }
+      .modal-message.error { color: #f37e7e; }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .hero-title {
+          font-size: 2.5rem;
+        }
+
+        .nav-links {
+          display: none;
+        }
+        .hero-wrap { grid-template-columns: 1fr; }
+        .hero-right { height: 300px; }
+        .about-content {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+/* Contact Section */
+#contact {
+  background: #140f1e;
+  padding: 4rem 2rem;
+}
+
+#contact .section-title {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: #E9E7F1;
+  font-weight: 700;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+#contact .section-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #B18CFF, #6C63FF);
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+/* Grid layout for contact cards */
+.contact-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Card styling */
+.contact-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3rem 2.5rem;
+  border-radius: 20px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px);
+}
+
+.contact-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  background: rgba(255,255,255,0.08);
+}
+
+/* Profile image */
+.contact-card img {
+  width: 180px;
+height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 3px solid #B18CFF;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.contact-card:hover img {
+  transform: scale(1.08);
+  border-color: #fff;
+}
+
+/* Name */
+.contact-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.8rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Info */
+.contact-card p {
+  font-size: 1rem;
+  color: #c9c4d6;
+  line-height: 1.6;
+}
+
+/* Links */
+.contact-card a {
+  color: #B18CFF;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.contact-card a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(177, 140, 255, 0.8);
+}
+
+.section-title {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: #E9E7F1;
+  font-weight: 700;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #B18CFF, #6C63FF);
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+    /* Responsive for Mobile */
+    @media (max-width: 768px) {
+      #contact {
+        padding: 3rem 1rem;
+      }
+
+      #contact .section-title {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+      }
+    }
+
+    </style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAG ChatBot</title>
+  
+    <!-- Favicon (logo in browser title) -->
+    <link rel="icon" href="https://i.pinimg.com/1200x/c4/dd/47/c4dd475a926160c734876937ce9aafe4.jpg" type="image/png" />
+  </head>
+  
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo-wrapper">
+        <img src="https://i.pinimg.com/1200x/c4/dd/47/c4dd475a926160c734876937ce9aafe4.jpg" 
+             alt="RAG ChatBot" class="logo-image">
+        <div class="logo-text">RAG ChatBot</div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="#" id="openLogin" class="cta-button">Login</a></li>
+      </ul>
+    </div>
+  </nav>
+  
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-wrap">
+          <div class="hero-left">
+            <h1 class="hero-title">AI-Powered Knowledge Assistant</h1>
+            <p class="hero-subtitle">
+              Transform your organization's documents into intelligent
+              conversations
+            </p>
+            <div class="hero-buttons">
+              <a href="#" id="tryNow" class="btn btn-primary">Try Our Services</a>
+              <a href="#features" class="btn btn-secondary">Learn More</a>
+            </div>
+          </div>
+          <div class="hero-right" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features" class="features-section">
+        <div class="container">
+          <h2 class="section-title">What We Offer</h2>
+          <div class="features-rail" id="featuresRail">
+            <div class="features-track" id="featuresTrack">
+              <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3 class="feature-title">AI-Powered Q&A</h3>
+                <ul class="feature-list">
+                  <li>Natural-language queries in English, Arabic, and more.</li>
+                  <li>Answers sourced strictly from your organization’s uploaded knowledge base.</li>
+                  <li>Optional voice input (STT) for quick, hands-free questions.</li>
+                </ul>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-title">Document Intelligence</h3>
+                <ul class="feature-list">
+                  <li>Admins upload PDFs, Word, TXT, CSV.</li>
+                  <li>Automatic chunking, embedding, and indexing for efficient retrieval.</li>
+                  <li>Enables powerful document‑grounded responses (RAG).</li>
+                </ul>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">Secure & Private</h3>
+                <ul class="feature-list">
+                  <li>Multi-tenant isolation: organizations are fully separated.</li>
+                  <li>Role-based access controls for admins and users.</li>
+                  <li>Content hashes prevent duplicate document ingestion.</li>
+                </ul>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Real-time Responses</h3>
+                <ul class="feature-list">
+                  <li>Optimized pipeline (vector search + Gemini LLM) for instant answers.</li>
+                  <li>Fallbacks handle multilingual queries and weak retrieval gracefully.</li>
+                </ul>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Role-Based Access</h3>
+                <ul class="feature-list">
+                  <li>Admins: Upload/manage documents, users, and feedback.</li>
+                  <li>Users: Ask questions, view chat history, interact with the assistant.</li>
+                  <li>Super‑Admins: Manage multiple organizations centrally.</li>
+                </ul>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Usage Analytics</h3>
+                <ul class="feature-list">
+                  <li>Collect feedback on responses (ratings, comments).</li>
+                  <li>Analyze popular questions, quality metrics, and coverage.</li>
+                  <li>Drive continuous improvement of knowledge management.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+<section id="about" class="about-section">
+  <div class="container">
+    <h2 class="section-title">About Us</h2>
+    <div class="about-content">
+      <div class="about-text">
+        <h3>Multi-Organization RAG Chatbot Platform</h3>
+        <p>
+          Our platform empowers organizations to deploy intelligent assistants that answer strictly from their uploaded documents, ensuring data isolation, accuracy, and trust.
+        </p>
+        <p>
+          Organizations upload their knowledge bases—policies, reports, guidelines—and users interact through text or voice, receiving context-aware answers from their organization's content only.
+        </p>
+        <ul>
+          <li><strong>Admins:</strong> Manage users, upload documents, review feedback</li>
+          <li><strong>Users:</strong> Access information conversationally with chat history</li>
+          <li><strong>Super-Admins:</strong> Oversee multiple organizations centrally</li>
+        </ul>
+        
+        <p>
+          Our goal: give every organization a private, intelligent assistant that makes knowledge easier, faster, and safer to access.
+        </p>
+      </div>
+      
+
+            <div class="about-image">
+              <img
+                src="https://i.pinimg.com/originals/52/3d/95/523d950a2e02a8534734db97a212df1a.gif"
+                alt="AI Technology"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    
+    <!-- Contact Us -->
+    <!-- Contact Section -->
+<section id="contact">
+  <h2 class="section-title">Contact Us</h2>
+  
+  <div class="contact-cards">
+    <!-- Card 1 -->
+    <div class="contact-card">
+      <img src="/static/Images/rehab_.jpg" alt="Rehab Hamdy">
+      <h3>Rehab Hamdy</h3>
+      <p>
+        <a href="https://www.linkedin.com/in/rehab-hamdy-83568424b" target="_blank">LinkedIn</a><br>
+        <a href="mailto:rehabhamdy15@gmail.com">rehabhamdy15@gmail.com</a>
+      </p>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="contact-card">
+      <img src="/static/Images/farida.jpg" alt="Farida Hamid">
+      <h3>Farida Hamid</h3>
+      <p>
+        <a href="https://www.linkedin.com/in/farida-hamid-6740b8253?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank">LinkedIn</a><br>
+        <a href="mailto:friend.email@example.com">faridahaimd2004@gmail.com</a>
+      </p>
+    </div>
+</section>
+
+
+    <!-- Login Modal -->
+    <div id="loginOverlay" class="modal-overlay" aria-hidden="true">
+      <div class="login-modal" role="dialog" aria-modal="true">
+        <div class="header">
+          <h3>Sign in</h3>
+          <button class="close-btn" id="closeLogin" aria-label="Close">×</button>
+        </div>
+        <div id="modalMessage" class="modal-message"></div>
+        <form id="modalLoginForm">
+          <div class="form-group">
+            <label for="modalUsername">Username</label>
+            <input type="text" id="modalUsername" name="username" placeholder="Enter username" required />
+          </div>
+          <div class="form-group">
+            <label for="modalPassword">Password</label>
+            <input type="password" id="modalPassword" name="password" placeholder="Enter password" required />
+          </div>
+          <button type="submit" class="login-btn" id="modalLoginBtn">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2025 RAG ChatBot. All rights reserved.</p>
+        <p>
+          Powered by advanced AI technology for intelligent knowledge management
+
+        </p>
+        <p>Created By Farida Hamid and Rehab Hamdy</p>
+      </div>
+    </footer>
+
+    <script>
+      // Smooth scrolling for navigation links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Add scroll effect to navbar
+      window.addEventListener("scroll", function () {
+        const navbar = document.querySelector(".navbar");
+        if (window.scrollY > 50) {
+          navbar.style.background = "rgba(24, 16, 37, 0.85)";
+        } else {
+          navbar.style.background = "rgba(24, 16, 37, 0.7)";
+        }
+      });
+
+      // Modal helpers
+      const overlay = document.getElementById('loginOverlay');
+      const openers = [
+        document.getElementById('openLogin'),
+        document.getElementById('tryNow'),
+        document.getElementById('getStarted')
+      ].filter(Boolean);
+      const closer = document.getElementById('closeLogin');
+
+      openers.forEach(el => el.addEventListener('click', () => {
+        overlay.classList.add('active');
+        document.getElementById('modalUsername').focus();
+      }));
+      closer.addEventListener('click', () => overlay.classList.remove('active'));
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+
+      // Modal login submission (reuses backend endpoints from login page)
+      document.getElementById('modalLoginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const username = document.getElementById('modalUsername').value;
+        const password = document.getElementById('modalPassword').value;
+        const messageDiv = document.getElementById('modalMessage');
+        const btn = document.getElementById('modalLoginBtn');
+        btn.disabled = true; btn.textContent = 'Signing in...';
+        messageDiv.textContent = '';
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          const requestData = JSON.stringify({ username, password });
+          let response = await fetch('/admin/user/login', { method: 'POST', headers, body: requestData });
+          let data = await response.json();
+          if (!response.ok && response.status === 401) {
+            response = await fetch('/admin/super-admin/login', { method: 'POST', headers, body: requestData });
+            data = await response.json();
+          }
+          if (response.ok) {
+            messageDiv.className = 'modal-message success';
+            messageDiv.textContent = `Welcome back, ${data.username}!`;
+            sessionStorage.setItem('user', JSON.stringify({
+              id: data.user_id,
+              username: data.username,
+              role: data.role,
+              organization_id: data.organization_id,
+              organization_name: data.organization_name,
+            }));
+            setTimeout(() => {
+              if (data.role === 'super-admin') {
+                window.location.href = '/super-admin';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            }, 800);
+          } else {
+            let errorMessage = 'Login failed. Please check your credentials.';
+            if (data && data.detail) errorMessage = data.detail;
+            else if (data && data.message) errorMessage = data.message;
+            else if (typeof data === 'string') errorMessage = data;
+            else if (Array.isArray(data)) errorMessage = data.join(', ');
+            messageDiv.className = 'modal-message error';
+            messageDiv.textContent = errorMessage;
+          }
+        } catch (err) {
+          messageDiv.className = 'modal-message error';
+          messageDiv.textContent = 'An error occurred during login. Please try again.';
+        } finally {
+          btn.disabled = false; btn.textContent = 'Sign In';
+        }
+      });
+
+      // Auto-scroll features every 5 seconds, one card at a time
+      (function(){
+        const rail = document.getElementById('featuresRail');
+        if (!rail) return;
+        let index = 0;
+        const step = () => {
+          const cards = rail.querySelectorAll('.feature-card');
+          if (!cards.length) return;
+          index = (index + 1) % cards.length;
+          const card = cards[index];
+          rail.scrollTo({ left: card.offsetLeft - 16, behavior: 'smooth' });
+        };
+        setInterval(step, 2000);
+      })();
+    </script>
+  </body>
+</html>

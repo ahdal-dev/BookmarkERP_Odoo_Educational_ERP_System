@@ -81,7 +81,7 @@
                                 </group>
                                 <field name="reason_for_overload" placeholder="Explain why you need credit overload..." nolabel="1"/>
                             </page>
-                            <page string="Review Comments" groups="petition_system.group_petition_admin">
+                            <page string="Review Comments" groups="edu_mang_petition.group_petition_admin">
                                 <group>
                                     <group>
                                         <field name="reviewer_id" readonly="1"/>

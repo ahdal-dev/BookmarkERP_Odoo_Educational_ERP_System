@@ -43,7 +43,7 @@ from enum import Enum
 
 # Environment Configuration
 OCR_SERVICE_URL = os.getenv("OCR_SERVICE_URL", "http://ocr_microservice:5000")
-ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8069")
+ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8081")
 ODOO_DB = os.getenv("ODOO_DB", "edu_demo_new")
 ODOO_USERNAME = os.getenv("ODOO_USERNAME", "admin")
 ODOO_PASSWORD = os.getenv("ODOO_PASSWORD", "admin")
@@ -754,6 +754,154 @@ async def submit_with_document(
             errors=errors + [str(e)]
         )
 
+
+# ============================================================================
+# Auth Endpoints
+# ============================================================================
+
+class LoginRequest(BaseModel):
+    login: str
+    password: str
+    db: str = "edu_demo_new"
+
+@app.post("/api/v1/auth/login")
+async def login(request: LoginRequest):
+    """
+    Authenticate via Odoo session, then issue a JWT token.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            auth_url = f"{ODOO_URL}/web/session/authenticate"
+            payload = {
+                "jsonrpc": "2.0",
+                "params": {
+                    "db": request.db,
+                    "login": request.login,
+                    "password": request.password,
+                }
+            }
+            response = await client.post(auth_url, json=payload)
+            result = response.json()
+            
+            if "result" in result and result["result"].get("uid"):
+                uid = result["result"]["uid"]
+                user_name = result["result"].get("name", request.login)
+                
+                # Issue JWT
+                jwt_payload = {
+                    "user_id": uid,
+                    "username": request.login,
+                    "email": request.login,
+                    "role": "admin",  # Default to admin for now
+                    "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+                }
+                token = jwt.encode(jwt_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+                
+                return {
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "user_id": uid,
+                    "user_name": user_name,
+                    "expires_in": JWT_EXPIRATION_HOURS * 3600,
+                }
+            else:
+                raise HTTPException(status_code=401, detail="Invalid credentials")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
+
+@app.get("/api/v1/auth/session")
+async def check_session(
+    user: TokenData = Depends(RBACChecker([
+        UserRole.PROSPECTIVE_STUDENT,
+        UserRole.ADMISSION_STAFF,
+        UserRole.ADMIN,
+        UserRole.SYSTEM
+    ]))
+):
+    """Validate current JWT token and return user info."""
+    return {
+        "valid": True,
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role.value,
+    }
+
+
+# ============================================================================
+# Module Management Endpoints
+# ============================================================================
+
+@app.get("/api/v1/admin/modules")
+async def list_modules(
+    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
+):
+    """List available Odoo modules."""
+    await odoo_client.authenticate()
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "model": "ir.module.module",
+                "method": "search_read",
+                "args": [[["state", "in", ["installed", "uninstalled"]]]],
+                "kwargs": {
+                    "fields": ["name", "shortdesc", "state", "summary"],
+                    "limit": 200,
+                }
+            }
+        }
+        response = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=payload)
+        return response.json().get("result", [])
+
+class InstallModuleRequest(BaseModel):
+    module_name: str
+
+@app.post("/api/v1/admin/modules/install")
+async def install_module(
+    request: InstallModuleRequest,
+    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
+):
+    """Install an Odoo module by technical name."""
+    await odoo_client.authenticate()
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        # Find the module
+        search_payload = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "model": "ir.module.module",
+                "method": "search_read",
+                "args": [[["name", "=", request.module_name]]],
+                "kwargs": {"fields": ["id", "state"], "limit": 1}
+            }
+        }
+        search_resp = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=search_payload)
+        modules = search_resp.json().get("result", [])
+        
+        if not modules:
+            raise HTTPException(status_code=404, detail=f"Module '{request.module_name}' not found")
+        
+        module = modules[0]
+        if module["state"] == "installed":
+            return {"success": True, "message": f"Module '{request.module_name}' is already installed"}
+        
+        # Install the module
+        install_payload = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "model": "ir.module.module",
+                "method": "button_immediate_install",
+                "args": [[module["id"]]],
+                "kwargs": {}
+            }
+        }
+        await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=install_payload)
+        return {"success": True, "message": f"Module '{request.module_name}' installed successfully"}
 
 # ============================================================================
 # Utility Endpoints - JWT Token Generation (for testing)

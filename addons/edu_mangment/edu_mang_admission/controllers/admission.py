@@ -26,7 +26,7 @@ class AdmissionController(http.Controller):
             return request.render('website.404')
     
     @http.route('/admission/submit', type='http', auth='public', methods=['POST'], 
-                csrf=False)
+                website=True, csrf=False)
     def admission_submit(self, **kwargs):
         try:
             name = request.params.get('name', '').strip()
