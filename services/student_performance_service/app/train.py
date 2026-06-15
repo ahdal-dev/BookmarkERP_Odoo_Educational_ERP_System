@@ -24,10 +24,20 @@ from sklearn.model_selection import train_test_split
 BASE_DIR = Path(__file__).resolve().parent
 
 def find_repo_root(start_dir: Path) -> Path:
+    candidates = []
     for parent in [start_dir, *start_dir.parents]:
+        candidates.append(parent)
+
+    cwd = Path.cwd()
+    for parent in [cwd, *cwd.parents]:
+        if parent not in candidates:
+            candidates.append(parent)
+
+    for parent in candidates:
         if (parent / "data" / "transcripts.json").exists() or (parent / "data" / "transcripts.json.dvc").exists():
             return parent
-    return start_dir.parents[2]
+
+    return cwd if (cwd / "data").exists() else start_dir.parents[2]
 
 REPO_ROOT = find_repo_root(BASE_DIR)
 TRANSCRIPTS_PATH = REPO_ROOT / "data" / "transcripts.json"
