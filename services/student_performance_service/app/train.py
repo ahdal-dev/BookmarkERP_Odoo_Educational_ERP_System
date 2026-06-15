@@ -22,8 +22,14 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 
 BASE_DIR = Path(__file__).resolve().parent
-REPO_ROOT = BASE_DIR.parents[3]
 
+def find_repo_root(start_dir: Path) -> Path:
+    for parent in [start_dir, *start_dir.parents]:
+        if (parent / "data" / "transcripts.json").exists() or (parent / "data" / "transcripts.json.dvc").exists():
+            return parent
+    return start_dir.parents[2]
+
+REPO_ROOT = find_repo_root(BASE_DIR)
 TRANSCRIPTS_PATH = REPO_ROOT / "data" / "transcripts.json"
 
 MLFLOW_URI = os.environ.get("MLFLOW_TRACKING_URI")
