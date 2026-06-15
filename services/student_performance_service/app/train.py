@@ -12,11 +12,14 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
+import shutil
+import subprocess
 try:
     import dvc.api
     DVC_AVAILABLE = True
 except Exception:
     DVC_AVAILABLE = False
+DVC_CLI_AVAILABLE = shutil.which("dvc") is not None
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -170,15 +173,43 @@ def main():
             transcripts = json.load(f)
     else:
         dvc_file = transcripts_path.with_name(f"{transcripts_path.name}.dvc")
-        if DVC_AVAILABLE and dvc_file.exists():
-            print(f"Transcript file missing, attempting DVC load from {dvc_file}")
-            try:
-                with dvc.api.open(str(transcripts_path.relative_to(REPO_ROOT)), repo=str(REPO_ROOT)) as f:
-                    transcripts = json.load(f)
-            except Exception as e:
+        if dvc_file.exists():
+            if DVC_AVAILABLE:
+                print(f"Transcript file missing, attempting DVC load from {dvc_file}")
+                try:
+                    with dvc.api.open(str(transcripts_path.relative_to(REPO_ROOT)), repo=str(REPO_ROOT)) as f:
+                        transcripts = json.load(f)
+                except Exception as e:
+                    raise FileNotFoundError(
+                        f"Transcript data not found at {transcripts_path}. DVC file exists but could not load it: {e}"
+                    ) from e
+            elif DVC_CLI_AVAILABLE:
+                print(f"Transcript file missing, attempting DVC CLI pull for {dvc_file}")
+                try:
+                    subprocess.run(
+                        ["dvc", "pull", str(dvc_file)],
+                        cwd=str(REPO_ROOT),
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    raise FileNotFoundError(
+                        f"Transcript data not found at {transcripts_path}. DVC CLI failed: {e.stderr or e.stdout}"
+                    ) from e
+
+                if transcripts_path.exists():
+                    with open(transcripts_path, "r", encoding="utf-8") as f:
+                        transcripts = json.load(f)
+                else:
+                    raise FileNotFoundError(
+                        f"Transcript data still missing at {transcripts_path} after DVC pull."
+                    )
+            else:
                 raise FileNotFoundError(
-                    f"Transcript data not found at {transcripts_path}. DVC file exists but could not load it: {e}"
-                ) from e
+                    f"Transcript data not found at {transcripts_path}. DVC metadata exists at {dvc_file}, "
+                    f"but neither dvc.api nor dvc CLI is available in the environment."
+                )
         else:
             raise FileNotFoundError(
                 f"Transcript data not found at {transcripts_path}."
