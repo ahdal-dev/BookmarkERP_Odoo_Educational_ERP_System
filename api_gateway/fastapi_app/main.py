@@ -826,20 +826,32 @@ async def resolve_user_role(uid: int) -> UserRole:
                 return UserRole.STUDENT
             user_group_ids = set(user_result[0].get("group_ids", []))
 
-            # 2. Resolve our group XML IDs -> numeric ids via ir.model.data
+            # 2. Resolve our group XML IDs -> numeric ids via ir.model.data.
+            # Also fetch base.group_system so built-in Odoo admin users are
+            # detected as SUPER_ADMIN even if not explicitly in group_erp_admin.
             data_payload = {
                 "jsonrpc": "2.0", "method": "call",
                 "params": {
                     "model": "ir.model.data", "method": "search_read",
-                    "args": [[["module", "=", "edu_mang_auth"],
-                              ["name", "in", [g for g, _ in ODOO_GROUP_TO_ROLE]]]],
-                    "kwargs": {"fields": ["name", "res_id"]},
+                    "args": [["|",
+                              "&", ["module", "=", "edu_mang_auth"],
+                                   ["name", "in", [g for g, _ in ODOO_GROUP_TO_ROLE]],
+                              "&", ["module", "=", "base"],
+                                   ["name", "=", "group_system"]]],
+                    "kwargs": {"fields": ["module", "name", "res_id"]},
                 },
             }
             data_resp = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=data_payload)
+            # Key: just "name" (xml local ID) — group_system is unique across both modules here
             name_to_resid = {r["name"]: r["res_id"] for r in data_resp.json().get("result", [])}
 
-        # 3. Precedence: first group the user actually belongs to wins.
+        # 3. Odoo built-in admin fallback: base.group_system -> SUPER_ADMIN
+        system_gid = name_to_resid.get("group_system")
+        if system_gid and system_gid in user_group_ids:
+            logger.info(f"Resolved role for uid {uid}: super_admin (via base.group_system)")
+            return UserRole.SUPER_ADMIN
+
+        # 4. Precedence: first custom group the user actually belongs to wins.
         for group_name, role in ODOO_GROUP_TO_ROLE:
             gid = name_to_resid.get(group_name)
             if gid and gid in user_group_ids:
