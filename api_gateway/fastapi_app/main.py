@@ -90,12 +90,35 @@ app.add_middleware(
 
 class UserRole(str, Enum):
     """
-    User roles for Role-Based Access Control (RBAC)
+    User roles for Role-Based Access Control (RBAC) — 9 canonical roles.
+    Mirrors the Odoo security groups (edu_mang_auth/security/security.xml)
+    and the frontend ROLES map (bookmark-frontend/src/config/roles.js).
     """
     PROSPECTIVE_STUDENT = "prospective_student"
-    ADMISSION_STAFF = "admission_staff"
-    ADMIN = "admin"
-    SYSTEM = "system"
+    ADMISSION_OFFICER   = "admission_officer"
+    STUDENT             = "student"
+    INSTRUCTOR          = "instructor"
+    ACADEMIC_ADVISOR    = "academic_advisor"
+    DEPARTMENT_CHAIR    = "department_chair"
+    REGISTRAR           = "registrar"
+    SUPPORT_TECHNICIAN  = "support_technician"
+    SUPER_ADMIN         = "super_admin"
+
+
+# Maps Odoo security-group XML IDs -> our role enum.
+# Ordered by precedence: the FIRST match (top-down) wins, so the
+# highest-privilege group a user belongs to determines their role.
+ODOO_GROUP_TO_ROLE = [
+    ("group_erp_admin",              UserRole.SUPER_ADMIN),  # XML ID kept for back-compat
+    ("group_erp_registrar",          UserRole.REGISTRAR),
+    ("group_erp_department_chair",   UserRole.DEPARTMENT_CHAIR),
+    ("group_erp_academic_advisor",   UserRole.ACADEMIC_ADVISOR),
+    ("group_erp_instructor",         UserRole.INSTRUCTOR),
+    ("group_erp_admission_officer",  UserRole.ADMISSION_OFFICER),
+    ("group_erp_support_technician", UserRole.SUPPORT_TECHNICIAN),
+    ("group_erp_student",            UserRole.STUDENT),
+    ("group_erp_prospective_student", UserRole.PROSPECTIVE_STUDENT),
+]
 
 
 class TokenData(BaseModel):
@@ -254,6 +277,11 @@ class RBACChecker:
             
             return token_data
             
+        except HTTPException:
+            # Preserve intentional 401/403 responses (e.g. expired token,
+            # insufficient permissions) — do not let the catch-all below
+            # rewrite them into a generic 401.
+            raise
         except InvalidTokenError as e:
             logger.error(f"Invalid JWT token: {str(e)}")
             raise HTTPException(
@@ -460,8 +488,8 @@ async def extract_document(
     user: TokenData = Depends(
         RBACChecker([
             UserRole.PROSPECTIVE_STUDENT, 
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
+            UserRole.ADMISSION_OFFICER,
+            UserRole.SUPER_ADMIN
         ])
     )
 ):
@@ -553,8 +581,8 @@ async def submit_admission_application(
     user: TokenData = Depends(
         RBACChecker([
             UserRole.PROSPECTIVE_STUDENT,
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
+            UserRole.ADMISSION_OFFICER,
+            UserRole.SUPER_ADMIN
         ])
     )
 ):
@@ -621,8 +649,8 @@ async def submit_with_document(
     user: TokenData = Depends(
         RBACChecker([
             UserRole.PROSPECTIVE_STUDENT,
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
+            UserRole.ADMISSION_OFFICER,
+            UserRole.SUPER_ADMIN
         ])
     )
 ):
@@ -764,6 +792,66 @@ class LoginRequest(BaseModel):
     password: str
     db: str = "edu_demo_new"
 
+
+async def resolve_user_role(uid: int) -> UserRole:
+    """
+    Query the authenticated user's Odoo security groups and map them to a
+    single canonical role. Replaces the previously hardcoded 'admin'.
+    Falls back to least-privilege STUDENT if no known group matches.
+
+    Note: /web/dataset/call_kw requires a session cookie, so we authenticate
+    as the admin service account INSIDE the same httpx client (cookies persist
+    across requests on the same client) before issuing the reads.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # 0. Establish a session on THIS client (cookie is reused below)
+            auth_payload = {
+                "jsonrpc": "2.0",
+                "params": {"db": ODOO_DB, "login": ODOO_USERNAME, "password": ODOO_PASSWORD},
+            }
+            await client.post(f"{ODOO_URL}/web/session/authenticate", json=auth_payload)
+
+            # 1. Read the user's group ids (Odoo 19 field name: group_ids)
+            user_payload = {
+                "jsonrpc": "2.0", "method": "call",
+                "params": {
+                    "model": "res.users", "method": "read",
+                    "args": [[uid], ["group_ids"]], "kwargs": {},
+                },
+            }
+            user_resp = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=user_payload)
+            user_result = user_resp.json().get("result", [])
+            if not user_result:
+                return UserRole.STUDENT
+            user_group_ids = set(user_result[0].get("group_ids", []))
+
+            # 2. Resolve our group XML IDs -> numeric ids via ir.model.data
+            data_payload = {
+                "jsonrpc": "2.0", "method": "call",
+                "params": {
+                    "model": "ir.model.data", "method": "search_read",
+                    "args": [[["module", "=", "edu_mang_auth"],
+                              ["name", "in", [g for g, _ in ODOO_GROUP_TO_ROLE]]]],
+                    "kwargs": {"fields": ["name", "res_id"]},
+                },
+            }
+            data_resp = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=data_payload)
+            name_to_resid = {r["name"]: r["res_id"] for r in data_resp.json().get("result", [])}
+
+        # 3. Precedence: first group the user actually belongs to wins.
+        for group_name, role in ODOO_GROUP_TO_ROLE:
+            gid = name_to_resid.get(group_name)
+            if gid and gid in user_group_ids:
+                logger.info(f"Resolved role for uid {uid}: {role.value}")
+                return role
+
+    except Exception as e:
+        logger.error(f"Role resolution failed for uid {uid}: {str(e)}")
+
+    return UserRole.STUDENT  # safe least-privilege default
+
+
 @app.post("/api/v1/auth/login")
 async def login(request: LoginRequest):
     """
@@ -786,22 +874,26 @@ async def login(request: LoginRequest):
             if "result" in result and result["result"].get("uid"):
                 uid = result["result"]["uid"]
                 user_name = result["result"].get("name", request.login)
-                
+
+                # Derive the real role from the user's Odoo security groups
+                role = await resolve_user_role(uid)
+
                 # Issue JWT
                 jwt_payload = {
                     "user_id": uid,
                     "username": request.login,
                     "email": request.login,
-                    "role": "admin",  # Default to admin for now
+                    "role": role.value,
                     "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
                 }
                 token = jwt.encode(jwt_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-                
+
                 return {
                     "access_token": token,
                     "token_type": "bearer",
                     "user_id": uid,
                     "user_name": user_name,
+                    "role": role.value,
                     "expires_in": JWT_EXPIRATION_HOURS * 3600,
                 }
             else:
@@ -813,14 +905,9 @@ async def login(request: LoginRequest):
 
 @app.get("/api/v1/auth/session")
 async def check_session(
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT,
-        UserRole.ADMISSION_STAFF,
-        UserRole.ADMIN,
-        UserRole.SYSTEM
-    ]))
+    user: TokenData = Depends(RBACChecker(list(UserRole)))
 ):
-    """Validate current JWT token and return user info."""
+    """Validate current JWT token and return user info (any authenticated role)."""
     return {
         "valid": True,
         "user_id": user.user_id,
@@ -836,7 +923,7 @@ async def check_session(
 
 @app.get("/api/v1/admin/modules")
 async def list_modules(
-    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
+    user: TokenData = Depends(RBACChecker([UserRole.SUPER_ADMIN]))
 ):
     """List available Odoo modules."""
     await odoo_client.authenticate()
@@ -863,7 +950,7 @@ class InstallModuleRequest(BaseModel):
 @app.post("/api/v1/admin/modules/install")
 async def install_module(
     request: InstallModuleRequest,
-    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
+    user: TokenData = Depends(RBACChecker([UserRole.SUPER_ADMIN]))
 ):
     """Install an Odoo module by technical name."""
     await odoo_client.authenticate()
