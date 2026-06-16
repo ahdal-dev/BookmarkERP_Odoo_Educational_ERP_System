@@ -1,3 +1,508 @@
+# import base64
+# import json
+# import os
+# from dotenv import load_dotenv
+# import logging
+
+# load_dotenv()
+
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# # --------------------------------------------------
+# # 🔑 API Key & Client Initialization
+# # --------------------------------------------------
+# API_KEY = os.getenv("MISTRAL_API_KEY") or "QzjgLxty0dWSqUhhrKIfkr3Qcds1U9Tg"
+
+# client = None
+# try:
+#     try:
+#         from mistralai import Mistral
+#         client = Mistral(api_key=API_KEY)
+#         logger.info("✅ Mistral client initialized (v0.2.0+ API)")
+#     except (ImportError, ModuleNotFoundError):
+#         from mistralai.client import MistralClient
+#         client = MistralClient(api_key=API_KEY)
+#         logger.info("✅ Mistral client initialized (legacy API)")
+# except Exception as e:
+#     logger.error(f"❌ Failed to initialize Mistral client: {e}")
+#     client = None
+
+
+# # --------------------------------------------------
+# # 🔧 Unified Chat Helper
+# # --------------------------------------------------
+# def _chat(messages, response_format=None):
+#     """Call Mistral chat, handling v0.2+ and legacy APIs transparently."""
+#     if not client:
+#         raise RuntimeError("Mistral client not initialized.")
+
+#     kwargs = dict(model="mistral-large-latest", messages=messages)
+#     if response_format:
+#         kwargs["response_format"] = response_format
+
+#     for method in [
+#         lambda: client.chat(**kwargs),
+#         lambda: client.chat.complete(**kwargs),
+#     ]:
+#         try:
+#             resp = method()
+#             return resp.choices[0].message.content
+#         except (AttributeError, TypeError):
+#             continue
+
+#     raise RuntimeError("Could not call Mistral chat API with either known method.")
+
+
+# from PIL import Image, ImageFilter, ImageEnhance
+# import cv2
+# import numpy as np
+
+# def preprocess_image(image_path):
+#     """Enhance image quality before OCR."""
+#     img = cv2.imread(image_path)
+
+#     # Convert to grayscale
+#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+#     # Deskew (straighten tilted documents)
+#     coords = np.column_stack(np.where(gray > 0))
+#     angle = cv2.minAreaRect(coords)[-1]
+#     if angle < -45:
+#         angle = -(90 + angle)
+#     else:
+#         angle = -angle
+#     (h, w) = gray.shape
+#     center = (w // 2, h // 2)
+#     M = cv2.getRotationMatrix2D(center, angle, 1.0)
+#     gray = cv2.warpAffine(gray, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+#     # Denoise
+#     gray = cv2.fastNlMeansDenoising(gray, h=10)
+
+#     # Increase contrast
+#     gray = cv2.equalizeHist(gray)
+
+#     # Upscale if small (vision models perform better on larger images)
+#     if max(h, w) < 1500:
+#         scale = 1500 / max(h, w)
+#         gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
+#     # Save preprocessed version
+#     out_path = image_path.replace(".", "_processed.")
+#     cv2.imwrite(out_path, gray)
+#     logger.info(f"Preprocessed image saved: {out_path}")
+#     return out_path
+# # --------------------------------------------------
+# # 🖼️  OCR Functions
+# # --------------------------------------------------
+# MIME_MAP = {
+#     ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+#     ".bmp": "image/bmp", ".tiff": "image/tiff", ".tif": "image/tiff",
+#     ".webp": "image/webp",
+# }
+
+# OCR_INSTRUCTIONS = {
+#     "birth_certificate": """This is an Egyptian birth certificate (صورة قيد الميلاد).
+# Extract ALL Arabic and English text exactly as it appears. Pay special attention to:
+# 1. The three labeled sections: بيانات المولود، بيانات الأب، بيانات الأم
+# 2. All 14-digit national ID numbers (الرقم القومي)
+# 3. The date of birth written in Arabic words under تاريخ الميلاد
+# 4. The bottom registration table with witness names and dates
+# 5. The serial/registration number (رقم مسلسل)
+# Preserve all labels next to their values. Output as structured markdown.""",
+
+#     "thanawiya_amma": """This is an Egyptian Thanawiya Amma (ثانوية عامة) certificate.
+# Extract ALL text exactly. Pay special attention to:
+# 1. Student info: name, seat number (رقم الجلوس), national ID
+# 2. All subject rows with their scores — format is score/max_score (e.g., ٦٠/١٣٠)
+# 3. The explicitly printed total score (المجموع)
+# 4. Pass/fail status (ناجح / راسب)
+# 5. School, educational administration, directorate
+# Output as structured markdown preserving table rows.""",
+
+   
+
+#     "passport": """This is a passport document.
+# Extract ALL text exactly. Pay special attention to:
+# 1. The two MRZ lines at the bottom (starting with P<)
+# 2. Passport number, nationality, dates
+# 3. Full name as it appears
+# Output as structured markdown preserving MRZ lines verbatim.""",
+
+#     "_default": """Extract ALL text from this document image.
+# Preserve document structure: keep labels next to their values.
+# For Arabic documents, maintain right-to-left reading order.
+# Include ALL numbers, dates, and names exactly as written.
+# Return as structured markdown.""",
+# }
+
+
+# def ocr_image(image_path, doc_hint=None):
+#     """Extract text from image using Mistral vision model."""
+#     logger.info(f"Running OCR on: {image_path}" + (f" [hint: {doc_hint}]" if doc_hint else ""))
+
+#     with open(image_path, "rb") as f:
+#         image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+
+#     ext = os.path.splitext(image_path)[1].lower()
+#     mime_type = MIME_MAP.get(ext, "image/jpeg")
+#     instruction = OCR_INSTRUCTIONS.get(doc_hint, OCR_INSTRUCTIONS["_default"])
+
+#     messages = [{
+#         "role": "user",
+#         "content": [
+#             {"type": "image_url", "image_url": f"data:{mime_type};base64,{image_data}"},
+#             {"type": "text", "text": instruction},
+#         ],
+#     }]
+
+#     try:
+#         text = _chat(messages)
+#         logger.info("✅ OCR complete")
+
+#         class ImagePage:
+#             def __init__(self, index, markdown):
+#                 self.index = index
+#                 self.markdown = markdown
+
+#         return [ImagePage(0, text)]
+
+#     except Exception as e:
+#         logger.error(f"OCR failed: {e}")
+#         raise RuntimeError(f"OCR image processing failed: {e}")
+
+
+# def ocr_pdf(pdf_path):
+#     """Extract text from PDF (requires pdf2image for full support)."""
+#     logger.warning("PDF support requires pdf2image. Install with: pip install pdf2image")
+
+#     class PDFPage:
+#         def __init__(self, index, markdown):
+#             self.index = index
+#             self.markdown = markdown
+
+#     return [PDFPage(0, "PDF processing requires pdf2image. Please convert to images first.")]
+
+
+# def is_pdf(filepath):
+#     return os.path.splitext(filepath)[1].lower() == ".pdf"
+
+
+# # --------------------------------------------------
+# # 🔢 Arabic → Western Numeral Conversion
+# # --------------------------------------------------
+# ARABIC_TO_WESTERN = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+
+# def force_convert_numerals(obj):
+#     """Recursively convert Arabic numerals to Western in any structure."""
+#     if isinstance(obj, str):
+#         return obj.translate(ARABIC_TO_WESTERN)
+#     elif isinstance(obj, dict):
+#         return {k: force_convert_numerals(v) for k, v in obj.items()}
+#     elif isinstance(obj, list):
+#         return [force_convert_numerals(item) for item in obj]
+#     return obj
+
+
+# # --------------------------------------------------
+# # 🔍 Document Type Detection
+# # --------------------------------------------------
+# DETECTION_HINTS = {
+#     "passport":           ["passport", "جواز سفر", "جواز", "nationality", "mrz", "p<egy", "egyptian passport"],
+#     "birth_certificate":  ["شهادة ميلاد", "birth certificate", "قيد الميلاد", "بيانات المولود", "بيانات الأب", "بيانات الأم"],
+#     "thanawiya_amma":     ["ثانوية عامة", "thanawiya", "مجموع", "رقم الجلوس", "الإدارة التعليمية", "لجنة"],
+#     "ig_transcript":      ["igcse", "cambridge", "centre number", "candidate number", "gcse", "a level"],
+#     "american_transcript":["gpa", "credits", "grade level", "transcript", "high school", "semester"],
+# }
+
+
+# def detect_doc_type(ocr_text):
+#     """
+#     Two-stage detection:
+#     1. Fast keyword heuristic — no API call needed
+#     2. LLM fallback if heuristic is ambiguous
+#     """
+#     text_lower = ocr_text.lower()
+
+#     scores = {
+#         doc_type: sum(1 for kw in keywords if kw in text_lower)
+#         for doc_type, keywords in DETECTION_HINTS.items()
+#     }
+#     logger.info(f"Keyword scores: {scores}")
+
+#     sorted_scores = sorted(scores.values(), reverse=True)
+#     best_type = max(scores, key=scores.get)
+#     best_score, second_score = sorted_scores[0], sorted_scores[1]
+
+#     if best_score >= 2 and best_score > second_score:
+#         logger.info(f"✅ Heuristic confident: {best_type}")
+#         return best_type
+
+#     logger.info("Heuristic uncertain — falling back to LLM...")
+#     return _llm_detect(ocr_text, scores)
+
+
+# def _llm_detect(ocr_text, hint_scores=None):
+#     """LLM-based detection with keyword hint scores passed as context."""
+#     hint_str = f"\nKeyword hint scores (higher = more likely): {hint_scores}\n" if hint_scores else ""
+
+#     prompt = f"""You are a document classifier for Egyptian and international academic/identity documents.
+# The OCR text below may contain Arabic, English, or mixed content with OCR noise.
+# {hint_str}
+# Classify the document as EXACTLY one of:
+# passport | birth_certificate | thanawiya_amma | ig_transcript | american_transcript
+
+# Rules:
+# - passport: travel document with MRZ lines or جواز سفر
+# - birth_certificate: birth record with بيانات المولود / بيانات الأب / بيانات الأم sections
+# - thanawiya_amma: Egyptian secondary school certificate with subjects, scores, رقم الجلوس
+# - ig_transcript: Cambridge/IGCSE result slip with centre/candidate numbers
+# - american_transcript: US-style transcript with GPA and credits
+
+# Reply with ONLY the document type key. No punctuation, no explanation.
+
+# --- OCR Text (first 1500 chars) ---
+# {ocr_text[:1500]}"""
+
+#     try:
+#         detected = _chat([{"role": "user", "content": prompt}]).strip().lower()
+#         for valid in DETECTION_HINTS:
+#             if valid in detected:
+#                 logger.info(f"LLM detected: {valid}")
+#                 return valid
+#         logger.warning(f"LLM returned unrecognized type: {detected}")
+#     except Exception as e:
+#         logger.error(f"LLM detection failed: {e}")
+
+#     return None
+
+
+# # --------------------------------------------------
+# # 📋 Extraction Prompts
+# # --------------------------------------------------
+# PROMPTS = {
+    
+#     "passport": """You are extracting data from a passport. OCR may include MRZ lines at the bottom.
+
+# Return ONLY a JSON object with these keys:
+# full_name, passport_number, nationality, date_of_birth, gender, issue_date, expiry_date, mrz_line1, mrz_line2
+
+# Rules:
+# - MRZ lines start with P< — extract verbatim if present
+# - passport_number: alphanumeric, usually 8-9 chars
+# - dates: YYYY-MM-DD; MRZ dates are YYMMDD (e.g., 900115 = 1990-01-15)
+# - nationality: 3-letter ISO code from MRZ (EGY=Egyptian)
+# - gender: "male" or "female"
+# - Use null for missing. No markdown. JSON only.""",
+
+#     "birth_certificate": """You are extracting data from an Egyptian birth certificate (صورة قيد الميلاد).
+
+# This document has labeled sections — extract each carefully:
+
+# SECTION 1 — بيانات المولود (Child's Data):
+# - الجنسية: child's nationality
+# - محل الميلاد: place of birth
+# - تاريخ الميلاد: date of birth written in Arabic words (e.g., "سبعة مارس ألفان و خمسة عشر" = 2015-03-07)
+# - الديانة: religion
+# - النوع: gender (ذكر=male, أنثى=female)
+# - بيانات المُبلِّغ: the REPORTER of the birth (NOT the child's name)
+
+# SECTION 2 — بيانات الأب (Father's Data):
+# - Father's full name (line above الرقم القومي)
+# - الرقم القومي: 14-digit national ID
+# - الديانة، الجنسية
+
+# SECTION 3 — بيانات الأم (Mother's Data):
+# - Mother's full name (line above الرقم القومي)
+# - الرقم القومي: 14-digit national ID
+# - الديانة، الجنسية
+
+# SECTION 4 — Bottom registration table:
+# - رقم مسلسل / رقم السجل: serial/registration number
+# - Witness names (شاهد / س من)
+# - Dates: تاريخ الواقعة (event), تاريخ التسجيل (registration), تاريخ الإخراج (issue)
+# - Issuing authority name
+
+# CRITICAL:
+# - The child's name is NOT explicitly labeled — infer from context or registration record
+# - تاريخ الميلاد is in Arabic words — convert to YYYY-MM-DD
+# - All national IDs are 14 digits — convert Arabic numerals to Western
+
+# Return ONLY a JSON object with these keys:
+# child_name, father_name, father_national_id, father_religion, father_nationality,
+# mother_name, mother_national_id, mother_religion, mother_nationality,
+# date_of_birth, place_of_birth, gender, religion, nationality,
+# reporter_name, registration_number, serial_number,
+# event_date, registration_date, issue_date,
+# authority, witnesses, additional_details
+
+# - witnesses: array of witness name strings
+# - additional_details: dict of anything else (document number, website, governorate, notes)
+# - dates: YYYY-MM-DD
+# - gender: "male" or "female"
+# - Use null for missing. No markdown. JSON only.""",
+
+#     "thanawiya_amma": """You are extracting data from an Egyptian Thanawiya Amma (ثانوية عامة) certificate.
+
+# Return ONLY a JSON object with these keys:
+# student_name, seat_number, national_id, school, educational_administration,
+# directorate, first_language, second_language, subjects, non_counted_subjects,
+# total_score, status, certificate_number, has_barcode, has_photo, has_official_stamp
+
+# Rules:
+# - subjects: array of {subject, score, max_score} — convert Arabic numerals to Western
+# - non_counted_subjects: array of {subject, result}
+# - Score format: ٦٠/١٣٠ or 60/130 means score=60, max_score=130
+# - total_score: use ONLY the explicitly printed total — NEVER calculate from subjects
+# - status: "pass" or "fail" (ناجح=pass, راسب=fail)
+# - has_barcode / has_photo / has_official_stamp: true or false
+# - Convert all Arabic numerals: ٠١٢٣٤٥٦٧٨٩ → 0123456789
+# - Use null for missing. No markdown. JSON only.""",
+
+#     "ig_transcript": """You are extracting data from a Cambridge/IGCSE results transcript.
+
+# Return ONLY a JSON object with these keys:
+# student_name, center_number, candidate_number, exam_session, subjects
+
+# Rules:
+# - subjects: array of {name, grade, mark}
+# - exam_session: e.g. "May/June 2024" or "October/November 2023"
+# - grade: letter grade (A*, A, B, C, D, E, F, U)
+# - mark: numeric if shown, else null
+# - Use null for missing. No markdown. JSON only.""",
+
+#     "american_transcript": """You are extracting data from an American high school transcript.
+
+# Return ONLY a JSON object with these keys:
+# student_name, school, grade_level, gpa, courses, graduation_date
+
+# Rules:
+# - courses: array of {name, grade, credits}
+# - gpa: numeric (e.g., 3.85)
+# - grade: letter or percentage
+# - credits: numeric
+# - graduation_date: YYYY-MM-DD or YYYY if only year known
+# - Use null for missing. No markdown. JSON only.""",
+# }
+
+
+# # --------------------------------------------------
+# # 🧠 Structured Extraction
+# # --------------------------------------------------
+# def extract_structured(ocr_text, prompt):
+#     """Extract structured JSON from OCR text using Mistral."""
+#     messages = [{"role": "user", "content": f"{prompt}\n\n--- OCR Text ---\n{ocr_text}"}]
+
+#     try:
+#         raw = _chat(messages, response_format={"type": "json_object"})
+#     except Exception:
+#         raw = _chat(messages)  # retry without response_format if unsupported
+
+#     raw = raw.strip()
+
+#     try:
+#         return json.loads(raw), raw
+#     except json.JSONDecodeError:
+#         pass
+
+#     # Attempt to extract JSON block from noisy response
+#     s, e = raw.find("{"), raw.rfind("}")
+#     if s != -1 and e > s:
+#         try:
+#             parsed = json.loads(raw[s:e + 1])
+#             logger.info("Extracted JSON from noisy response")
+#             return parsed, raw
+#         except json.JSONDecodeError:
+#             pass
+
+#     logger.error("Could not parse response as JSON")
+#     return {"_raw": raw}, raw
+
+
+# # --------------------------------------------------
+# # 🙋 Manual Fallback Type Selection
+# # --------------------------------------------------
+# def prompt_doc_type():
+#     """Ask user to manually select document type."""
+#     options = {
+#         "1": "passport",
+#         "2": "birth_certificate",
+#         "3": "thanawiya_amma",
+#         "4": "ig_transcript",
+#         "5": "american_transcript",
+#     }
+#     print("\n⚠️  Could not auto-detect document type. Choose manually:")
+#     for k, v in options.items():
+#         print(f"  {k} = {v}")
+#     choice = input("Enter number: ").strip()
+#     return options.get(choice)
+
+# def clean_ocr_text(raw_ocr, doc_type):
+#     """Ask the model to self-correct OCR noise before extraction."""
+#     prompt = f"""The following text was extracted via OCR from an Arabic/English document ({doc_type}).
+# It may contain:
+# - Merged or split Arabic words
+# - Garbled numbers or dates
+# - Broken table rows
+# - Mixed Arabic/English OCR errors
+
+# Please clean and reconstruct the text while preserving ALL original content and structure.
+# Fix obvious OCR errors but do NOT add or invent any information.
+# Return the cleaned text only — no explanation.
+
+# --- RAW OCR ---
+# {raw_ocr}"""
+
+#     return _chat([{"role": "user", "content": prompt}])
+# # --------------------------------------------------
+# # 🚀 Main
+# # --------------------------------------------------
+# if __name__ == "__main__":
+
+#     FILE_PATH = r"C:\Users\zyada\Desktop\ZC\Spring 2026\CSAI 499\Testing OCR IMAGES\images.jpg"
+
+#     if not os.path.exists(FILE_PATH):
+#         print(f"❌ File not found: {FILE_PATH}")
+
+#     else:
+#         print(f"📂 Processing: {FILE_PATH}\n")
+
+#         # ── Step 1: Generic OCR pass ──────────────────────────
+#         print("🖼️  Running initial OCR...")
+#         # In __main__, Step 1:
+#         processed_path = preprocess_image(FILE_PATH)
+#         pages = ocr_image(processed_path, doc_hint=doc_type)
+#         full_text = "".join(f"\n\n## Page {p.index + 1}\n\n{p.markdown}" for p in pages)
+#         print(f"✅ Pages processed: {len(pages)}")
+#         print("\n--- RAW OCR PREVIEW ---")
+#         print(full_text[:600])
+
+#         # ── Step 2: Detect document type ─────────────────────
+#         print("\n🔍 Detecting document type...")
+#         doc_type = detect_doc_type(full_text)
+#         if not doc_type:
+#             doc_type = prompt_doc_type()
+#         print(f"📄 Document type: {doc_type}")
+
+#         # ── Step 3: Re-OCR with document-aware prompt ─────────
+#         if not is_pdf(FILE_PATH):
+#             print(f"\n🔁 Re-running OCR with {doc_type}-aware prompt...")
+#             pages = ocr_image(FILE_PATH, doc_hint=doc_type)
+#             full_text = "".join(f"\n\n## Page {p.index + 1}\n\n{p.markdown}" for p in pages)
+
+#         # ── Step 4: Extract structured data ──────────────────
+#         prompt = PROMPTS.get(doc_type)
+#         if not prompt:
+#             print(f"❌ No extraction prompt for type: {doc_type}")
+#         else:
+#             print("\n🧠 Extracting structured data...")
+#             parsed, _ = extract_structured(full_text, prompt)
+#             parsed = force_convert_numerals(parsed)
+#             print("\n✅ Extracted Data:")
+#             print(json.dumps(parsed, ensure_ascii=False, indent=2))
+
 import base64
 import json
 import os
