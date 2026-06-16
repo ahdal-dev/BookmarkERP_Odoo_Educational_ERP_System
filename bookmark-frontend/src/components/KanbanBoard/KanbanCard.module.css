@@ -1,0 +1,96 @@
+.card {
+  background: var(--color-bg-white);
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card:active {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
+.accent {
+  height: 4px;
+  background: var(--card-accent, var(--color-lime));
+}
+
+.body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary-black);
+}
+
+.star {
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #d1d1c7;
+  padding: 0;
+  line-height: 1;
+}
+
+.starred {
+  color: var(--color-yellow);
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-coral);
+  padding: 4px 0;
+}
+
+.avatars {
+  display: flex;
+  gap: -8px;
+  margin-top: 4px;
+}
+
+.avatarCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-lime);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  margin-left: -6px;
+}
+
+.avatarCircle:first-child {
+  margin-left: 0;
+}

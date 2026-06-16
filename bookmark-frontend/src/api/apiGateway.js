@@ -124,4 +124,102 @@ export const odooAPI = {
   },
 };
 
+/* ============================================================
+   REGISTRATION ENDPOINTS
+   ============================================================ */
+
+export const registrationAPI = {
+  // TODO(backend): implement GET /api/v1/registration/courses
+  getCourses: async (params = {}) => {
+    const response = await api.get('/api/v1/registration/courses', { params });
+    return response.data;
+  },
+};
+
+/* ============================================================
+   ADMIN ENDPOINTS
+   ============================================================ */
+
+export const adminAPI = {
+  // TODO(backend): implement GET /api/v1/admin/users
+  getUsers: async (params = {}) => {
+    const response = await api.get('/api/v1/admin/users', { params });
+    return response.data;
+  },
+
+  // TODO(backend): implement POST /api/v1/admin/users
+  createUser: async (userData) => {
+    const response = await api.post('/api/v1/admin/users', userData);
+    return response.data;
+  },
+
+  // TODO(backend): implement GET /api/v1/admin/settings/registration-rules
+  getRules: async () => {
+    const response = await api.get('/api/v1/admin/settings/registration-rules');
+    return response.data;
+  },
+
+  // TODO(backend): implement PUT /api/v1/admin/settings/registration-rules
+  updateRules: async (rules) => {
+    const response = await api.put('/api/v1/admin/settings/registration-rules', rules);
+    return response.data;
+  },
+};
+
+/* ============================================================
+   ADMISSIONS ENDPOINTS
+   ============================================================ */
+
+export const admissionsAPI = {
+  // TODO(backend): implement GET /api/v1/admin/admissions/pipeline
+  getPipeline: async () => {
+    const response = await api.get('/api/v1/admin/admissions/pipeline');
+    return response.data;
+  },
+
+  // TODO(backend): implement PATCH /api/v1/admin/admissions/:id/stage
+  updateStage: async (id, stage) => {
+    const response = await api.patch(`/api/v1/admin/admissions/${id}/stage`, { stage });
+    return response.data;
+  },
+};
+
+/* ============================================================
+   ADMISSION APPLICATION ENDPOINTS
+   ============================================================ */
+
+export const applicationAPI = {
+  // TODO(backend): implement POST /api/v1/admission/documents (multipart)
+  uploadDocument: async (formData) => {
+    const response = await api.post('/api/v1/admission/documents', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+};
+
+/* ============================================================
+   PETITIONS ENDPOINTS
+   ============================================================ */
+
+export const petitionsAPI = {
+  // TODO(backend): implement GET /api/v1/admin/petitions
+  listPetitions: async (params = {}) => {
+    const response = await api.get('/api/v1/admin/petitions', { params });
+    return response.data;
+  },
+
+  // TODO(backend): implement GET /api/v1/admin/petitions/:id
+  getPetition: async (id) => {
+    const response = await api.get(`/api/v1/admin/petitions/${id}`);
+    return response.data;
+  },
+
+  // TODO(backend): implement POST /api/v1/petitions
+  submitPetition: async (data) => {
+    const response = await api.post('/api/v1/petitions', data);
+    return response.data;
+  },
+};
+
 export default api;

@@ -26,6 +26,7 @@ Key Features:
     'data': [
         'security/ir.model.access.csv',
         'security/security_rules.xml',
+        'views/registration_views.xml',
         'views/student_templates.xml',
         'views/officer_templates.xml',
         'views/admin_templates.xml',

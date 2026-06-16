@@ -1,0 +1,65 @@
+.card {
+  background: var(--color-bg-white);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-width: 200px;
+}
+
+.dark {
+  background: var(--color-primary-black);
+  color: #ffffff;
+}
+
+.accent {
+  height: 4px;
+  background: var(--accent, var(--color-lime));
+}
+
+.body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.dark .label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.valueRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-primary-black);
+}
+
+.dark .value {
+  color: #ffffff;
+}
+
+.delta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-lime);
+}
+
+.dark .delta {
+  color: var(--color-lime-light);
+}

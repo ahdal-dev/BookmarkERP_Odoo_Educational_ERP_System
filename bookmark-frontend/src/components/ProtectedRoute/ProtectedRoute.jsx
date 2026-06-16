@@ -3,10 +3,11 @@ import { useAuth } from '../../context/AuthContext';
 
 /* ============================================================
    PROTECTED ROUTE — Redirects unauthenticated users to /login
+   Supports optional role-based access control.
    ============================================================ */
 
-export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+export default function ProtectedRoute({ children, roles }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -32,6 +33,16 @@ export default function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Role-based access: if roles prop is specified, check the user's role
+  if (roles && roles.length > 0) {
+    const userRole = user?.role?.toLowerCase();
+    const hasAccess = roles.some((r) => r.toLowerCase() === userRole);
+    if (!hasAccess) {
+      // Redirect users without the required role to the dashboard
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;
