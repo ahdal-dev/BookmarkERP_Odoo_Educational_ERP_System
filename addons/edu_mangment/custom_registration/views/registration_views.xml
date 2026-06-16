@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================== -->
+    <!-- EDUCATION COURSE — List / Form / Search                            -->
+    <!-- ================================================================== -->
+
+    <record id="view_education_course_list" model="ir.ui.view">
+        <field name="name">education.course.list</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <list string="Courses" default_order="code, name" multi_edit="1">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="instructor"/>
+                <field name="credits"/>
+                <field name="semester"/>
+                <field name="year"/>
+                <field name="schedule"/>
+                <field name="total_seats"/>
+                <field name="available_seats"/>
+                <field name="registration_open" widget="boolean_toggle"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_education_course_form" model="ir.ui.view">
+        <field name="name">education.course.form</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <form string="Course">
+                <header>
+                    <button name="action_open_registration"
+                            string="Open Registration"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="registration_open"/>
+                    <button name="action_close_registration"
+                            string="Close Registration"
+                            type="object"
+                            invisible="not registration_open"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Course Information">
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="instructor"/>
+                            <field name="credits"/>
+                        </group>
+                        <group string="Schedule &amp; Capacity">
+                            <field name="schedule"/>
+                            <field name="timing_start" widget="float_time"/>
+                            <field name="timing_end" widget="float_time"/>
+                            <field name="total_seats"/>
+                            <field name="available_seats" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Term">
+                            <field name="semester"/>
+                            <field name="year"/>
+                        </group>
+                        <group string="Registration">
+                            <field name="registration_open"/>
+                            <field name="registration_start"/>
+                            <field name="registration_end"/>
+                            <field name="add_drop_deadline"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Enrollments">
+                            <field name="registration_ids" readonly="1">
+                                <list>
+                                    <field name="student_name"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'enrolled'"
+                                           decoration-danger="state == 'dropped'"
+                                           decoration-warning="state == 'waitlist'"/>
+                                    <field name="registration_date"/>
+                                    <field name="is_officer_override"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Cart / Wishlist">
+                            <field name="cart_ids" readonly="1">
+                                <list>
+                                    <field name="student_id"/>
+                                    <field name="priority"/>
+                                    <field name="added_date"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_education_course_search" model="ir.ui.view">
+        <field name="name">education.course.search</field>
+        <field name="model">education.course</field>
+        <field name="arch" type="xml">
+            <search string="Search Courses">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="instructor"/>
+                <filter string="Registration Open" name="reg_open"
+                        domain="[('registration_open', '=', True)]"/>
+                <filter string="Active" name="active"
+                        domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="archived"
+                        domain="[('active', '=', False)]"/>
+                <filter string="Fall" name="fall"
+                        domain="[('semester', '=', 'fall')]"/>
+                <filter string="Spring" name="spring"
+                        domain="[('semester', '=', 'spring')]"/>
+                <filter string="Summer" name="summer"
+                        domain="[('semester', '=', 'summer')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- EDUCATION CART — List / Form / Search                              -->
+    <!-- ================================================================== -->
+
+    <record id="view_education_cart_list" model="ir.ui.view">
+        <field name="name">education.cart.list</field>
+        <field name="model">education.cart</field>
+        <field name="arch" type="xml">
+            <list string="Cart / Wishlist" default_order="create_date desc">
+                <field name="student_id"/>
+                <field name="course_code"/>
+                <field name="course_name"/>
+                <field name="available_seats"/>
+                <field name="registration_open"/>
+                <field name="priority"/>
+                <field name="added_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_education_cart_form" model="ir.ui.view">
+        <field name="name">education.cart.form</field>
+        <field name="model">education.cart</field>
+        <field name="arch" type="xml">
+            <form string="Cart Item">
+                <header>
+                    <button name="action_register"
+                            string="Register for Course"
+                            type="object"
+                            class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Student">
+                            <field name="student_id"/>
+                            <field name="priority"/>
+                        </group>
+                        <group string="Course">
+                            <field name="course_id"/>
+                            <field name="course_code" readonly="1"/>
+                            <field name="available_seats" readonly="1"/>
+                            <field name="registration_open" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" placeholder="Optional notes about this course selection..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_education_cart_search" model="ir.ui.view">
+        <field name="name">education.cart.search</field>
+        <field name="model">education.cart</field>
+        <field name="arch" type="xml">
+            <search string="Search Cart Items">
+                <field name="student_id"/>
+                <field name="course_id"/>
+                <filter string="Registration Open" name="reg_open"
+                        domain="[('registration_open', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- EDUCATION REGISTRATION — List / Form / Search                      -->
+    <!-- ================================================================== -->
+
+    <record id="view_education_registration_list" model="ir.ui.view">
+        <field name="name">education.registration.list</field>
+        <field name="model">education.registration</field>
+        <field name="arch" type="xml">
+            <list string="Enrollments" default_order="registration_date desc">
+                <field name="student_name"/>
+                <field name="course_code"/>
+                <field name="course_name"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'enrolled'"
+                       decoration-danger="state == 'dropped'"
+                       decoration-warning="state == 'waitlist'"/>
+                <field name="registration_date"/>
+                <field name="dropped_date" optional="hide"/>
+                <field name="is_officer_override"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_education_registration_form" model="ir.ui.view">
+        <field name="name">education.registration.form</field>
+        <field name="model">education.registration</field>
+        <field name="arch" type="xml">
+            <form string="Registration">
+                <header>
+                    <button name="action_drop"
+                            string="Drop Course"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state != 'enrolled'"
+                            confirm="Are you sure you want to drop this course?"/>
+                    <button name="action_reenroll"
+                            string="Re-enroll"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'dropped'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="enrolled,dropped"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Student">
+                            <field name="student_id"/>
+                            <field name="student_name" readonly="1"/>
+                        </group>
+                        <group string="Course">
+                            <field name="course_id"/>
+                            <field name="course_code" readonly="1"/>
+                            <field name="course_schedule" readonly="1"/>
+                            <field name="course_instructor" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Dates">
+                            <field name="registration_date" readonly="1"/>
+                            <field name="dropped_date" readonly="1"/>
+                        </group>
+                        <group string="Administration">
+                            <field name="is_officer_override"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_education_registration_search" model="ir.ui.view">
+        <field name="name">education.registration.search</field>
+        <field name="model">education.registration</field>
+        <field name="arch" type="xml">
+            <search string="Search Enrollments">
+                <field name="student_name"/>
+                <field name="course_code"/>
+                <field name="course_name"/>
+                <filter string="Enrolled" name="enrolled"
+                        domain="[('state', '=', 'enrolled')]"/>
+                <filter string="Dropped" name="dropped"
+                        domain="[('state', '=', 'dropped')]"/>
+                <filter string="Waitlist" name="waitlist"
+                        domain="[('state', '=', 'waitlist')]"/>
+                <filter string="Officer Override" name="officer_override"
+                        domain="[('is_officer_override', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- ACTIONS                                                            -->
+    <!-- ================================================================== -->
+
+    <record id="action_education_course" model="ir.actions.act_window">
+        <field name="name">Courses</field>
+        <field name="res_model">education.course</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_education_course_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first course
+            </p>
+            <p>
+                Manage the course catalog — set schedules, seat limits, and registration periods.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_education_cart" model="ir.actions.act_window">
+        <field name="name">Cart / Wishlist</field>
+        <field name="res_model">education.cart</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_education_cart_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No cart items yet
+            </p>
+            <p>
+                Students add courses to their cart before registration opens.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_education_registration" model="ir.actions.act_window">
+        <field name="name">Enrollments</field>
+        <field name="res_model">education.registration</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_education_registration_search"/>
+        <field name="context">{'search_default_enrolled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No enrollments yet
+            </p>
+            <p>
+                Track student course enrollments, drops, and waitlist entries.
+            </p>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- MENUS                                                              -->
+    <!-- ================================================================== -->
+
+    <menuitem id="menu_registration_root"
+              name="Registration"
+              sequence="25"/>
+
+    <menuitem id="menu_registration_courses"
+              name="Courses"
+              parent="menu_registration_root"
+              action="action_education_course"
+              sequence="10"/>
+
+    <menuitem id="menu_registration_cart"
+              name="Cart / Wishlist"
+              parent="menu_registration_root"
+              action="action_education_cart"
+              sequence="20"/>
+
+    <menuitem id="menu_registration_enrollments"
+              name="Enrollments"
+              parent="menu_registration_root"
+              action="action_education_registration"
+              sequence="30"/>
+
+</odoo>

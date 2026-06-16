@@ -1,0 +1,73 @@
+.dropzone {
+  border: 2px dashed var(--color-border-light);
+  border-radius: 16px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.dropzone:hover,
+.dragging {
+  border-color: var(--color-lime);
+  background: rgba(76, 175, 39, 0.03);
+}
+
+.fileInput {
+  display: none;
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mainText {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-black);
+}
+
+.subText {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.browseBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-lime);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.browseBtn:hover {
+  color: var(--color-lime-dark);
+}
+
+.fileList {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--color-primary-black);
+  padding: 6px 12px;
+  background: rgba(76, 175, 39, 0.06);
+  border-radius: 8px;
+}

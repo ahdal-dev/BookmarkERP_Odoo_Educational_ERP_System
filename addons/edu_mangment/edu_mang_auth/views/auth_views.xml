@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================== -->
+    <!-- ERP SECURITY GROUPS — Management View                              -->
+    <!-- ================================================================== -->
+
+    <!-- Action: Show only the 3 custom ERP groups -->
+    <record id="action_erp_groups" model="ir.actions.act_window">
+        <field name="name">ERP Security Groups</field>
+        <field name="res_model">res.groups</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            ('id', 'in', [
+                ref('edu_mang_auth.group_erp_student'),
+                ref('edu_mang_auth.group_erp_admission_officer'),
+                ref('edu_mang_auth.group_erp_admin'),
+            ])
+        ]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Educational ERP Security Groups
+            </p>
+            <p>
+                Manage the three core roles: Student, Admission Officer, and Administrator.
+                Assign users to groups to control their access level.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action: Show users belonging to any ERP group -->
+    <record id="action_erp_users" model="ir.actions.act_window">
+        <field name="name">ERP Users</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[
+            ('groups_id', 'in', [
+                ref('edu_mang_auth.group_erp_student'),
+                ref('edu_mang_auth.group_erp_admission_officer'),
+                ref('edu_mang_auth.group_erp_admin'),
+            ])
+        ]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Educational ERP Users
+            </p>
+            <p>
+                All users assigned to an Educational ERP role (Student, Officer, or Admin).
+            </p>
+        </field>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- MENUS                                                              -->
+    <!-- ================================================================== -->
+
+    <menuitem id="menu_auth_root"
+              name="Authentication"
+              sequence="50"
+              groups="edu_mang_auth.group_erp_admin"/>
+
+    <menuitem id="menu_auth_groups"
+              name="ERP Security Groups"
+              parent="menu_auth_root"
+              action="action_erp_groups"
+              sequence="10"
+              groups="edu_mang_auth.group_erp_admin"/>
+
+    <menuitem id="menu_auth_users"
+              name="ERP Users"
+              parent="menu_auth_root"
+              action="action_erp_users"
+              sequence="20"
+              groups="edu_mang_auth.group_erp_admin"/>
+
+</odoo>

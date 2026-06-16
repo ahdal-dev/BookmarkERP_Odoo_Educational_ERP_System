@@ -9,6 +9,13 @@ import UnauthorizedPage from './pages/UnauthorizedPage/UnauthorizedPage';
 
 // App Launcher (existing component, now mounted at /apps)
 import DashboardPage from './pages/DashboardPage/DashboardPage';
+import RegistrationPage from './pages/RegistrationPage/RegistrationPage';
+import InstitutionalRulesetPage from './pages/InstitutionalRulesetPage/InstitutionalRulesetPage';
+import UserManagementPage from './pages/UserManagementPage/UserManagementPage';
+import DocumentVerificationPage from './pages/DocumentVerificationPage/DocumentVerificationPage';
+import AdmissionPipelinePage from './pages/AdmissionPipelinePage/AdmissionPipelinePage';
+import PetitionFormPage from './pages/PetitionFormPage/PetitionFormPage';
+import PetitionTrackingPage from './pages/PetitionTrackingPage/PetitionTrackingPage';
 
 // Role landing pages (scaffolded — see docs/User_stories/Missing_Views_ToDo.md)
 import StudentDashboardPage from './pages/student/StudentDashboardPage';
@@ -32,10 +39,14 @@ export default function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/admissions/status" element={<ApplicationStatusPage />} />
 
+<<<<<<< HEAD
           {/* Post-login dispatcher */}
           <Route path="/" element={<RoleRouter />} />
 
           {/* App Launcher — Super Admin / Registrar / Admission Officer */}
+=======
+          {/* Protected Routes — Student */}
+>>>>>>> 403bd54eb2eb942d14bbb4a9c3bd0c8ac9c32d4d
           <Route
             path="/apps"
             element={
@@ -44,6 +55,64 @@ export default function App() {
               >
                 <DashboardPage />
               </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/registration"
+            element={
+              <ProtectedRoute>
+                <RegistrationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/petitions/new"
+            element={
+              <ProtectedRoute>
+                <PetitionFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/apply/documents"
+            element={
+              <ProtectedRoute>
+                <DocumentVerificationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes — Admin */}
+          <Route
+            path="/admin/settings/registration-rules"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <InstitutionalRulesetPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/admissions"
+            element={
+              <ProtectedRoute roles={['admin', 'officer']}>
+                <AdmissionPipelinePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/petitions"
+            element={
+              <ProtectedRoute roles={['admin', 'officer']}>
+                <PetitionTrackingPage />
+              </ProtectedRoute>
             }
           />
 

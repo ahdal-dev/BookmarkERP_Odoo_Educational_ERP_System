@@ -7,7 +7,8 @@ Implements:
 - Session management and secure logout
 - CSRF protection for all forms
 
-Note: Login is handled by /edu/login from edu_mang_website module.
+Note: Student-facing login is handled by the React frontend (bookmark-frontend).
+Backend login uses Odoo's native /web/login.
 """
 
 import logging
@@ -24,7 +25,7 @@ class EduPortalAuthController(http.Controller):
     Main authentication controller for the Educational Portal.
     
     Provides role-specific dashboards and session management.
-    Login is handled by edu_mang_website at /edu/login.
+    Student-facing login is handled by the React frontend.
     """
 
     # =========================================================================

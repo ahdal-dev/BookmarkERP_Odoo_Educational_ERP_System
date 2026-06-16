@@ -1,18 +1,8 @@
-# ============================================================================
-# Testing Pipeline Orchestrator
-# ============================================================================
-# Orchestrates the full testing pyramid as a single status check.
-# Calls the three layer-specific workflows and provides a unified
-# pass/fail status for branch protection rules.
-#
-# Individual layer workflows also run independently on their own triggers.
-# ============================================================================
-
 name: "🏗️ Testing Pipeline"
 
 on:
   push:
-    branches: [main, develop]
+    branches: "!*main"
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
