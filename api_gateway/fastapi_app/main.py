@@ -84,6 +84,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Petition multi-tier router (Instructor -> Advisor -> Chair workflow)
+from routers import petitions as petitions_router
+app.include_router(petitions_router.router)
+
 # ============================================================================
 # Pydantic Models - Request/Response Schemas
 # ============================================================================
