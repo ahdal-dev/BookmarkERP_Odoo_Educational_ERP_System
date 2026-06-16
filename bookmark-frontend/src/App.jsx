@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute/RoleProtectedRoute';
 import RoleRouter from './components/RoleRouter/RoleRouter';
 import { ROLES } from './config/roles';
@@ -39,14 +40,10 @@ export default function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/admissions/status" element={<ApplicationStatusPage />} />
 
-<<<<<<< HEAD
           {/* Post-login dispatcher */}
           <Route path="/" element={<RoleRouter />} />
 
           {/* App Launcher — Super Admin / Registrar / Admission Officer */}
-=======
-          {/* Protected Routes — Student */}
->>>>>>> 403bd54eb2eb942d14bbb4a9c3bd0c8ac9c32d4d
           <Route
             path="/apps"
             element={
