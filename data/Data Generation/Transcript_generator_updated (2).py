@@ -10,7 +10,7 @@ Includes:
 - Complete Course Catalogs (300+ courses)
 
 Author: AI-Assisted Development
-Project: Educational ERP System
+Project: Zewail City Educational ERP System
 """
 
 import json
@@ -27,7 +27,10 @@ from pathlib import Path
 # Google Gemini imports
 import google.generativeai as genai
 
-
+# Configuration
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+OUTPUT_DIR = Path("generated_data")
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Configure Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -110,8 +113,8 @@ ZEWAIL_CITY_STRUCTURE = {
             "undergraduate_programs": [
                 "Actuarial Analysis and Risk Management",
                 "Finance and Investment Management",
-                "Marketing, Entrepreneurship and Innovation Management",
-                "Operations, Supply Chain and Technology Management"
+                "Marketing, Entrepreneurship, and Innovation Management",
+                "Operations, Supply Chain, and Technology Management"
             ],
             "graduate_programs": []
         },
@@ -130,14 +133,14 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Engineering",
             "degree": "BSc in Aerospace Engineering",
             "duration_years": 4,
-            "total_credits": 160,
+            "total_credits": 144,
             "specializations": [
                 "Aerodynamics",
                 "Propulsion Systems",
-                "Flight Mechanics and Control",
+                "Flight Dynamics and Control",
                 "Space Systems Engineering",
-                "Aircraft Structures",
-                "Avionics"
+                "Thin-Walled Structures",
+                "Gas Dynamics"
             ]
         },
         "Communications and Information Engineering": {
@@ -145,7 +148,7 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Engineering",
             "degree": "BSc in Communications and Information Engineering",
             "duration_years": 4,
-            "total_credits": 160,
+            "total_credits": 144,
             "specializations": [
                 "Communication Technologies",
                 "Artificial Intelligence",
@@ -160,7 +163,7 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Engineering",
             "degree": "BSc in Environmental Engineering",
             "duration_years": 4,
-            "total_credits": 160,
+            "total_credits": 144,
             "specializations": [
                 "Water Resources Engineering",
                 "Air Quality Engineering",
@@ -174,7 +177,7 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Engineering",
             "degree": "BSc in Nanotechnology and Nanoelectronics Engineering",
             "duration_years": 4,
-            "total_credits": 160,
+            "total_credits": 144,
             "specializations": [
                 "Nano-VLSI Design",
                 "Nano-Fabrication and MEMS",
@@ -188,7 +191,7 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Engineering",
             "degree": "BSc in Renewable Energy Engineering",
             "duration_years": 4,
-            "total_credits": 160,
+            "total_credits": 144,
             "specializations": [
                 "Solar Energy (Concentrated Solar Power)",
                 "Photovoltaic Systems (PV)",
@@ -213,18 +216,24 @@ ZEWAIL_CITY_STRUCTURE = {
         },
         
         # School of Science Programs
+        # Source: SCI_Curricula_2023.pdf - University of Science and Technology, Zewail City
         "Biomedical Sciences": {
             "code": "BMS",
             "school": "School of Science",
             "degree": "BSc in Biomedical Sciences",
             "duration_years": 4,
-            "total_credits": 140,
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 32,
+                "major_requirements": 30,
+                "concentration_requirements": 52
+            },
             "concentrations": [
-                "Molecular and Cell Biology",
+                "Molecular Cell Biology",
                 "Medical Sciences",
                 "Computational Biology and Genomics",
-                "Drug Design and Development",
-                "Immunology and Microbiology"
+                "Drug Design and Development"
             ]
         },
         "Nano Science": {
@@ -232,41 +241,35 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Science",
             "degree": "BSc in Nano Science",
             "duration_years": 4,
-            "total_credits": 140,
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 32,
+                "major_requirements": 28,
+                "concentration_requirements": 54
+            },
             "concentrations": [
-                "Nano-medicine",
-                "Bio-nanotechnology",
-                "Nano Chemistry",
+                "Nanomedicine",
                 "Nanophysics",
-                "Nanomaterials"
+                "Bio-Nanotechnology",
+                "Nanochemistry"
             ]
         },
         "Physics of Universe": {
-            "code": "PEU",
+            "code": "PHYS",
             "school": "School of Science",
             "degree": "BSc in Physics of Universe",
             "duration_years": 4,
-            "total_credits": 140,
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 32,
+                "major_requirements": 70,
+                "concentration_requirements": 12
+            },
             "concentrations": [
                 "Astrophysics",
-                "High Energy Physics",
-                "Cosmology",
-                "Theoretical Physics",
-                "Computational Physics"
-            ]
-        },
-        "Materials Science": {
-            "code": "MATSCI",
-            "school": "School of Science",
-            "degree": "BSc in Materials Science",
-            "duration_years": 4,
-            "total_credits": 140,
-            "concentrations": [
-                "Advanced Materials",
-                "Functional Materials",
-                "Computational Materials Science",
-                "Biomaterials",
-                "Electronic Materials"
+                "High Energy Physics"
             ]
         },
         
@@ -276,28 +279,30 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Computational Sciences and Artificial Intelligence",
             "degree": "BSc in Data Science and Artificial Intelligence",
             "duration_years": 4,
-            "total_credits": 145,
-            "specializations": [
-                "Machine Learning",
-                "Big Data Analytics",
-                "Computer Vision",
-                "Natural Language Processing",
-                "Deep Learning",
-                "AI Applications"
-            ]
+            "total_credits": 132,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 53,
+                "major_requirements": 63
+            },
+            "note": "No concentrations; single major track"
         },
         "Software Development": {
-            "code": "SW",
+            "code": "SWD",
             "school": "School of Computational Sciences and Artificial Intelligence",
             "degree": "BSc in Software Development",
             "duration_years": 4,
-            "total_credits": 145,
-            "specializations": [
-                "Web and Mobile Development",
-                "Cloud Computing",
-                "Software Architecture",
-                "DevOps Engineering",
-                "Full-Stack Development"
+            "total_credits": 132,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 53,
+                "major_requirements": 33,
+                "concentration_requirements": 30
+            },
+            "concentrations": [
+                "Application Development (APD)",
+                "Gaming and Computer Graphics (GCG)",
+                "Human Computer Interaction (HCI)"
             ]
         },
         "Information Technology": {
@@ -305,64 +310,69 @@ ZEWAIL_CITY_STRUCTURE = {
             "school": "School of Computational Sciences and Artificial Intelligence",
             "degree": "BSc in Information Technology",
             "duration_years": 4,
-            "total_credits": 145,
-            "specializations": [
-                "Cybersecurity",
-                "Network Administration",
-                "Database Management",
-                "IT Infrastructure",
-                "Enterprise Systems"
+            "total_credits": 132,
+            "credit_breakdown": {
+                "university_requirements": 16,
+                "school_requirements": 53,
+                "major_requirements": 34,
+                "concentration_requirements": 29
+            },
+            "concentrations": [
+                "Networks, Security and Governance (ITNS)",
+                "Infrastructure and Cloud Computing (ITCC)"
             ]
         },
         
         # School of Business Programs
+        # Source: BUS_Curricula_2023.pdf - University of Science and Technology, Zewail City
+        # All BUS programs: 130 Cr = 21 Cr University Req + 70 Cr School Req + 39 Cr Program Req
         "Actuarial Analysis and Risk Management": {
-            "code": "BACT",
+            "code": "AARM",
             "school": "School of Business",
-            "degree": "BSc in Actuarial Analysis and Risk Management",
+            "degree": "BBA in Actuarial Analysis and Risk Management",
             "duration_years": 4,
-            "total_credits": 140,
-            "specializations": [
-                "Insurance Risk Management",
-                "Financial Risk Analytics",
-                "Pension and Benefits",
-                "Enterprise Risk Management"
-            ]
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 21,
+                "school_requirements": 70,
+                "program_requirements": 39
+            }
         },
         "Finance and Investment Management": {
-            "code": "FINC",
+            "code": "FIM",
             "school": "School of Business",
-            "degree": "BSc in Finance and Investment Management",
+            "degree": "BBA in Finance and Investment Management",
             "duration_years": 4,
-            "total_credits": 140,
-            "specializations": [
-                "Investment Banking",
-                "Portfolio Management",
-                "Corporate Finance",
-                "FinTech",
-                "Financial Analytics"
-            ]
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 21,
+                "school_requirements": 70,
+                "program_requirements": 39
+            }
         },
-        "Marketing, Entrepreneurship and Innovation Management": {
-            "code": "MKTG",
+        "Marketing, Entrepreneurship, and Innovation Management": {
+            "code": "MEIM",
             "school": "School of Business",
-            "degree": "BSc in Marketing, Entrepreneurship and Innovation Management",
+            "degree": "BBA in Marketing, Entrepreneurship, and Innovation Management",
             "duration_years": 4,
-            "total_credits": 140,
-            "specializations": [
-                "Digital Marketing",
-                "Startup Management",
-                "Innovation Strategy",
-                "Brand Management",
-                "Social Entrepreneurship"
-            ]
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 21,
+                "school_requirements": 70,
+                "program_requirements": 39
+            }
         },
-        "Operations, Supply Chain and Technology Management": {
-            "code": "SCHN",
+        "Operations, Supply Chain, and Technology Management": {
+            "code": "OSCTM",
             "school": "School of Business",
-            "degree": "BSc in Operations, Supply Chain and Technology Management",
+            "degree": "BBA in Operations, Supply Chain, and Technology Management",
             "duration_years": 4,
-            "total_credits": 140,
+            "total_credits": 130,
+            "credit_breakdown": {
+                "university_requirements": 21,
+                "school_requirements": 70,
+                "program_requirements": 39
+            },
             "specializations": [
                 "Supply Chain Analytics",
                 "Operations Research",
@@ -560,11 +570,11 @@ HANDBOOK_REFERENCES = {
                 "Information Technology Handbook 2025-2026"
             ],
             "School of Business": [
-                "Actuarial Analysis and Risk Management Handbook 2025-2026",
-                "Finance and Investment Management Handbook 2025-2026",
-                "Marketing, Entrepreneurship and Innovation Management Handbook 2025-2026",
-                "Operations, Supply Chain and Technology Management Handbook 2025-2026"
-            ]
+                    "Actuarial Analysis and Risk Management Handbook 2025-2026",
+                    "Finance and Investment Management Handbook 2025-2026",
+                    "Marketing, Entrepreneurship, and Innovation Management Handbook 2025-2026",
+                    "Operations, Supply Chain, and Technology Management Handbook 2025-2026"
+                ]
         }
     },
     "graduate": {
@@ -602,10 +612,14 @@ HANDBOOK_REFERENCES = {
             "F": {"min_gpa": 0.00, "max_gpa": 0.99, "description": "Fail"}
         },
         "credit_requirements": {
-            "engineering": {"total": 160, "major": 90, "general_education": 30, "electives": 40},
-            "science": {"total": 140, "major": 80, "general_education": 30, "electives": 30},
-            "csai": {"total": 145, "major": 85, "general_education": 30, "electives": 30},
-            "business": {"total": 140, "major": 80, "general_education": 30, "electives": 30}
+            "engineering": {"total": 144, "university_requirements": 18, "school_requirements": 33, "program_requirements": 93},
+            "science_bms": {"total": 130, "university_requirements": 16, "school_requirements": 32, "major_requirements": 30, "concentration_requirements": 52},
+            "science_nanosc": {"total": 130, "university_requirements": 16, "school_requirements": 32, "major_requirements": 28, "concentration_requirements": 54},
+            "science_pu": {"total": 130, "university_requirements": 16, "school_requirements": 32, "major_requirements": 70, "concentration_requirements": 12},
+            "csai_dsai": {"total": 132, "university_requirements": 16, "school_requirements": 53, "major_requirements": 63},
+            "csai_swd": {"total": 132, "university_requirements": 16, "school_requirements": 53, "major_requirements": 33, "concentration_requirements": 30},
+            "csai_it": {"total": 132, "university_requirements": 16, "school_requirements": 53, "major_requirements": 34, "concentration_requirements": 29},
+            "business": {"total": 130, "university_requirements": 21, "school_requirements": 70, "program_requirements": 39}
         },
         "academic_standing": {
             "good_standing": {"min_cgpa": 2.0},
@@ -628,28 +642,94 @@ STUDY_PLANS = {
     
     "Aerospace Engineering": {
         "code": "SPC",
-        "total_credits": 160,
+        "total_credits": 144,
+        # University Requirements (18 Cr): ENGL 152, ENGL 153, SCH 262, SCH 263 (8 Cr compulsory)
+        #   + SPC 477 (2 Cr compulsory GE) + 8 Cr GE electives = 10 Cr program-specific GE
+        # School Requirements (33 Cr): CHEM 103, MATH 101, MATH 102, MATH 201, MATH 202,
+        #   PHYS 115, PHYS 125, PHYS 116, PHYS 126, CSCI 101, ENGR 102, ENGR 121, ENGR 333,
+        #   SPC 498, SPC 499
+        # Program Requirements (93 Cr): all others listed below
         "year_1": {
-            "fall": ["CHEM 103", "ENGL 152", "CSCI 101","ENGR 102","ENGR 121","MATH 101","PHYS 115","PHYS 125"],
-            "spring": ["CIE 101", "ENGL 153", "ENGR 105", "MATH 102","MATSCI 201","PHYS 116","PHYS 126","SPC 101"]
-            },
+            "fall": [
+                "CHEM 103",   # 3 cr - School Req
+                "CSCI 101",   # 2 cr - School Req
+                "ENGL 152",   # 2 cr - Univ Req
+                "ENGR 102",   # 2 cr - School Req
+                "ENGR 121",   # 2 cr - School Req
+                "MATH 101",   # 3 cr - School Req
+                "PHYS 115",   # 1 cr - School Req (Lab)
+                "PHYS 125"    # 2 cr - School Req (Theory)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "CIE 101",    # 3 cr - Program Req
+                "ENGL 153",   # 2 cr - Univ Req
+                "ENGR 105",   # 3 cr - Program Req
+                "MATH 102",   # 3 cr - School Req
+                "MATSCI 201", # 3 cr - Program Req
+                "PHYS 116",   # 1 cr - School Req (Lab)
+                "PHYS 126",   # 2 cr - School Req (Theory)
+                "SPC 101"     # 2 cr - Program Req
+            ]                 # Semester total: 19 cr
+        },
         "year_2": {
-            "fall": ["CIE 205", "ENGR 207", "MATH 201", "MATH 202","REE 202","SPC 228"],
-            "spring": ["ENGR 201", "MATH 306", "REE 122", "SPC 206", "SPC 210", "SPC 238"]
-            },
+            "fall": [
+                "CIE 205",    # 3 cr - Program Req
+                "ENGR 207",   # 3 cr - Program Req
+                "MATH 201",   # 3 cr - School Req
+                "MATH 202",   # 3 cr - School Req
+                "REE 202",    # 3 cr - Program Req
+                "SPC 228"     # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "ENGR 201",   # 3 cr - Program Req
+                "MATH 306",   # 3 cr - Program Req
+                "REE 122",    # 3 cr - Program Req
+                "SPC 206",    # 3 cr - Program Req
+                "SPC 210",    # 3 cr - Program Req
+                "SPC 238"     # 3 cr - Program Req
+            ]                 # Semester total: 18 cr
+        },
         "year_3": {
-            "fall": ["ENGR 346", "MATH 302", "REE 302", "SPC 302", "SPC 307","SPC 337"],
-            "spring": ["SCH 262", "SCH 263", "SPC 304", "SPC 315", "SPC 322","SPC 327","SPC 332"],
-            "Summer":["ENGR 333"]
-            },
+            "fall": [
+                "ENGR 346",   # 3 cr - Program Req
+                "MATH 302",   # 3 cr - Program Req
+                "REE 302",    # 3 cr - Program Req
+                "SPC 302",    # 3 cr - Program Req
+                "SPC 307",    # 3 cr - Program Req
+                "SPC 337"     # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "SCH 262",    # 2 cr - Univ Req
+                "SCH 263",    # 2 cr - Univ Req
+                "SPC 304",    # 2 cr - Program Req
+                "SPC 315",    # 3 cr - Program Req
+                "SPC 322",    # 3 cr - Program Req
+                "SPC 327",    # 3 cr - Program Req
+                "SPC 332"     # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "summer": [
+                "ENGR 333"    # 2 cr - School Req (Industrial Training; register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": ["CIE 237", "SPC 417", "SPC 470", "SPC 498"],
-            "fall_program_electives": 2,
-            "fall_sch_electives": 2,
-            "spring": ["SPC 435", "SPC 477", "SPC 499"],
-            "spring_program_electives": 2,
-            "spring_sch_electives": 2
-            },
+            "fall": [
+                "CIE 237",    # 3 cr - Program Req
+                "SPC 417",    # 3 cr - Program Req
+                "SPC 470",    # 3 cr - Program Req
+                "SPC 498"     # 1 cr - School Req (Senior Design Project I; after 102 cr)
+            ],
+            "fall_spc_electives": 4,    # 4 cr SPC program electives
+            "fall_gen_ed_electives": 4, # 4 cr General Education electives
+            # Fall total: 18 cr
+            "spring": [
+                "SPC 435",    # 3 cr - Program Req
+                "SPC 477",    # 2 cr - Univ Req (compulsory GE for SPC)
+                "SPC 499"     # 3 cr - School Req (Senior Design Project II)
+            ],
+            "spring_spc_electives": 4,    # 4 cr SPC program electives
+            "spring_gen_ed_electives": 4  # 4 cr General Education electives
+            # Spring total: 16 cr
+        },
         "electives": {
             "program": [
                 "NANENG 410", "PHYS 205", "PHYS 218",
@@ -659,120 +739,458 @@ STUDY_PLANS = {
                 "SPC 439", "SPC 446", "SPC 447", "SPC 460",
                 "SPC 497"
             ],
-            "sch": [
-                "ENV 301", "ENV 512", "ENV 527",
-                "HIS 302", "HIS 304", "PHIL 301", "REE 503",
-                "SCH 201", "SCH 202", "SCH 205", "SCH 206",
-                "SCH 207", "SCH 232", "SCH 233", "SCH 234",
-                "SCH 235", "SCH 244", "SCH 258", "SCH 265",
-                "SCH 266"
-            ],
-            "elective_credits_required": 8
-            }
+            "program_elective_credits_required": 8,
+            "gen_ed_elective_credits_required": 8
+        }
     },
     
-   "Communications and Information Engineering": {
+    "Communications and Information Engineering": {
         "code": "CIE",
-        "total_credits": 160,
-
+        "total_credits": 144,
+        # University Requirements (18 Cr): ENGL 152, ENGL 153, SCH 263 (compulsory 8 cr)
+        #   + SCH 261, SCH 264 (4 cr compulsory GE) + 6 cr GE electives = 10 cr program-specific GE
+        # School Requirements (33 Cr): CHEM 103, MATH 101, MATH 102, MATH 201, MATH 202,
+        #   PHYS 115, PHYS 125, PHYS 116, PHYS 126, CSCI 101, ENGR 102, ENGR 121, ENGR 333,
+        #   CIE 498, CIE 499
+        # Program Requirements (93 Cr): 72 cr compulsory + 21 cr electives
         "year_1": {
-            "fall": ["CHEM 103", "CSCI 101", "ENGL 152","ENGR 102", "ENGR 121","MATH 101",  "PHYS 115", "PHYS 125"],
-            "spring": [ "CIE 101", "CIE 110", "ENGL 153",  "MATH 102", "MATH 203", "PHYS 116", "PHYS 126",  "SCH 263"]
-            },
-
+            "fall": [
+                "CHEM 103",   # 3 cr - School Req
+                "CSCI 101",   # 2 cr - School Req
+                "ENGL 152",   # 2 cr - Univ Req
+                "ENGR 102",   # 2 cr - School Req
+                "ENGR 121",   # 2 cr - School Req
+                "MATH 101",   # 3 cr - School Req
+                "PHYS 115",   # 1 cr - School Req (Lab)
+                "PHYS 125"    # 2 cr - School Req (Theory)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "CIE 101",    # 3 cr - Program Req
+                "CIE 110",    # 3 cr - Program Req
+                "ENGL 153",   # 2 cr - Univ Req
+                "MATH 102",   # 3 cr - School Req
+                "MATH 203",   # 1 cr - Program Req
+                "PHYS 116",   # 1 cr - School Req (Lab)
+                "PHYS 126",   # 2 cr - School Req (Theory)
+                "SCH 263"     # 2 cr - Univ Req
+            ]                 # Semester total: 17 cr
+        },
         "year_2": {
-            "fall": ["CIE 205", "CIE 206", "CIE 227", "CIE 239", "MATH 201", "MATH 202" ],
-            "spring": [ "CIE 201", "CIE 237", "CIE 247", "CIE 249","PHYS 203","SCH 261", "SCH 262"]
-            },
-
+            "fall": [
+                "CIE 205",    # 3 cr - Program Req
+                "CIE 206",    # 3 cr - Program Req
+                "CIE 227",    # 3 cr - Program Req
+                "CIE 239",    # 3 cr - Program Req
+                "MATH 201",   # 3 cr - School Req
+                "MATH 202"    # 3 cr - School Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "CIE 201",    # 3 cr - Program Req
+                "CIE 237",    # 3 cr - Program Req
+                "CIE 247",    # 3 cr - Program Req
+                "CIE 249",    # 3 cr - Program Req
+                "PHYS 203",   # 3 cr - Program Req
+                "SCH 261",    # 2 cr - Univ Req (compulsory GE for CIE)
+                "SCH 262"     # 2 cr - Univ Req
+            ]                 # Semester total: 19 cr
+        },
         "year_3": {
-            "fall": [ "CIE 302", "CIE 317", "CIE 318", "CIE 328", "CIE 337", "MATH 302" ],
-            "spring": [  "CIE 338", "CIE 347",  "CIE 349", "CIE 357",  "CIE 367", "CIE 399",  "SCH 264"  ],
-            "summer": [ "ENGR 333"]
-            },
-
+            "fall": [
+                "CIE 302",    # 3 cr - Program Req
+                "CIE 317",    # 3 cr - Program Req
+                "CIE 318",    # 3 cr - Program Req
+                "CIE 328",    # 3 cr - Program Req
+                "CIE 337",    # 3 cr - Program Req
+                "MATH 302"    # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "CIE 338",    # 3 cr - Program Req
+                "CIE 347",    # 3 cr - Program Req
+                "CIE 349",    # 3 cr - Program Req
+                "CIE 357",    # 3 cr - Program Req
+                "CIE 367",    # 3 cr - Program Req
+                "CIE 399",    # 2 cr - Program Req
+                "SCH 264"     # 2 cr - Univ Req (compulsory GE for CIE)
+            ],                # Semester total: 19 cr
+            "summer": [
+                "ENGR 333"    # 2 cr - School Req (Industrial Training; register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": ["CIE 448","CIE 498","CIE Electives","General Education Electives" ],
-            "spring": ["CIE 499","CIE Electives","General Education Electives"]
-            }
+            "fall": [
+                "CIE 448",    # 3 cr - Program Req
+                "CIE 498"     # 1 cr - School Req (Senior Design Project I; after 102 cr)
+            ],
+            "fall_cie_electives": 9,     # 9 cr CIE program electives
+            "fall_gen_ed_electives": 4,  # 4 cr General Education electives
+            # Fall total: 17 cr
+            "spring": [
+                "CIE 499"     # 3 cr - School Req (Senior Design Project II)
+            ],
+            "spring_cie_electives": 12,   # 12 cr CIE program electives
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Spring total: 17 cr
+        },
+        "electives": {
+            "program": [
+                "BMS 404",
+                "CIE 402", "CIE 404", "CIE 412", "CIE 413", "CIE 416",
+                "CIE 418", "CIE 419", "CIE 420", "CIE 427", "CIE 436",
+                "CIE 438", "CIE 449", "CIE 450", "CIE 451", "CIE 452",
+                "CIE 453", "CIE 454", "CIE 455", "CIE 456", "CIE 457",
+                "CIE 458", "CIE 459", "CIE 460", "CIE 461", "CIE 464",
+                "CIE 465", "CIE 467", "CIE 470", "CIE 474", "CIE 477",
+                "CIE 478", "CIE 481", "CIE 482",
+                "CIE 491", "CIE 492", "CIE 493", "CIE 494", "CIE 495", "CIE 497",
+                "NANENG 325", "NANENG 426", "NANENG 462",
+                "MATH 404"
+            ],
+            "program_elective_credits_required": 21,
+            "gen_ed_elective_credits_required": 6
+        }
     },
     
-   "Environmental Engineering": {
+    "Environmental Engineering": {
         "code": "ENV",
-        "total_credits": 160,
-
+        "total_credits": 144,
+        # University Requirements (18 Cr): ENGL 152, ENGL 153, SCH 263 (compulsory 8 cr)
+        #   + ENV 302, ENV 412, SCH 261 (6 cr compulsory GE) + 4 cr GE electives = 10 cr program-specific GE
+        # School Requirements (33 Cr): CHEM 103, MATH 101, MATH 102, MATH 201, MATH 202,
+        #   PHYS 115, PHYS 125, PHYS 116, PHYS 126, CSCI 101, ENGR 102, ENGR 121, ENGR 333,
+        #   ENV 498, ENV 499
+        # Program Requirements (93 Cr): 87 cr compulsory + 6 cr electives
         "year_1": {
-            "fall": ["CHEM 103", "CSCI 101", "ENGL 152","ENGR 102", "ENGR 121","MATH 101", "PHYS 115", "PHYS 125"],
-            "spring": ["ENGL 153", "ENGR 105","ENV 104", "ENV 120","MATH 102","PHYS 116", "PHYS 126", "SCH 263"]
-            },
-
+            "fall": [
+                "CHEM 103",   # 3 cr - School Req
+                "CSCI 101",   # 2 cr - School Req
+                "ENGL 152",   # 2 cr - Univ Req
+                "ENGR 102",   # 2 cr - School Req
+                "ENGR 121",   # 2 cr - School Req
+                "MATH 101",   # 3 cr - School Req
+                "PHYS 115",   # 1 cr - School Req (Lab)
+                "PHYS 125"    # 2 cr - School Req (Theory)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "ENGL 153",   # 2 cr - Univ Req
+                "ENGR 105",   # 3 cr - Program Req
+                "ENV 104",    # 3 cr - Program Req
+                "ENV 120",    # 2 cr - Program Req
+                "MATH 102",   # 3 cr - School Req
+                "PHYS 116",   # 1 cr - School Req (Lab)
+                "PHYS 126",   # 2 cr - School Req (Theory)
+                "SCH 263"     # 2 cr - Univ Req
+            ]                 # Semester total: 18 cr
+        },
         "year_2": {
-            "fall": ["ENGR 207","ENV 204", "ENV 207", "ENV 224","MATH 201", "MATH 202"],
-            "spring": ["ENV 219", "ENV 230","ENV 250", "ENV 257","MATH 301", "MATH 306","SCH 262"]
-            },
-
+            "fall": [
+                "ENGR 207",   # 3 cr - Program Req
+                "ENV 204",    # 3 cr - Program Req
+                "ENV 207",    # 3 cr - Program Req
+                "ENV 224",    # 3 cr - Program Req
+                "MATH 201",   # 3 cr - School Req
+                "MATH 202"    # 3 cr - School Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "ENV 219",    # 2 cr - Program Req
+                "ENV 230",    # 3 cr - Program Req
+                "ENV 250",    # 3 cr - Program Req
+                "ENV 257",    # 3 cr - Program Req
+                "MATH 301",   # 3 cr - Program Req
+                "MATH 306",   # 3 cr - Program Req
+                "SCH 262"     # 2 cr - Univ Req
+            ]                 # Semester total: 19 cr
+        },
         "year_3": {
-            "fall": ["ENGR 346","ENV 302", "ENV 306","ENV 320", "ENV 323", "ENV 328","General Education Elective"],
-            "spring": ["ENV 322", "ENV 325","ENV 327", "ENV 359","ENV 367", "ENV 380","SCH 261"],
-            "summer": ["ENGR 333"]
-            },
-
+            "fall": [
+                "ENGR 346",   # 3 cr - Program Req
+                "ENV 302",    # 2 cr - Univ Req (compulsory GE for ENV)
+                "ENV 306",    # 3 cr - Program Req
+                "ENV 320",    # 3 cr - Program Req
+                "ENV 323",    # 3 cr - Program Req
+                "ENV 328"     # 2 cr - Program Req
+            ],
+            "fall_gen_ed_electives": 2,  # 2 cr General Education electives
+            # Fall total: 18 cr
+            "spring": [
+                "ENV 322",    # 3 cr - Program Req
+                "ENV 325",    # 3 cr - Program Req
+                "ENV 327",    # 2 cr - Program Req
+                "ENV 359",    # 3 cr - Program Req
+                "ENV 367",    # 3 cr - Program Req
+                "ENV 380",    # 3 cr - Program Req
+                "SCH 261"     # 2 cr - Univ Req (compulsory GE for ENV)
+            ],                # Semester total: 19 cr
+            "summer": [
+                "ENGR 333"    # 2 cr - School Req (Industrial Training; register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": [ "ENV 411", "ENV 412","ENV 415", "ENV 416","ENV 434", "ENV 440","ENV 498","ENV Electives"],
-            "spring": [ "ENV 446", "ENV 460", "ENV 470","ENV 499","ENV Electives","General Education Electives"]
-            }
+            "fall": [
+                "ENV 411",    # 3 cr - Program Req
+                "ENV 412",    # 2 cr - Univ Req (compulsory GE for ENV)
+                "ENV 415",    # 1 cr - Program Req
+                "ENV 416",    # 1 cr - Program Req
+                "ENV 434",    # 3 cr - Program Req
+                "ENV 440",    # 3 cr - Program Req
+                "ENV 498"     # 1 cr - School Req (Senior Design Project I; after 102 cr)
+            ],
+            "fall_env_electives": 3,     # 3 cr ENV program electives
+            # Fall total: 17 cr
+            "spring": [
+                "ENV 446",    # 3 cr - Program Req
+                "ENV 460",    # 2 cr - Program Req
+                "ENV 470",    # 3 cr - Program Req
+                "ENV 499"     # 3 cr - School Req (Senior Design Project II)
+            ],
+            "spring_env_electives": 3,    # 3 cr ENV program electives
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Spring total: 16 cr
+        },
+        "electives": {
+            "program": [
+                "ENV 419", "ENV 430", "ENV 451", "ENV 454",
+                "ENV 456", "ENV 458", "ENV 459", "ENV 461",
+                "ENV 475", "ENV 497"
+            ],
+            "program_elective_credits_required": 6,
+            "gen_ed_elective_credits_required": 4
+        }
     },
     
-   "Nanotechnology and Nanoelectronics Engineering": {
+    "Nanotechnology and Nanoelectronics Engineering": {
         "code": "NANENG",
-        "total_credits": 160,
-
+        "total_credits": 144,
+        # University Requirements (18 Cr): ENGL 152, ENGL 153, SCH 262, SCH 263 (compulsory 8 cr)
+        #   + SCH 261, SCH 264 (4 cr compulsory GE) + 6 cr GE electives = 10 cr program-specific GE
+        # School Requirements (33 Cr): CHEM 103, MATH 101, MATH 102, MATH 201, MATH 202,
+        #   PHYS 115, PHYS 125, PHYS 116, PHYS 126, CSCI 101, ENGR 102, ENGR 121, ENGR 333,
+        #   NANENG 498, NANENG 499
+        # Program Requirements (93 Cr): 81 cr compulsory + 6 cr focus area + 6 cr electives
         "year_1": {
-            "fall": ["CHEM 103","CSCI 101","ENGL 152","ENGR 102","ENGR 121","MATH 101","PHYS 115","PHYS 125"],
-            "spring": ["ENGL 153","MATH 102","MATH 203","NANENG 112","NANENG 171","PHYS 116","PHYS 126","PHYS 203","General Education Elective"]
-            },
-
+            "fall": [
+                "CHEM 103",   # 3 cr - School Req
+                "CSCI 101",   # 2 cr - School Req
+                "ENGL 152",   # 2 cr - Univ Req
+                "ENGR 102",   # 2 cr - School Req
+                "ENGR 121",   # 2 cr - School Req
+                "MATH 101",   # 3 cr - School Req
+                "PHYS 115",   # 1 cr - School Req (Lab)
+                "PHYS 125"    # 2 cr - School Req (Theory)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "ENGL 153",   # 2 cr - Univ Req
+                "MATH 102",   # 3 cr - School Req
+                "MATH 203",   # 1 cr - Program Req
+                "NANENG 112", # 1 cr - Program Req
+                "NANENG 171", # 2 cr - Program Req
+                "PHYS 116",   # 1 cr - School Req (Lab)
+                "PHYS 126",   # 2 cr - School Req (Theory)
+                "PHYS 203"    # 3 cr - Program Req
+            ],
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Semester total: 17 cr
+        },
         "year_2": {
-            "fall": ["MATH 201","MATH 202","NANENG 202","NANENG 203","PHYS 224","SCH 261","SCH 263"],
-            "spring": ["NANENG 205","NANENG 211","NANENG 212","NANENG 218","NANENG 222","NANENG 231","General Education Elective"]
-            },
-
+            "fall": [
+                "MATH 201",   # 3 cr - School Req
+                "MATH 202",   # 3 cr - School Req
+                "NANENG 202", # 3 cr - Program Req
+                "NANENG 203", # 3 cr - Program Req
+                "PHYS 224",   # 3 cr - Program Req
+                "SCH 261",    # 2 cr - Univ Req (compulsory GE for NANENG)
+                "SCH 263"     # 2 cr - Univ Req
+            ],                # Semester total: 19 cr
+            "spring": [
+                "NANENG 205", # 3 cr - Program Req
+                "NANENG 211", # 2 cr - Program Req
+                "NANENG 212", # 3 cr - Program Req
+                "NANENG 218", # 2 cr - Program Req
+                "NANENG 222", # 3 cr - Program Req
+                "NANENG 231"  # 3 cr - Program Req
+            ],
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Semester total: 18 cr
+        },
         "year_3": {
-            "fall": ["MATH 301","NANENG 301","NANENG 308","NANENG 323","NANENG 335","SCH 262"],
-            "spring": ["MATH 302","MATH 306","NANENG 303","NANENG 313","NANENG 315","NANENG 325","NANENG 361"],
-            "summer": ["ENGR 333"]
-            },
-
+            "fall": [
+                "MATH 301",   # 3 cr - Program Req
+                "NANENG 301", # 3 cr - Program Req
+                "NANENG 308", # 3 cr - Program Req
+                "NANENG 323", # 3 cr - Program Req
+                "NANENG 335", # 3 cr - Program Req
+                "SCH 262"     # 2 cr - Univ Req
+            ],                # Semester total: 17 cr
+            "spring": [
+                "MATH 302",   # 3 cr - Program Req
+                "MATH 306",   # 3 cr - Program Req
+                "NANENG 303", # 2 cr - Program Req
+                "NANENG 313", # 1 cr - Program Req
+                "NANENG 315", # 3 cr - Program Req
+                "NANENG 325", # 3 cr - Program Req
+                "NANENG 361"  # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "summer": [
+                "ENGR 333"    # 2 cr - School Req (Industrial Training; register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": ["NANENG 410","NANENG 416","NANENG 430","NANENG 498","SCH 264","NANENG Focus Area Course","NANENG Elective","General Education Elective"],
-            "spring": ["NANENG 406", "NANENG 419","NANENG 424","NANENG 499","NANENG Focus Area Course","NANENG Elective"]
+            "fall": [
+                "NANENG 410", # 3 cr - Program Req
+                "NANENG 416", # 2 cr - Program Req
+                "NANENG 430", # 3 cr - Program Req
+                "NANENG 498", # 1 cr - School Req (Senior Design Project I; after 102 cr)
+                "SCH 264"     # 2 cr - Univ Req (compulsory GE for NANENG)
+            ],
+            "fall_focus_area_course_1": 3,  # 3 cr Focus Area Course 1
+            "fall_naneng_electives": 3,     # 3 cr NANENG electives
+            "fall_gen_ed_electives": 2,     # 2 cr General Education electives
+            # Fall total: 19 cr
+            "spring": [
+                "NANENG 406", # 3 cr - Program Req
+                "NANENG 419", # 2 cr - Program Req
+                "NANENG 424", # 3 cr - Program Req
+                "NANENG 499"  # 3 cr - School Req (Senior Design Project II)
+            ],
+            "spring_focus_area_course_2": 3, # 3 cr Focus Area Course 2
+            "spring_naneng_electives": 3     # 3 cr NANENG electives
+            # Spring total: 17 cr
+        },
+        "focus_areas": {
+            "Nano-Fabrication and MEMS": {
+                "courses": ["NANENG 436", "NANENG 455"],
+                "credits": 6
+            },
+            "Nano-VLSI": {
+                "courses": ["NANENG 439", "NANENG 445"],
+                "credits": 6
+            },
+            "Nano-Photonics": {
+                "courses": ["NANENG 431", "NANENG 435", "NANENG 470"],
+                "credits": 6,
+                "note": "Choose two courses"
             }
+        },
+        "electives": {
+            "program": [
+                "CIE 227", "CIE 452",
+                "NANENG 426", "NANENG 427", "NANENG 431", "NANENG 435",
+                "NANENG 436", "NANENG 437", "NANENG 438", "NANENG 439",
+                "NANENG 440", "NANENG 441", "NANENG 442", "NANENG 445",
+                "NANENG 446", "NANENG 447", "NANENG 448", "NANENG 449",
+                "NANENG 455", "NANENG 462", "NANENG 470", "NANENG 471",
+                "NANENG 497"
+            ],
+            "program_elective_credits_required": 6,
+            "focus_area_credits_required": 6,
+            "gen_ed_elective_credits_required": 6
+        }
     },
     
-  "Renewable Energy Engineering": {
+    "Renewable Energy Engineering": {
         "code": "REE",
-        "total_credits": 160,
-
+        "total_credits": 144,
+        # University Requirements (18 Cr): ENGL 152, ENGL 153, SCH 262, SCH 263 (compulsory 8 cr)
+        #   + REE 403 (2 cr compulsory GE) + 8 cr GE electives = 10 cr program-specific GE
+        # School Requirements (33 Cr): CHEM 103, MATH 101, MATH 102, MATH 201, MATH 202,
+        #   PHYS 115, PHYS 125, PHYS 116, PHYS 126, CSCI 101, ENGR 102, ENGR 121, ENGR 333,
+        #   REE 498, REE 499
+        # Program Requirements (93 Cr): 87 cr compulsory + 6 cr electives
         "year_1": {
-            "fall": ["CHEM 103","CSCI 101","ENGL 152","ENGR 102","ENGR 121","MATH 101","PHYS 115","PHYS 125"],
-            "spring": ["ENGL 153","ENGR 105","MATH 102","PHYS 116","PHYS 126","REE 101","REE 122","GEN_ED_ELECTIVE"]
-            },
-
+            "fall": [
+                "CHEM 103",   # 3 cr - School Req
+                "CSCI 101",   # 2 cr - School Req
+                "ENGL 152",   # 2 cr - Univ Req
+                "ENGR 102",   # 2 cr - School Req
+                "ENGR 121",   # 2 cr - School Req
+                "MATH 101",   # 3 cr - School Req
+                "PHYS 115",   # 1 cr - School Req (Lab)
+                "PHYS 125"    # 2 cr - School Req (Theory)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "ENGL 153",   # 2 cr - Univ Req
+                "ENGR 105",   # 3 cr - Program Req
+                "MATH 102",   # 3 cr - School Req
+                "PHYS 116",   # 1 cr - School Req (Lab)
+                "PHYS 126",   # 2 cr - School Req (Theory)
+                "REE 101",    # 3 cr - Program Req
+                "REE 122"     # 3 cr - Program Req
+            ],
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Semester total: 19 cr
+        },
         "year_2": {
-            "fall": ["ENGR 201","MATH 201","MATH 202","REE 202","REE 208","SCH 263","GEN_ED_ELECTIVE"],
-            "spring": ["MATH 302","REE 203","REE 218","REE 306","REE 310","GEN_ED_ELECTIVE"]
-            },
-
+            "fall": [
+                "ENGR 201",   # 3 cr - Program Req
+                "MATH 201",   # 3 cr - School Req
+                "MATH 202",   # 3 cr - School Req
+                "REE 202",    # 3 cr - Program Req
+                "REE 208",    # 3 cr - Program Req
+                "SCH 263"     # 2 cr - Univ Req
+            ],
+            "fall_gen_ed_electives": 2,   # 2 cr General Education electives
+            # Fall total: 19 cr
+            "spring": [
+                "MATH 302",   # 3 cr - Program Req
+                "REE 203",    # 3 cr - Program Req
+                "REE 218",    # 3 cr - Program Req
+                "REE 306",    # 3 cr - Program Req
+                "REE 310"     # 3 cr - Program Req
+            ],
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Semester total: 17 cr
+        },
         "year_3": {
-            "fall": ["ENGR 207","ENGR 346","MATH 301","REE 302","REE 311","REE 320"],
-            "spring": ["MATH 306","REE 315","REE 317","REE 319","REE 321","SCH 262"],
-            "summer": ["ENGR 333"]
-            },
-
+            "fall": [
+                "ENGR 207",   # 3 cr - Program Req
+                "ENGR 346",   # 3 cr - Program Req
+                "MATH 301",   # 3 cr - Program Req
+                "REE 302",    # 3 cr - Program Req
+                "REE 311",    # 3 cr - Program Req
+                "REE 320"     # 3 cr - Program Req
+            ],                # Semester total: 18 cr
+            "spring": [
+                "MATH 306",   # 3 cr - Program Req
+                "REE 315",    # 3 cr - Program Req
+                "REE 317",    # 3 cr - Program Req
+                "REE 319",    # 3 cr - Program Req
+                "REE 321",    # 3 cr - Program Req
+                "SCH 262"     # 2 cr - Univ Req
+            ],                # Semester total: 17 cr
+            "summer": [
+                "ENGR 333"    # 2 cr - School Req (Industrial Training; register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": ["REE 418","REE 425","REE 429","REE 432","REE 470","REE 498","REE_ELECTIVE"],
-            "spring": ["REE 403","REE 428","REE 434","REE 499","REE_ELECTIVE","GEN_ED_ELECTIVE"]
-            }
+            "fall": [
+                "REE 418",    # 3 cr - Program Req
+                "REE 425",    # 3 cr - Program Req
+                "REE 429",    # 3 cr - Program Req
+                "REE 432",    # 3 cr - Program Req
+                "REE 470",    # 3 cr - Program Req
+                "REE 498"     # 1 cr - School Req (Senior Design Project I; after 102 cr)
+            ],
+            "fall_ree_electives": 2,     # 2 cr REE program electives
+            # Fall total: 18 cr
+            "spring": [
+                "REE 403",    # 2 cr - Univ Req (compulsory GE for REE)
+                "REE 428",    # 3 cr - Program Req
+                "REE 434",    # 3 cr - Program Req
+                "REE 499"     # 3 cr - School Req (Senior Design Project II)
+            ],
+            "spring_ree_electives": 4,    # 4 cr REE program electives
+            "spring_gen_ed_electives": 2  # 2 cr General Education electives
+            # Spring total: 17 cr
+        },
+        "electives": {
+            "program": [
+                "REE 476", "REE 477", "REE 478", "REE 479", "REE 480",
+                "REE 483", "REE 484", "REE 485", "REE 486", "REE 487",
+                "REE 488", "REE 489", "REE 490", "REE 491", "REE 492",
+                "REE 493", "REE 494", "REE 495", "REE 496"
+            ],
+            "program_elective_credits_required": 6,
+            "gen_ed_elective_credits_required": 8
+        }
     },
     
     # "Energy and Bioprocess Engineering": {
@@ -800,403 +1218,1257 @@ STUDY_PLANS = {
     # SCHOOL OF SCIENCE STUDY PLANS
     # ============================================================
     
-  "Biomedical Sciences": {
+    # ============================================================
+    # BIOMEDICAL SCIENCES (BMS) - 130 CREDIT HOURS
+    # Source: SCI_Curricula_2023.pdf, Section 2
+    # University Req (16 Cr) | School Req (32 Cr) | Major Req (30 Cr) | Concentration (52 Cr)
+    # ============================================================
+    "Biomedical Sciences": {
         "code": "BMS",
         "total_credits": 130,
 
+        # FOUNDATION YEAR (Year 1) - identical for all SCI programs
         "year_1": {
-            "fall": ["BIOL 101","BIOL 111","CHEM 101","CHEM 111","ENGL 152","MATH 101","PHYS 101","PHYS 111"],
-            "spring": ["BIOL 102","BIOL 112","CHEM 102","CHEM 112","ENGL 153","MATH 102","PHYS 102","PHYS 112"]
-            },
+            "fall": [
+                "BIOL 101",   # 3 cr - Biology I (concurrent with BIOL 111)
+                "BIOL 111",   # 1 cr - Biology I Lab
+                "CHEM 101",   # 3 cr - Chemistry I (concurrent with CHEM 111)
+                "CHEM 111",   # 1 cr - Chemistry I Lab
+                "ENGL 152",   # 2 cr - Effective Speaking and Composition  [University Req]
+                "MATH 101",   # 3 cr - Calculus I
+                "PHYS 101",   # 3 cr - Introduction to Classical Mechanics
+                "PHYS 111"    # 1 cr - Classical Mechanics Lab (concurrent with PHYS 101)
+            ],                # Semester total: 17 cr
+            "spring": [
+                "BIOL 102",   # 3 cr - Biology II
+                "BIOL 112",   # 1 cr - Biology II Lab
+                "CHEM 102",   # 3 cr - Chemistry II
+                "CHEM 112",   # 1 cr - Chemistry II Lab
+                "ENGL 153",   # 2 cr - Scientific Writing  [University Req]
+                "MATH 102",   # 3 cr - Calculus II
+                "PHYS 102",   # 3 cr - Introduction to Electromagnetism
+                "PHYS 112"    # 1 cr - Electromagnetism Lab
+            ]                 # Semester total: 17 cr
+        },
 
+        # YEAR 2 (BMS Major core begins; concentration tracks split in Sem 2)
         "year_2": {
-            "fall": ["BMS 201","BMS 202","BMS 211","BMS 212","CHEM 201", "CHEM 211", "CSCI 101","GEN_ED_ELECTIVE"],
-            "spring": ["BMS 203","BMS 204","BMS 213","BMS 214","BMS_CONCENTRATION","GEN_ED_ELECTIVE"]
-            },
+            # Semester 1 - common to ALL concentrations
+            "fall": [
+                "BMS 201",    # 3 cr - General Microbiology  [Major Req]
+                "BMS 202",    # 3 cr - Cell Biology           [Major Req]
+                "BMS 211",    # 1 cr - General Microbiology Lab
+                "BMS 212",    # 1 cr - Cell Biology Lab
+                "CHEM 201",   # 3 cr - Organic Chemistry      [Major Req]
+                "CHEM 211",   # 1 cr - Organic Chemistry Lab  [Major Req]
+                "CSCI 101",   # 2 cr - Introduction to Computer Science [Major Req]
+                "GEN_ED_ELECTIVE"  # 3 cr - General Education Elective [Univ Req]
+            ],                # Semester total: 17 cr
 
+            # Semester 2 - common core + concentration-specific courses
+            "spring": {
+                # Core courses taken by ALL concentrations
+                "common": [
+                    "BMS 203",   # 3 cr - Principles of Genetics [Major Req]
+                    "BMS 204",   # 3 cr - Biochemistry            [Major Req]
+                    "BMS 213",   # 1 cr - Principles of Genetics Lab
+                    "BMS 214"    # 1 cr - Biochemistry Lab
+                ],
+                # Concentration-specific additions (7-8 cr)
+                "Computational Biology and Genomics": [
+                    "CHEM 202",  # 3 cr - Analytical and Physical Chemistry
+                    "CHEM 212",  # 1 cr - Analytical and Physical Chemistry Lab
+                    "MATH 201"   # 3 cr - Linear Algebra and Vector Geometry
+                ],               # Conc. total: 7 cr; Sem total: 15 cr
+                "Molecular Cell Biology": [
+                    "BMS 205",   # 3 cr - Human Physiology
+                    "BMS 215",   # 1 cr - Human Physiology Lab
+                    "CHEM 202",  # 3 cr - Analytical and Physical Chemistry
+                    "CHEM 212"   # 1 cr - Analytical and Physical Chemistry Lab
+                ],               # Conc. total: 8 cr; Sem total: 16 cr
+                "Medical Sciences": [
+                    "BMS 205",   # 3 cr - Human Physiology
+                    "BMS 215",   # 1 cr - Human Physiology Lab
+                    "CHEM 202",  # 3 cr - Analytical and Physical Chemistry
+                    "CHEM 212"   # 1 cr - Analytical and Physical Chemistry Lab
+                ],               # Conc. total: 8 cr; Sem total: 16 cr
+                "Drug Design and Development": [
+                    "BMS 205",   # 3 cr - Human Physiology
+                    "BMS 215",   # 1 cr - Human Physiology Lab
+                    "CHEM 203"   # 3 cr - Organic Chemistry II
+                ]                # Conc. total: 7 cr; Sem total: 15 cr
+            }
+        },
+
+        # YEAR 3 - Concentration courses + common major courses
         "year_3": {
-            "fall": ["BMS 304","BMS 404","BMS_ELECTIVE","GEN_ED_ELECTIVE","BMS_CONCENTRATION"],
-            "spring": ["BMS 303","BMS_CONCENTRATION","GEN_ED_ELECTIVE"],
-            "summer": ["BMS 399"]
+            # Semester 1 - common courses + concentration-specific
+            "fall": {
+                "common": [
+                    "BMS 304",   # 2 cr - Biomedical Scientific Ethics & Safety [Major Req]
+                    "BMS 404",   # 3 cr - Biostatistics [Major Req]
+                    "BMS_ELECTIVE",       # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE"     # 2 cr - General Education Elective
+                ],
+                "Computational Biology and Genomics": [
+                    "BMS 321"    # 3 cr - Programming for Computational Biology
+                ],
+                "Molecular Cell Biology": [
+                    "BMS 301",   # 3 cr - Molecular Biology
+                    "BMS 311",   # 1 cr - Molecular Biology Lab
+                    "GEN_ED_ELECTIVE"  # 3 cr additional
+                ],
+                "Medical Sciences": [
+                    "BMS 325",   # 3 cr - Clinical Sciences and Practicum
+                    "BMS 344"    # 3 cr - Human Embryology and Practicum
+                ],
+                "Drug Design and Development": [
+                    "BMS 332",   # 3 cr - Drug Discovery and Development
+                    "BMS 334"    # 3 cr - Pharmacokinetics & Pharmacodynamics
+                ]
             },
+            # Semester 2 - concentration-specific
+            "spring": {
+                "common": [
+                    "BMS 303",        # 3 cr - Experimental Design and Data Analysis [Major Req]
+                    "GEN_ED_ELECTIVE" # 2 cr - General Education Elective
+                ],
+                "Computational Biology and Genomics": [
+                    "BMS 320",   # 3 cr - Intro to Bioinformatics and Programming Language
+                    "BMS 331",   # 3 cr - Numerical Analysis and Matlab
+                    "BMS_CONC_ELECTIVE_2"  # 6 cr - Choose 2 from: BMS 322/323/328/364/MATH 308
+                ],
+                "Molecular Cell Biology": [
+                    "BMS 324",   # 3 cr - Molecular Genetics and Cell Regulation
+                    "BMS 340",   # 4 cr - Advanced Techniques in BMS
+                    "BMS_CONC_ELECTIVE_2"  # 6 cr - Choose 2 from: BMS 320/323/326/327/336/337
+                ],
+                "Medical Sciences": [
+                    "BMS 313",   # 1 cr - Human Anatomy Lab
+                    "BMS 330",   # 3 cr - Human Anatomy
+                    "BMS 336",   # 3 cr - Stem Cells and Regenerative Medicine Lecture+Practicum
+                    "BMS_CONC_ELECTIVE_1"  # 3 cr - Choose 1 from: BMS 323/327/337
+                ],
+                "Drug Design and Development": [
+                    "BMS 333",   # 3 cr - Drug Design and Computational Chemistry
+                    "BMS 339",   # 3 cr - Principles of Pharmacology and Toxicology
+                    "BMS 343",   # 1 cr - Drug Design and Computational Chemistry Lab
+                    "BMS 349",   # 1 cr - Principles of Pharmacology and Toxicology Lab
+                    "CHEM 202",  # 3 cr - Analytical and Physical Chemistry
+                    "CHEM 212"   # 1 cr - Analytical and Physical Chemistry Lab
+                ]
+            },
+            "summer": [
+                "BMS 399"    # 2 cr - Internship (Pass/Fail, after year 3)
+            ]
+        },
 
+        # YEAR 4 - Senior projects + remaining concentration courses
         "year_4": {
-            "fall": ["BMS 401","BMS_ELECTIVE","GEN_ED_ELECTIVE","BMS_CONCENTRATION"],
-            "spring": ["BMS 402","BMS_ELECTIVE","GEN_ED_ELECTIVE","BMS_CONCENTRATION"]
+            "fall": {
+                "Computational Biology and Genomics": [
+                    "BMS 401",       # 3 cr - Senior Project I
+                    "BMS 473",       # 3 cr - Foundations of Computational and Systems Biology
+                    "BMS 474",       # 3 cr - Genomics and Data Sciences
+                    "BMS_ELECTIVE",  # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE"# 3 cr - General Education Elective
+                ],                   # Total: 15 cr
+                "Molecular Cell Biology": [
+                    "BMS 401",       # 3 cr - Senior Project I
+                    "BMS_ELECTIVE",  # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE",# 2 cr - General Education Elective
+                    "BMS_CONC_ELECTIVE_2"  # 6 cr - Choose 2 from: BMS 364/434/475/477
+                ],                   # Total: 14 cr
+                "Medical Sciences": [
+                    "BMS 401",       # 3 cr - Senior Project I
+                    "BMS 438",       # 3 cr - Human Pathophysiology
+                    "BMS_ELECTIVE",  # 6 cr - BMS Electives (2 courses)
+                    "GEN_ED_ELECTIVE"# 3 cr - General Education Elective
+                ],                   # Total: 15 cr
+                "Drug Design and Development": [
+                    "BMS 401",       # 3 cr - Senior Project 1
+                    "BMS 405",       # 3 cr - Medicinal and Biological Chemistry
+                    "BMS 415",       # 1 cr - Medicinal and Biological Chemistry Lab
+                    "BMS 435",       # 1 cr - Legal aspects in drug design and development
+                    "BMS_ELECTIVE",  # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE"# 3 cr - General Education Elective
+                ]                    # Total: 14 cr
+            },
+            "spring": {
+                "Computational Biology and Genomics": [
+                    "BMS 402",       # 3 cr - Senior Project II
+                    "BMS 422",       # 3 cr - Algorithmic Foundations of Computational Biology
+                    "BMS 426",       # 3 cr - Developmental Biology and Genetics
+                    "BMS_ELECTIVE",  # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE"# 2 cr - General Education Elective
+                ],                   # Total: 14 cr
+                "Molecular Cell Biology": [
+                    "BMS 402",       # 3 cr - Senior Project II  (prereq: BMS 401)
+                    "BMS_ELECTIVE",  # 6 cr - BMS Electives
+                    "BMS_CONC_ELECTIVE_1"  # 3 cr - Choose 1 from: BMS 322/429
+                ],                   # Total: 12 cr
+                "Medical Sciences": [
+                    "BMS 402",       # 3 cr - Senior Project II
+                    "BMS 428",       # 3 cr - Pathology
+                    "BMS 429",       # 3 cr - Molecular Immunology and Practicum
+                    "BMS 448",       # 1 cr - Pathology Lab
+                    "BMS_ELECTIVE",  # 3 cr - BMS Elective
+                    "GEN_ED_ELECTIVE"# 2 cr - General Education Elective
+                ],                   # Total: 15 cr
+                "Drug Design and Development": [
+                    "BMS 402",       # 3 cr - Senior Project II
+                    "BMS 406",       # 3 cr - Molecular Modeling and Targeted Drug Design
+                    "BMS 416",       # 1 cr - Molecular Modeling and Targeted Drug Design Lab
+                    "BMS_ELECTIVE",  # 6 cr - BMS Electives (2 courses)
+                    "GEN_ED_ELECTIVE"# 2 cr - General Education Elective
+                ]                    # Total: 15 cr
             }
-    },    
+        },
 
-    "Nano Science": {
-
-        "code": "NANOSC",
-        "total_credits": 140,
-        
-        "year_1": {
-                "fall": ["BIOL 101", "BIOL 111", "CHEM 101", "CHEM 111", "ENGL 152", "MATH 101", "PHYS 101", "PHYS 111"],
-                "spring": ["BIOL 102", "BIOL 112", "CHEM 102", "CHEM 112", "ENGL 153", "MATH 102", "PHYS 102", "PHYS 112"]
-            },
-        "year_2": {
-                "fall": {
-                    "Nanophysics/Bio-Nanotechnology": ["CHEM 201", "CHEM 211", "CSCI 101", "MATH 201", "PHYS 201", "PHYS 211"],
-                    "Nanomedicine": ["CHEM 201", "CHEM 211", "CSCI 101", "MATH 201", "BMS 202", "BMS 212"]
-                },
-                "spring": {
-                    "Nanophysics/Bio-Nanotechnology": ["CHEM 202", "CHEM 212", "MATH 202", "MATSCI 201", "PHYS 202", "PHYS 212", "General Education Electives"],
-                    "Nanomedicine": ["CHEM 202", "CHEM 212", "CHEM 203", "MATSCI 201", "BMS 204", "BMS 214", "General Education Electives"],
-                    "Nanochemistry": ["CHEM 202", "CHEM 212", "CHEM 203", "MATSCI 201", "PHYS 202", "PHYS 212", "General Education Electives"]
-                }
-            },
-        "year_3": {
-                "fall": {
-                    "Nanomedicine": ["NANOSC 302", "NANOSC 305", "NANOSC 308", "NANOSC 312", "NANOSC 315", "General Education Electives", "NANOSC Electives"],
-                    "Nanophysics": ["NANOSC 302", "NANOSC 305", "NANOSC 306", "NANOSC 312", "NANOSC 315", "PHYS 323", "PHYS 316"],
-                    "Bio-Nanotechnology": ["NANOSC 302", "NANOSC 303", "NANOSC 305", "NANOSC 306", "NANOSC 312", "NANOSC 315", "NANOSC Electives"],
-                    "Nanochemistry": ["NANOSC 302", "NANOSC 303", "NANOSC 305", "NANOSC 306", "NANOSC 312", "NANOSC 315", "NANOSC Electives"]
-                },
-                "spring": {
-                    "Nanomedicine": ["BMS 205", "NANOSC 301", "NANOSC 307", "NANOSC 309", "NANOSC 310", "General Education Electives"],
-                    "Nanophysics": ["MATSCI 302", "NANOSC 301", "NANOSC 307", "PHYS 210", "PHYS 348", "General Education Electives"],
-                    "Bio-Nanotechnology": ["NANOSC 301", "NANOSC 307", "NANOSC 317", "NANOSC 328", "General Education Electives"],
-                    "Nanochemistry": ["NANOSC 301", "NANOSC 307", "NANOSC 322", "NANOSC 392", "General Education Electives"]
-                },
-                "summer": {
-                    "Nanomedicine": ["NANOSC 399"],
-                    "Nanophysics": ["NANOSC 399"],
-                    "Bio-Nanotechnology": ["NANOSC 399"],
-                    "Nanochemistry": ["NANOSC 399"]
-                }
-            },
-       "year_4": {
-                "fall": {
-                    "Nanomedicine": ["NANOSC 403", "NANOSC 405", "NANOSC 417", "NANOSC 458", "NANOSC Electives", "General Education Electives"],
-                    "Nanophysics": ["NANOSC 413", "NANOSC 415", "NANOSC Electives", "General Education Electives"],
-                    "Bio-Nanotechnology": ["MATH 306", "NANOSC 308", "NANOSC 411", "NANOSC 458", "NANOSC Electives", "General Education Electives"],
-                    "Nanochemistry": ["MATH 306", "NANOSC 308", "NANOSC 412", "NANOSC 458", "NANOSC Electives", "General Education Electives"]
-                    },
-                "spring": {
-                    "Nanomedicine": ["NANOSC 404", "NANOSC 406", "NANOSC 498", "NANOSC Electives"],
-                    "Nanophysics": ["NANOSC 416", "NANOSC 499", "NANOSC Electives"],
-                    "Bio-Nanotechnology": ["NANOSC 408", "NANOSC 409", "NANOSC 498", "NANOSC Electives"],
-                    "Nanochemistry": ["MATSCI 480", "NANOSC 409", "NANOSC 498", "NANOSC Electives"]
-                    }
-            }
-
-    },
-    
-   "Physics of Universe": {
-       "code": "PEU",
-       "total_credits": 140,
-        "year_1": {
-                "fall": ["BIOL 101", "BIOL 111", "CHEM 101", "CHEM 111", "ENGL 152", "MATH 101", "PHYS 101", "PHYS 111"],
-                "spring": ["BIOL 102", "BIOL 112", "CHEM 102", "CHEM 112", "ENGL 153", "MATH 102", "PHYS 102", "PHYS 112"]
-            },
-       "year_2": {
-                "fall": ["CSCI 101", "MATH 201", "PHYS 205", "PHYS 204", "PHYS 201", "PHYS 211", "General Education Electives"],
-                "spring": ["MATH 202", "PHYS 202", "PHYS 212", "PHYS 208", "PU Electives", "General Education Electives"]
-            },
-       "Year_3": {
-                "fall": ["PHYS 311", "PHYS 316", "PHYS 323", "PU Electives", "General Education Electives"],
-                "spring": {
-                    "Astrophysics": ["MATSCI 302", "PHYS 308", "PHYS 327", "PHYS 356", "General Education Electives", "PU Concentration Courses", "PHYS 331"],
-                    "High Energy Physics": ["MATSCI 302", "PHYS 308", "PHYS 327", "PHYS 356", "General Education Electives", "PU Concentration Courses", "PHYS 348"]
-                },
-                "summer": ["PHYS 399"]
-            },
-        "year_4": {
-                "fall": {
-                    "Astrophysics": ["PHYS 498", "PHYS 453", "PHYS 455", "PU Electives", "General Education Electives", "PU Concentration Courses", "ENGR 207"],
-                    "High Energy Physics": ["PHYS 498", "PHYS 453", "PHYS 455", "PU Electives", "General Education Electives", "PU Concentration Courses", "PHYS 430"]
-                },
-                "spring": {
-                    "Astrophysics": ["PHYS 405", "PHYS 499", "PU Electives", "PHYS Concentration Courses", "PHYS 416", "PHYS 438"],
-                    "High Energy Physics": ["PHYS 405", "PHYS 499", "PU Electives", "PHYS Concentration Courses", "PHYS 431"]
-                }
-            },
-        "electives": ["CIE 202", "CIE 205", "MATH 301", "MATH 302", "MATH 310", "MATH 306", "MATH 308", "MATH 403","PHYS 218", "NANOSC 413", "NANOSC 415", "PHYS 364", "PHYS 420", "PHYS 422", "PHYS 432", "PHYS 450", "CIE 470","PHYS 348", "PHYS 430", "ENGR 207", "PHYS 331"]
-    },
-    
-    "Materials Science": {
-        "code": "MATSCI",
-        "total_credits": 140,
-        "foundation_year": {
-            "fall": ["BIOL 101", "BIOL 111", "CHEM 101", "CHEM 111", "ENGL 152", "MATH 101", "PHYS 101", "PHYS 111"],
-            "spring": ["BIOL 102", "BIOL 112", "CHEM 102", "CHEM 112", "ENGL 153", "MATH 102", "PHYS 102", "PHYS 112"]
-        },
-        "year_2": {
-            "fall": ["CHEM 201", "CHEM 211", "MATH 201", "MATSCI 204", "MATSCI 214", "PHYS 201", "PHYS 211"],
-            "spring": ["CHEM 202", "CHEM 212", "MATH 202", "MATH 301", "PHYS 202", "PHYS 212", "SCH XXX"]
-        },
-        "year_3": {
-            "Advanced Materials": {
-                "fall": ["MATSCI 301", "MATSCI 305", "MATSCI 307", "MATSCI 317", "NANOSC 302", "SCH XXX"],
-                "spring": ["MATSCI 302", "MATSCI 303", "MATSCI 304", "MATSCI 308", "MATSCI 318", "MATSCI 403"],
-                "summer": ["MATSCI 399"]
-            },
-            "Materials Modeling": {
-                "fall": ["MATSCI 301", "MATSCI 305", "MATSCI 307", "MATSCI 317", "MATH 302", "NANOSC 302"],
-                "spring": ["MATH 306", "MATSCI 302", "MATSCI 303", "MATSCI 308", "MATSCI 318", "SCH XXX"],
-                "summer": ["MATSCI 399"]
-            }
-        },
-        "year_4": {
-            "Advanced Materials": {
-                "fall": ["MATSCI 407", "MATSCI 416", "MATSCI 417", "SCH XXX", "MATSCI XXX"],
-                "spring": ["MATSCI 405", "MATSCI 418", "MATSCI 480", "MATSCI XXX", "SCH XXX"]
-            },
-            "Materials Modeling": {
-                "fall": ["MATSCI 402", "MATSCI 412", "MATSCI 416", "SCH XXX", "MATSCI XXX"],
-                "spring": ["MATSCI 406", "MATSCI 418", "MATSCI 480", "MATSCI XXX", "SCH XXX"]
-            }
-        },
+        # ELECTIVES - from official BMS Electives List (Section 2.7)
         "electives": {
-            "program": ["MATSCI 402", "MATSCI 405", "MATSCI 406", "MATSCI 407", "MATSCI 412", "MATSCI 417", "MATSCI 418", "MATSCI 480"],
-            "sch": ["SCH XXX"],
-            "elective_credits_required": 6
+            "bms_program_electives": [
+                "BMS 335", "BMS 409", "BMS 425", "BMS 430", "BMS 432",
+                "BMS 444", "BMS 451", "BMS 452", "BMS 455", "BMS 456",
+                "BMS 457", "BMS 458", "BMS 459", "BMS 460", "BMS 462",
+                "BMS 463", "BMS 465", "BMS 467", "BMS 471", "BMS 499"
+            ],
+            "concentration_electives": {
+                "Computational Biology and Genomics": [
+                    "BMS 205", "BMS 215", "BMS 301", "BMS 311", "BMS 313",
+                    "BMS 324", "BMS 325", "BMS 326", "BMS 327", "BMS 330",
+                    "BMS 332", "BMS 333", "BMS 334", "BMS 336", "BMS 337",
+                    "BMS 339", "BMS 340", "BMS 343", "BMS 344", "BMS 349",
+                    "BMS 405", "BMS 406", "BMS 415", "BMS 416", "BMS 428",
+                    "BMS 429", "BMS 434", "BMS 435", "BMS 438", "BMS 448",
+                    "BMS 475", "BMS 477", "CHEM 203"
+                ],
+                "Molecular Cell Biology": [
+                    "BMS 313", "BMS 321", "BMS 325", "BMS 328", "BMS 330",
+                    "BMS 331", "BMS 332", "BMS 333", "BMS 334", "BMS 339",
+                    "BMS 343", "BMS 344", "BMS 349", "BMS 405", "BMS 406",
+                    "BMS 415", "BMS 416", "BMS 422", "BMS 426", "BMS 428",
+                    "BMS 435", "BMS 438", "BMS 448", "BMS 473", "BMS 474",
+                    "CHEM 203", "MATH 201", "MATH 308"
+                ],
+                "Medical Sciences": [
+                    "BMS 301", "BMS 311", "BMS 320", "BMS 321", "BMS 322",
+                    "BMS 324", "BMS 326", "BMS 328", "BMS 331", "BMS 332",
+                    "BMS 333", "BMS 334", "BMS 339", "BMS 340", "BMS 343",
+                    "BMS 349", "BMS 364", "BMS 405", "BMS 406", "BMS 415",
+                    "BMS 416", "BMS 422", "BMS 426", "BMS 434", "BMS 435",
+                    "BMS 473", "BMS 474", "BMS 475", "BMS 477", "CHEM 203",
+                    "MATH 201", "MATH 308"
+                ],
+                "Drug Design and Development": [
+                    "BMS 301", "BMS 311", "BMS 313", "BMS 320", "BMS 321",
+                    "BMS 322", "BMS 323", "BMS 324", "BMS 325", "BMS 326",
+                    "BMS 327", "BMS 328", "BMS 330", "BMS 331", "BMS 336",
+                    "BMS 337", "BMS 340", "BMS 344", "BMS 364", "BMS 422",
+                    "BMS 426", "BMS 428", "BMS 429", "BMS 434", "BMS 438",
+                    "BMS 448", "BMS 473", "BMS 474", "BMS 475", "BMS 477",
+                    "MATH 201", "MATH 308"
+                ]
+            },
+            "outside_major_max": 1,
+            "outside_major_options": [
+                "CIE 302", "CIE 318", "CIE 320", "CIE 337", "CIE 338",
+                "ENV 203", "ENV 220", "ENV 303", "MATH 301", "MATH 302",
+                "MATSCI 302", "MATSCI 303", "NANENG 301", "NANENG 305",
+                "NANOSC 301", "NANOSC 302", "NANOSC 303", "PEU 304",
+                "REE 302", "REE 307"
+            ]
+        }
+    },
+
+    # ============================================================
+    # NANO SCIENCE (NANOSC) - 130 CREDIT HOURS
+    # Source: SCI_Curricula_2023.pdf, Section 3
+    # University Req (16 Cr) | School Req (32 Cr) | Major Req (28 Cr) | Concentration (54 Cr)
+    # ============================================================
+    "Nano Science": {
+        "code": "NANOSC",
+        "total_credits": 130,
+
+        # FOUNDATION YEAR (Year 1) - identical for all SCI programs
+        "year_1": {
+            "fall": [
+                "BIOL 101", "BIOL 111",
+                "CHEM 101", "CHEM 111",
+                "ENGL 152", "MATH 101",
+                "PHYS 101", "PHYS 111"
+            ],   # 17 cr
+            "spring": [
+                "BIOL 102", "BIOL 112",
+                "CHEM 102", "CHEM 112",
+                "ENGL 153", "MATH 102",
+                "PHYS 102", "PHYS 112"
+            ]    # 17 cr
+        },
+
+        # YEAR 2 - tracks split immediately by concentration
+        "year_2": {
+            "fall": {
+                # Nanophysics, Bio-Nanotechnology, Nanochemistry share same Sem 1
+                "Nanophysics": [
+                    "CHEM 201",   # 3 cr - Organic Chemistry       [Major Req]
+                    "CHEM 211",   # 1 cr - Organic Chemistry Lab   [Major Req]
+                    "CSCI 101",   # 2 cr - Intro to Computer Science [Major Req]
+                    "MATH 201",   # 3 cr - Linear Algebra and Vector Geometry [Major Req]
+                    "PHYS 201",   # 3 cr - Thermodynamics, Wave Motion and Optics
+                    "PHYS 211"    # 1 cr - Thermodynamics Lab
+                ],   # 13 cr
+                "Bio-Nanotechnology": [
+                    "CHEM 201", "CHEM 211", "CSCI 101", "MATH 201",
+                    "PHYS 201", "PHYS 211"
+                ],   # 13 cr
+                "Nanochemistry": [
+                    "CHEM 201", "CHEM 211", "CSCI 101", "MATH 201",
+                    "PHYS 201", "PHYS 211"
+                ],   # 13 cr
+                "Nanomedicine": [
+                    "CHEM 201",   # 3 cr - Organic Chemistry       [Major Req]
+                    "CHEM 211",   # 1 cr - Organic Chemistry Lab
+                    "CSCI 101",   # 2 cr - Intro to Computer Science
+                    "MATH 201",   # 3 cr - Linear Algebra and Vector Geometry
+                    "BMS 202",    # 3 cr - Cell Biology             [Concentration Req]
+                    "BMS 212"     # 1 cr - Cell Biology Lab
+                ]    # 13 cr
+            },
+            "spring": {
+                "Nanophysics": [
+                    "CHEM 202",    # 3 cr - Analytical and Physical Chemistry [Major Req]
+                    "CHEM 212",    # 1 cr - Analytical and Physical Chemistry Lab
+                    "MATH 202",    # 3 cr - Ordinary Differential Equations
+                    "MATSCI 201",  # 3 cr - Fundamentals of Materials Science [Major Req]
+                    "PHYS 202",    # 3 cr - Modern Physics
+                    "PHYS 212",    # 1 cr - Modern Physics Lab
+                    "GEN_ED_ELECTIVE"  # 2 cr
+                ],   # 16 cr
+                "Bio-Nanotechnology": [
+                    "CHEM 202", "CHEM 212", "MATH 202", "MATSCI 201",
+                    "PHYS 202", "PHYS 212", "GEN_ED_ELECTIVE"
+                ],   # 16 cr
+                "Nanochemistry": [
+                    "CHEM 202",    # 3 cr
+                    "CHEM 212",    # 1 cr
+                    "CHEM 203",    # 3 cr - Organic Chemistry II    [Concentration Req]
+                    "MATSCI 201",  # 3 cr
+                    "PHYS 202",    # 3 cr
+                    "PHYS 212",    # 1 cr
+                    "GEN_ED_ELECTIVE"  # 2 cr
+                ],   # 16 cr
+                "Nanomedicine": [
+                    "CHEM 202",    # 3 cr - Analytical and Physical Chemistry [Major Req]
+                    "CHEM 212",    # 1 cr
+                    "CHEM 203",    # 3 cr - Organic Chemistry II    [Concentration Req]
+                    "MATSCI 201",  # 3 cr - Fundamentals of Materials Science
+                    "BMS 204",     # 3 cr - Biochemistry             [Concentration Req]
+                    "BMS 214",     # 1 cr - Biochemistry Lab
+                    "GEN_ED_ELECTIVE"  # 2 cr
+                ]    # 16 cr
+            }
+        },
+
+        # YEAR 3 - Major courses (all concentrations share NANOSC core) + concentration specifics
+        "year_3": {
+            "fall": {
+                # All concentrations take these NANOSC major core courses in Year 3 Sem 1:
+                # NANOSC 302 (3), NANOSC 305 (3), NANOSC 312 (1), NANOSC 315 (1) = 8 cr common
+                "Nanomedicine": [
+                    "NANOSC 302",  # 3 cr - Modern Characterization Techniques I [Major Req]
+                    "NANOSC 305",  # 3 cr - Synthesis/Fabrication of Nanomaterials [Major Req]
+                    "NANOSC 308",  # 3 cr - Introduction to Polymer Science  [Conc Req]
+                    "NANOSC 312",  # 1 cr - Modern Characterization Techniques I Lab
+                    "NANOSC 315",  # 1 cr - Synthesis/Fabrication Lab
+                    "GEN_ED_ELECTIVE",  # 2 cr
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ],   # 16 cr
+                "Nanophysics": [
+                    "NANOSC 302",  # 3 cr
+                    "NANOSC 305",  # 3 cr
+                    "NANOSC 306",  # 3 cr - Statistical Mechanics I  [Conc Req]
+                    "NANOSC 312",  # 1 cr
+                    "NANOSC 315",  # 1 cr
+                    "PHYS 323",    # 3 cr - Quantum Mechanics I       [Conc Req]
+                    "PHYS 316"     # 3 cr - Mathematical Physics I    [Conc Req]
+                ],   # 17 cr
+                "Bio-Nanotechnology": [
+                    "NANOSC 302",  # 3 cr
+                    "NANOSC 303",  # 3 cr - Quantum Mechanics         [Conc Req]
+                    "NANOSC 305",  # 3 cr
+                    "NANOSC 306",  # 3 cr - Statistical Mechanics I   [Conc Req]
+                    "NANOSC 312",  # 1 cr
+                    "NANOSC 315",  # 1 cr
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ],   # 17 cr
+                "Nanochemistry": [
+                    "NANOSC 302",  # 3 cr
+                    "NANOSC 303",  # 3 cr - Quantum Mechanics         [Conc Req]
+                    "NANOSC 305",  # 3 cr
+                    "NANOSC 306",  # 3 cr - Statistical Mechanics I   [Conc Req]
+                    "NANOSC 312",  # 1 cr
+                    "NANOSC 315",  # 1 cr
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ]    # 17 cr
+            },
+            "spring": {
+                "Nanomedicine": [
+                    "BMS 205",     # 3 cr - Human Physiology           [Conc Req]
+                    "NANOSC 301",  # 3 cr - Spectroscopy of Nanomaterials [Major Req]
+                    "NANOSC 307",  # 1 cr - Nano Sciences Research Lab Rotations [Major Req]
+                    "NANOSC 309",  # 3 cr - Principles of Pharmacokinetics [Conc Req]
+                    "NANOSC 310",  # 3 cr - Computer Aided Drug Design  [Conc Req]
+                    "GEN_ED_ELECTIVE"   # 4 cr
+                ],   # 17 cr
+                "Nanophysics": [
+                    "MATSCI 302",  # 3 cr - Solid State Physics         [Conc Req]
+                    "NANOSC 301",  # 3 cr - Spectroscopy of Nanomaterials
+                    "NANOSC 307",  # 1 cr - Lab Rotations
+                    "PHYS 210",    # 3 cr - Advanced Electromagnetism   [Conc Req]
+                    "PHYS 348",    # 3 cr - Quantum Mechanics II        [Conc Req]
+                    "GEN_ED_ELECTIVE"   # 6 cr
+                ],   # 19 cr
+                "Bio-Nanotechnology": [
+                    "NANOSC 301",  # 3 cr - Spectroscopy of Nanomaterials
+                    "NANOSC 307",  # 1 cr - Lab Rotations
+                    "NANOSC 317",  # 3 cr - Special Topics in Bio-Nanotechnology [Conc Req]
+                    "NANOSC 328",  # 3 cr - Biological Nanomaterials   [Conc Req]
+                    "GEN_ED_ELECTIVE"   # 6 cr
+                ],   # 16 cr
+                "Nanochemistry": [
+                    "NANOSC 301",  # 3 cr - Spectroscopy of Nanomaterials
+                    "NANOSC 307",  # 1 cr - Lab Rotations
+                    "NANOSC 322",  # 3 cr - Chemistry & Physics of Nanomaterials [Conc Req]
+                    "NANOSC 392",  # 3 cr - Introduction to Nanochemistry [Conc Req]
+                    "GEN_ED_ELECTIVE"   # 6 cr
+                ]    # 16 cr
+            },
+            "summer": [
+                "NANOSC 399"  # 2 cr - Internship (Pass/Fail)
+            ]
+        },
+
+        # YEAR 4 - Capstone research projects + remaining concentration courses
+        "year_4": {
+            "fall": {
+                "Nanomedicine": [
+                    "NANOSC 403",  # 3 cr - Special Topics in Nanomedicine [Conc Req]
+                    "NANOSC 405",  # 3 cr - Nanopharmaceutics             [Conc Req]
+                    "NANOSC 417",  # 1 cr - Nanomedicine Lab               [Conc Req]
+                    "NANOSC 458",  # 3 cr - Nanoscience Capstone Research Project I
+                    "NANOSC_ELECTIVE",  # 6 cr
+                    "GEN_ED_ELECTIVE"   # 4 cr
+                ],   # 20 cr (with gen ed) -> see note: Year 4 total 29-32 cr
+                "Nanophysics": [
+                    "NANOSC 413",  # 3 cr - Photonics & Laser Physics     [Conc Req]
+                    "NANOSC 415",  # 3 cr - Electronic & Magnetic Properties [Conc Req]
+                    "NANOSC_ELECTIVE",  # 6 cr
+                    "GEN_ED_ELECTIVE"   # 4 cr
+                ],   # 16 cr
+                "Bio-Nanotechnology": [
+                    "MATH 306",    # 3 cr - Numerical Analysis            [Conc Req]
+                    "NANOSC 308",  # 3 cr - Introduction to Polymer Science [Conc Req]
+                    "NANOSC 411",  # 1 cr - Bio-Nanotechnology Lab        [Conc Req]
+                    "NANOSC 458",  # 3 cr - Capstone Research Project I
+                    "NANOSC_ELECTIVE",  # 6 cr
+                    "GEN_ED_ELECTIVE"   # 4 cr
+                ],   # 20 cr
+                "Nanochemistry": [
+                    "NANOSC 308",  # 3 cr - Introduction to Polymer Science [Conc Req]
+                    "NANOSC 412",  # 1 cr - Nanochemistry Lab             [Conc Req]
+                    "NANOSC 458",  # 3 cr - Capstone Research Project I
+                    "MATSCI 480",  # 3 cr - Self-assembled Systems        [Conc Req]
+                    "NANOSC_ELECTIVE",  # 6 cr
+                    "GEN_ED_ELECTIVE"   # 4 cr
+                ]    # 20 cr
+            },
+            "spring": {
+                "Nanomedicine": [
+                    "NANOSC 404",  # 3 cr - Principles of Pharmacology    [Conc Req]
+                    "NANOSC 406",  # 3 cr - Nanomaterials for Regenerative Medicine [Conc Req]
+                    "NANOSC 498",  # 3 cr - Capstone Research Project II
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ],   # 12 cr
+                "Nanophysics": [
+                    "NANOSC 416",  # 3 cr - Modeling of Nanomaterials     [Conc Req]
+                    "NANOSC 499",  # 4 cr - Capstone Research Project (Nanophysics)
+                    "NANOSC_ELECTIVE"   # 6 cr
+                ],   # 13 cr
+                "Bio-Nanotechnology": [
+                    "NANOSC 408",  # 3 cr - Synthetic Biology             [Conc Req]
+                    "NANOSC 409",  # 3 cr - Surfaces and Colloidal Science [Conc Req]
+                    "NANOSC 498",  # 3 cr - Capstone Research Project II
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ],   # 12 cr
+                "Nanochemistry": [
+                    "BMS 331",     # 3 cr - Numerical Analysis and MatLab [Conc Req]
+                    "NANOSC 409",  # 3 cr - Surfaces and Colloidal Science [Conc Req]
+                    "NANOSC 498",  # 3 cr - Capstone Research Project II
+                    "NANOSC_ELECTIVE"   # 3 cr
+                ]    # 12 cr
+            }
+        },
+
+        # MAJOR REQUIREMENTS COURSES (28 Cr) - taken across years 2-3
+        "major_requirements": [
+            "CHEM 201", "CHEM 202", "CHEM 211", "CHEM 212",
+            "CSCI 101", "MATH 201", "MATSCI 201",
+            "NANOSC 301", "NANOSC 302", "NANOSC 305",
+            "NANOSC 307", "NANOSC 312", "NANOSC 315"
+        ],
+
+        # ELECTIVES - from official NANOSC Electives list (Section 3.7)
+        "electives": {
+            "nanosc_electives": [
+                "BMS 201", "BMS 202", "BMS 204", "BMS 205", "BMS 301",
+                "BMS 320", "BMS 322", "BMS 324", "BMS 327", "BMS 330",
+                "BMS 336", "BMS 337", "BMS 344", "BMS 364", "BMS 404",
+                "BMS 428", "BMS 429", "BMS 430", "BMS 438", "BMS 456",
+                "BMS 459", "BMS 465", "CHEM 203",
+                "MATSCI 302", "MATSCI 303", "MATSCI 308", "MATSCI 407",
+                "MATSCI 421", "MATSCI 480",
+                "NANENG 301", "NANOSC 308", "NANOSC 313",
+                "NANOSC 401", "NANOSC 402", "NANOSC 408",
+                "NANOSC 413", "NANOSC 415", "NANOSC 416",
+                "NANOSC 420", "NANOSC 421", "NANOSC 424", "NANOSC 425",
+                "NANOSC 426", "NANOSC 427", "NANOSC 431", "NANOSC 433",
+                "PHYS 326", "PHYS 430", "PHYS 450", "PHYS 455",
+                "BMS 332", "NANOSC 310", "MATSCI 425"
+            ],
+            "nanosc_elective_credits_required": 12
         }
     },
     # ============================================================
-    # SCHOOL OF CSAI STUDY PLANS
-    # Based on Official ZC Handbook (September 2022)
-    # 132 Credit Hours: 16 Univ Req + 53 School Req + 63 Program Req
-    # Includes: General Education Electives (6 Cr) + Program Electives (varies)
+    # PHYSICS OF UNIVERSE (PU) - 130 CREDIT HOURS
+    # Source: SCI_Curricula_2023.pdf, Section 4
+    # University Req (16 Cr) | School Req (32 Cr) | Major Req (70 Cr) | Concentration (12 Cr)
+    # Concentrations: Astrophysics | High Energy Physics
     # ============================================================
+    "Physics of Universe": {
+        "code": "PHYS",
+        "total_credits": 130,
+
+        # FOUNDATION YEAR (Year 1)
+        "year_1": {
+            "fall": [
+                "BIOL 101", "BIOL 111",
+                "CHEM 101", "CHEM 111",
+                "ENGL 152", "MATH 101",
+                "PHYS 101", "PHYS 111"
+            ],   # 17 cr
+            "spring": [
+                "BIOL 102", "BIOL 112",
+                "CHEM 102", "CHEM 112",
+                "ENGL 153", "MATH 102",
+                "PHYS 102", "PHYS 112"
+            ]    # 17 cr
+        },
+
+        # YEAR 2 (33 Cr total) - common to both concentrations
+        "year_2": {
+            "fall": [
+                "CSCI 101",   # 2 cr - Introduction to Computer Science [Major Req]
+                "MATH 201",   # 3 cr - Linear Algebra and Vector Geometry [Major Req]
+                "PHYS 205",   # 3 cr - Introduction to Modern Astrophysics [Major Req]
+                "PHYS 204",   # 3 cr - Analytical Mechanics               [Major Req]
+                "PHYS 201",   # 3 cr - Thermodynamics, Wave Motion and Optics [Major Req]
+                "PHYS 211",   # 1 cr - Thermodynamics, Wave Motion and Optics Lab
+                "GEN_ED_ELECTIVE"  # 3 cr - General Education Elective
+            ],   # 18 cr
+            "spring": [
+                "MATH 202",   # 3 cr - Ordinary Differential Equations [Major Req]
+                "PHYS 202",   # 3 cr - Modern Physics                  [Major Req]
+                "PHYS 212",   # 1 cr - Modern Physics Lab
+                "PHYS 208",   # 3 cr - Electrodynamics I               [Major Req]
+                "PU_ELECTIVE",     # 3 cr - PU Elective
+                "GEN_ED_ELECTIVE"  # 2 cr - General Education Elective
+            ]    # 15 cr
+        },
+
+        # YEAR 3 (34 Cr total) - concentration split in Semester 2
+        "year_3": {
+            "fall": [
+                "PHYS 311",   # 3 cr - Thermal and Statistical Physics  [Major Req]
+                "PHYS 316",   # 3 cr - Mathematical Physics I           [Major Req]
+                "PHYS 323",   # 3 cr - Quantum Mechanics I              [Major Req]
+                "PU_ELECTIVE",     # 3 cr - PU Elective
+                "GEN_ED_ELECTIVE"  # 2 cr - General Education Elective
+            ],   # 14 cr
+            "spring": {
+                "common": [
+                    "MATSCI 302", # 3 cr - Solid State Physics          [Major Req]
+                    "PHYS 308",   # 3 cr - Electrodynamics II           [Major Req]
+                    "PHYS 327",   # 2 cr - Observational Astrophysics Lab [Major Req]
+                    "PHYS 356",   # 4 cr - Mathematical Physics II      [Major Req]
+                    "GEN_ED_ELECTIVE"  # 3 cr - General Education Elective
+                ],
+                # Concentration-specific course (3 cr each)
+                "Astrophysics": [
+                    "PHYS 331"    # 3 cr - Stellar Structure and Evolution [Conc Req]
+                ],
+                "High Energy Physics": [
+                    "PHYS 348"    # 3 cr - Quantum Mechanics II          [Conc Req]
+                ]
+            },   # 18 cr
+            "summer": [
+                "PHYS 399"    # 2 cr - Internship (Pass/Fail)
+            ]
+        },
+
+        # YEAR 4 (29 Cr total) - concentration courses + senior projects
+        "year_4": {
+            "fall": {
+                "common": [
+                    "PHYS 498",   # 1 cr - Senior Project I  [Major Req]
+                    "PHYS 453",   # 3 cr - Gravity & General Relativity [Major Req]
+                    "PHYS 455",   # 3 cr - Mathematical Physics III    [Major Req]
+                    "PU_ELECTIVE",     # 3 cr - PU Elective
+                    "GEN_ED_ELECTIVE"  # 2 cr - General Education Elective
+                ],
+                "Astrophysics": [
+                    "ENGR 207"    # 3 cr - Fluid Mechanics              [Conc Req]
+                ],
+                "High Energy Physics": [
+                    "PHYS 430"    # 3 cr - Quantum Mechanics III        [Conc Req]
+                ]
+            },   # 15 cr
+            "spring": {
+                "common": [
+                    "PHYS 405",   # 3 cr - Cosmology                   [Major Req]
+                    "PHYS 499",   # 2 cr - Senior Project II           [Major Req]
+                    "PU_ELECTIVE"      # 3 cr - PU Elective
+                ],
+                "Astrophysics": [
+                    "PHYS 416",   # 3 cr - Galactic & Extragalactic Astrophysics [Conc Req]
+                    "PHYS 438"    # 3 cr - Compact Objects & High Energy Astrophysics [Conc Req]
+                ],               # Conc total: 6 cr
+                "High Energy Physics": [
+                    "PHYS 431"    # 6 cr - Quantum Field Theory and Particle Physics [Conc Req]
+                ]                # Conc total: 6 cr
+            }    # 14 cr
+        },
+
+        # PU MAJOR REQUIREMENTS (70 Cr) - summary
+        "major_requirements": [
+            "CSCI 101", "MATH 201", "MATH 202",
+            "PHYS 201", "PHYS 202", "PHYS 204", "PHYS 205", "PHYS 208",
+            "PHYS 211", "PHYS 212",
+            "MATSCI 302",
+            "PHYS 308", "PHYS 311", "PHYS 316", "PHYS 323",
+            "PHYS 327", "PHYS 356",
+            "PHYS 405", "PHYS 453", "PHYS 455",
+            "PHYS 498", "PHYS 499",
+            "PU_ELECTIVES_12_CR"  # 12 cr PU electives
+        ],
+
+        # PU CONCENTRATION REQUIREMENTS (12 Cr)
+        "concentrations": {
+            "Astrophysics": {
+                "courses": ["PHYS 331", "PHYS 416", "ENGR 207", "PHYS 438"],
+                "credits": 12
+            },
+            "High Energy Physics": {
+                "courses": ["PHYS 348", "PHYS 430", "PHYS 431"],
+                "credits": 12
+            }
+        },
+
+        # PU ELECTIVE COURSES (Section 4.7)
+        "electives": {
+            "program_electives": [
+                "CIE 202", "CIE 205",
+                "MATH 301", "MATH 302", "MATH 306", "MATH 308", "MATH 310", "MATH 403",
+                "PHYS 218",
+                "NANOSC 413", "NANOSC 415",
+                "PHYS 364", "PHYS 420", "PHYS 422", "PHYS 432", "PHYS 450",
+                "CIE 470"
+            ],
+            "astrophysics_additional_electives": ["PHYS 348", "PHYS 430"],
+            "high_energy_additional_electives": ["ENGR 207", "PHYS 331"],
+            "pu_elective_credits_required": 12
+        }
+    },
     
+    # ============================================================
+    # SCHOOL OF CSAI STUDY PLANS
+    # Based on Official ZC Handbook (September 2022) - CSAI_Curricula_2022.pdf
+    # 132 Credit Hours: 16 Univ Req + 53 School Req + Program Req (varies)
+    # University Req (16 Cr): 10 Cr compulsory + 6 Cr GE electives
+    # School Req (53 Cr): Math (12 Cr) + Fundamental Computing (33 Cr) + Internship & Senior Project (8 Cr)
+    # ============================================================
+
     "Data Science and Artificial Intelligence": {
         "code": "DSAI",
         "total_credits": 132,
+        # 16 Univ Req + 53 School Req + 63 Major Req = 132 Cr
         "year_1": {
-                "fall": ["CSAI 100", "CSAI 101", "CSAI 102", "CSAI 252", "ENGL 156", "MATH 103", "SCH 163"],
-                "spring": ["CSAI 151", "DSAI 103", "DSAI 104", "ENGL 157", "MATH 104", "General Education Electives"]
-                },
+            "fall": [
+                "CSAI 100",   # 1 cr - Introduction to Computational Sciences and AI
+                "CSAI 101",   # 2 cr - Fundamentals of Programming and Computer Science
+                "CSAI 102",   # 3 cr - Digital Logic and Computer Architecture
+                "CSAI 252",   # 3 cr - Introduction to Computer Networks
+                "ENGL 156",   # 2 cr - Technical English 1
+                "MATH 103",   # 3 cr - Calculus for Computational Sciences
+                "SCH 163"     # 2 cr - Sustainability, Social and Ethical Issues in Computing
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 151",   # 3 cr - Object-Oriented Programming
+                "DSAI 103",   # 3 cr - Data Acquisition in Data Science (ETL)
+                "DSAI 104",   # 2 cr - Knowledge Representation and Reasoning
+                "ENGL 157",   # 2 cr - Technical English 2
+                "MATH 104",   # 3 cr - Linear Algebra
+                "GE_ELECTIVE" # 2 cr - General Education Elective
+            ]               # Semester total: 15 cr
+        },
         "year_2": {
-                "fall": ["CSAI 201", "CSAI 202", "CSAI 205", "DSAI 203", "MATH 105", "SCH 261"],
-                "spring": ["CSAI 251", "CSAI 253", "DSAI 201", "DSAI 202", "MATH 205", "SCH 264"]
-                },
+            "fall": [
+                "CSAI 201",   # 3 cr - Data Structures
+                "CSAI 202",   # 3 cr - Introduction to Database Systems
+                "CSAI 205",   # 3 cr - Fundamentals of Circuits and Electronics
+                "DSAI 203",   # 3 cr - Data Integration and Visualization
+                "MATH 105",   # 3 cr - Probability and Statistics
+                "SCH 261"     # 2 cr - Engineering Project Management
+            ],              # Semester total: 17 cr
+            "spring": [
+                "CSAI 251",   # 3 cr - Algorithm Design and Analysis
+                "CSAI 253",   # 3 cr - Machine Learning
+                "DSAI 201",   # 3 cr - Data Mining and Information Retrieval
+                "DSAI 202",   # 2 cr - Data Governance
+                "MATH 205",   # 3 cr - Discrete Mathematics for Computational Sciences
+                "SCH 264"     # 2 cr - Introduction to Entrepreneurship and Small Business Management
+            ]               # Semester total: 16 cr
+        },
         "year_3": {
-            "fall": ["CSAI 203", "CSAI 301", "DSAI 307", "DSAI 308", "MATH 303", "General Education Electives"],
-            "fall_sch_electives": 2,
-            "spring": ["CSAI 351", "DSAI 305", "DSAI 325", "DSAI 352", "DSAI 353","General Education Electives"],
-            "spring_sch_electives": 1,
-            "summer": ["CSAI 399"]
-            },
+            "fall": [
+                "CSAI 203",   # 3 cr - Introduction to Software Engineering
+                "CSAI 301",   # 3 cr - Artificial Intelligence
+                "DSAI 307",   # 2 cr - Statistical Inference
+                "DSAI 308",   # 3 cr - Deep Learning
+                "MATH 303",   # 3 cr - Linear and Non-linear Programming for Computational Sciences
+                "GE_ELECTIVE" # 2 cr - General Education Elective
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 351",   # 3 cr - Principles and Practices for Secure Computing
+                "DSAI 305",   # 3 cr - Interpretability & Explainability in AI
+                "DSAI 325",   # 3 cr - Introduction to Information Theory
+                "DSAI 352",   # 3 cr - Computer Vision
+                "DSAI 353",   # 3 cr - Natural Language Processing
+                "GE_ELECTIVE" # 2 cr - General Education Elective
+            ],              # Semester total: 17 cr
+            "summer": [
+                "CSAI 399"    # 4 cr - Internship (register after 80 cr)
+            ]
+        },
         "year_4": {
-            "fall": ["CSAI 302", "CSAI 498", "DSAI 402", "DSAI 403", "DSAI 456", "Data Science Program Elective"],
-            "fall_program_electives": 1,
-            "spring": ["CSAI 499", "DSAI 406", "DSAI 427", "Data Science Program Electives"],
-            "spring_program_electives": 2
-            },
+            "fall": [
+                "CSAI 302",       # 3 cr - Advanced Database Systems
+                "CSAI 498",       # 1 cr - Senior Project - Part 1 (after 92 cr)
+                "DSAI 402",       # 3 cr - Reinforcement Learning
+                "DSAI 403",       # 3 cr - Nature Inspired Computation
+                "DSAI 456",       # 3 cr - Speech Recognition
+                "DSAI_ELECTIVE"   # 3 cr - Data Science and AI Specific Elective
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 499",       # 3 cr - Senior Project - Part 2
+                "DSAI 406",       # 3 cr - Machine Learning Engineering for Production (MLOps)
+                "DSAI 427",       # 3 cr - Big Data Analytics
+                "DSAI_ELECTIVE",  # 3 cr - Data Science and AI Specific Elective
+                "DSAI_ELECTIVE"   # 3 cr - Data Science and AI Specific Elective (total 6 cr spring)
+            ]               # Semester total: 15 cr
+        },
         "electives": {
-            "program": ["DSAI 413", "DSAI 414", "DSAI 415", "DSAI 416", "DSAI 417", "DSAI 418", "DSAI 431", "DSAI 433", "DSAI 490", "SW 402", "SW 403", "SWGCG 402", "ITNS 407", "ITNS 410"],
-            "sch": ["SCH 201", "SCH 202", "SCH 205", "SCH 206", "SCH 207", "SCH 232", "SCH 234", "SCH 235", "SCH 258", "SCH 260", "SCH 265", "SCH 266", "SCH 273", "SCH 275", "SCH 277", "SCH 288", "SCH 299"],
+            "program": [
+                "DSAI 413", "DSAI 414", "DSAI 415", "DSAI 416",
+                "DSAI 417", "DSAI 418", "DSAI 431", "DSAI 433", "DSAI 490",
+                "SW 402", "SW 403", "SWGCG 402",
+                "ITNS 407", "ITNS 410",
+                "SWHCI 451", "SWHCI 453",
+                "CSAI 490"
+            ],
             "elective_credits_required": 9
-            }
+        }
     },
     
     "Software Development": {
-        "code": "SW",
+        "code": "SWD",
         "total_credits": 132,
+        # 16 Univ Req + 53 School Req + 33 Major Req + 30 Concentration Req = 132 Cr
+        # Concentrations: APD (Application Development) | GCG (Gaming & Computer Graphics) | HCI (Human Computer Interaction)
         "year_1": {
-            "fall": ["CSAI 100", "CSAI 101", "CSAI 102", "CSAI 252", "ENGL 156", "MATH 103", "SCH 163"],
-            "spring": ["CSAI 151", "ENGL 157", "MATH 104", "PHYS 103", "SW 151", "General Education Electives"]
-            },
+            "fall": [
+                "CSAI 100",   # 1 cr - Introduction to Computational Sciences and AI
+                "CSAI 101",   # 2 cr - Fundamentals of Programming and Computer Science
+                "CSAI 102",   # 3 cr - Digital Logic and Computer Architecture
+                "CSAI 252",   # 3 cr - Introduction to Computer Networks
+                "ENGL 156",   # 2 cr - Technical English 1
+                "MATH 103",   # 3 cr - Calculus for Computational Sciences
+                "SCH 163"     # 2 cr - Sustainability, Social and Ethical Issues in Computing
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 151",   # 3 cr - Object-Oriented Programming
+                "ENGL 157",   # 2 cr - Technical English 2
+                "MATH 104",   # 3 cr - Linear Algebra
+                "PHYS 103",   # 3 cr - Physics 1
+                "SW 151",     # 3 cr - Computer Architecture and Organization
+                "GE_ELECTIVE" # 2 cr - General Education Elective
+            ]               # Semester total: 16 cr
+        },
         "year_2": {
-            "fall": ["CSAI 201", "CSAI 202", "CSAI 203", "MATH 105", "PHYS 104", "SCH 261"],
-            "spring": ["CSAI 204", "CSAI 251", "CSAI 253", "MATH 205", "SCH 264", "SW 251"]
-            },
+            "fall": [
+                "CSAI 201",   # 3 cr - Data Structures
+                "CSAI 202",   # 3 cr - Introduction to Database Systems
+                "CSAI 203",   # 3 cr - Introduction to Software Engineering
+                "MATH 105",   # 3 cr - Probability and Statistics
+                "PHYS 104",   # 3 cr - Physics 2
+                "SCH 261"     # 2 cr - Engineering Project Management
+            ],              # Semester total: 17 cr
+            "spring": [
+                "CSAI 204",   # 3 cr - Operating Systems
+                "CSAI 251",   # 3 cr - Algorithm Design and Analysis
+                "CSAI 253",   # 3 cr - Machine Learning
+                "MATH 205",   # 3 cr - Discrete Mathematics for Computational Sciences
+                "SCH 264",    # 2 cr - Introduction to Entrepreneurship and Small Business Management
+                "SW 251"      # 3 cr - User Experience and Interaction Design
+            ]               # Semester total: 17 cr
+        },
         "year_3": {
+            # Year 3 splits by concentration
             "APD": {
-                "fall": ["CSAI 301", "SW 252", "SW 301", "SW 302", "SWAPD 301", "General Education Electives"],
-                "fall_sch_electives": 2,
-                "spring": ["CSAI 302", "CSAI 351", "MATH 307", "SWAPD 351", "SWAPD 352", "CSAI 399"],
-                "spring_sch_electives": 1,
-                "summer": ["CSAI 399"]
+                "fall": [
+                    "CSAI 301",   # 3 cr - Artificial Intelligence
+                    "SW 252",     # 3 cr - Embedded Systems
+                    "SW 301",     # 3 cr - Object-Oriented Analysis and Design
+                    "SW 302",     # 3 cr - User Interface Development
+                    "SWAPD 301",  # 3 cr - Software Systems Requirements Development
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 17 cr
+                "spring": [
+                    "CSAI 302",   # 3 cr - Advanced Database Systems
+                    "CSAI 351",   # 3 cr - Principles and Practices for Secure Computing
+                    "MATH 307",   # 3 cr - Numerical Methods
+                    "SWAPD 351",  # 3 cr - Software Architecture and Design
+                    "SWAPD 352"   # 3 cr - Web Applications Development
+                ],              # Semester total: 15 cr
+                "summer": ["CSAI 399"]  # 4 cr - Internship (after 80 cr)
             },
             "GCG": {
-                "fall": ["CSAI 301", "SW 252", "SW 301", "SW 302", "SWGCG 301", "General Education Electives"],
-                "spring": ["CSAI 351", "MATH 307", "SWGCG 351", "SWGCG 352", "General Education Electives"],
-                "summer": ["CSAI 399"]
+                "fall": [
+                    "CSAI 301",   # 3 cr - Artificial Intelligence
+                    "SW 252",     # 3 cr - Embedded Systems
+                    "SW 301",     # 3 cr - Object-Oriented Analysis and Design
+                    "SW 302",     # 3 cr - User Interface Development
+                    "SWGCG 301",  # 3 cr - Computer Graphics and Multimedia Systems
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 17 cr
+                "spring": [
+                    "CSAI 351",   # 3 cr - Principles and Practices for Secure Computing
+                    "MATH 307",   # 3 cr - Numerical Methods
+                    "SWGCG 351",  # 3 cr - Game Design and Development
+                    "SWGCG 352",  # 3 cr - Computer and Physics-Based Animation
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 14 cr
+                "summer": ["CSAI 399"]  # 4 cr - Internship (after 80 cr)
             },
             "HCI": {
-                "fall": ["CSAI 301", "SCH 273", "SW 252", "SW 301", "SW 302", "SWHCI 301"],
-                "spring": ["CSAI 351", "MATH 307", "SWHCI 351", "SWHCI 352", "General Education Electives"],
-                "summer": ["CSAI 399"]
+                "fall": [
+                    "CSAI 301",   # 3 cr - Artificial Intelligence
+                    "SCH 273",    # 2 cr - Cognitive Psychology (required GE replacement for HCI)
+                    "SW 252",     # 3 cr - Embedded Systems
+                    "SW 301",     # 3 cr - Object-Oriented Analysis and Design
+                    "SW 302",     # 3 cr - User Interface Development
+                    "SWHCI 301"   # 3 cr - Prototyping Algorithmic Experiences
+                ],              # Semester total: 17 cr
+                "spring": [
+                    "CSAI 351",   # 3 cr - Principles and Practices for Secure Computing
+                    "MATH 307",   # 3 cr - Numerical Methods
+                    "SWHCI 351",  # 3 cr - Statistical Graphics and Visualization
+                    "SWHCI 352",  # 3 cr - User-Focused Sensing Systems
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 14 cr
+                "summer": ["CSAI 399"]  # 4 cr - Internship (after 80 cr)
             }
         },
         "year_4": {
             "APD": {
-                "fall": ["CSAI 498", "SW 401", "SW 402", "SWAPD 401", "SWAPD 402", "Application Development Elective"],
-                "fall_program_electives": 1,
-                "spring": ["CSAI 499", "SWAPD 452", "SWAPD 453", "Application Development Elective"],
-                "spring_program_electives": 1
+                "fall": [
+                    "CSAI 498",      # 1 cr - Senior Project - Part 1 (after 92 cr)
+                    "SW 401",        # 3 cr - Parallel and Distributed Computing
+                    "SW 402",        # 3 cr - Software Project Management
+                    "SWAPD 401",     # 3 cr - Software Testing, Validation, and Quality Assurance
+                    "SWAPD 402",     # 3 cr - Mobile Application Development
+                    "APD_ELECTIVE"   # 3 cr - Application Development Elective
+                ],              # Semester total: 16 cr
+                "spring": [
+                    "CSAI 499",      # 3 cr - Senior Project - Part 2
+                    "SWAPD 452",     # 3 cr - Enterprise Application Development
+                    "SWAPD 453",     # 3 cr - IoT Applications Development
+                    "GE_ELECTIVE",   # 2 cr - General Education Elective
+                    "APD_ELECTIVE"   # 3 cr - Application Development Elective
+                ]               # Semester total: 14 cr
             },
             "GCG": {
-                "fall": ["CSAI 498", "SW 401", "SW 402", "SWGCG 401", "SWGCG 402", "Gaming and Computer Graphics Elective"],
-                "spring": ["CSAI 499", "SWGCG 451", "SWGCG 452", "SWGCG 453", "Gaming and Computer Graphics Elective"]
+                "fall": [
+                    "CSAI 498",      # 1 cr - Senior Project - Part 1 (after 92 cr)
+                    "SW 401",        # 3 cr - Parallel and Distributed Computing
+                    "SW 402",        # 3 cr - Software Project Management
+                    "SWGCG 401",     # 3 cr - Design and Geometric Modeling for Visualization and Communication
+                    "SWGCG 402",     # 3 cr - Visual Effects Production
+                    "GCG_ELECTIVE"   # 3 cr - Gaming and Computer Graphics Elective
+                ],              # Semester total: 16 cr
+                "spring": [
+                    "CSAI 499",      # 3 cr - Senior Project - Part 2
+                    "SWGCG 451",     # 3 cr - Model Creation and Character Animation
+                    "SWGCG 452",     # 3 cr - Physics-Based Vision and Rendering
+                    "SWGCG 453",     # 3 cr - Mobile and Casual Game Development
+                    "GCG_ELECTIVE"   # 3 cr - Gaming and Computer Graphics Elective
+                ]               # Semester total: 15 cr
             },
             "HCI": {
-                "fall": ["CSAI 498", "SW 401", "SW 402", "SWHCI 401", "SWHCI 402", "HCI Elective"],
-                "spring": ["CSAI 499", "SWHCI 451", "SWHCI 452", "SWHCI 453", "HCI Elective"]
+                "fall": [
+                    "CSAI 498",      # 1 cr - Senior Project - Part 1 (after 92 cr)
+                    "SW 401",        # 3 cr - Parallel and Distributed Computing
+                    "SW 402",        # 3 cr - Software Project Management
+                    "SWHCI 401",     # 3 cr - Human Information Processing and Artificial Intelligence
+                    "SWHCI 402",     # 3 cr - AI Based Products and Services
+                    "HCI_ELECTIVE"   # 3 cr - Human Computer Interaction Elective
+                ],              # Semester total: 16 cr
+                "spring": [
+                    "CSAI 499",      # 3 cr - Senior Project - Part 2
+                    "SWHCI 451",     # 3 cr - Cognitive Modeling for HCI
+                    "SWHCI 452",     # 3 cr - Designing Extended Reality Experience
+                    "SWHCI 453",     # 3 cr - Human Factors
+                    "HCI_ELECTIVE"   # 3 cr - Human Computer Interaction Elective
+                ]               # Semester total: 15 cr
             }
-       },
+        },
         "electives": {
-            "program": ["SWGCG 301", "SWGCG 351", "SWGCG 453", "SWHCI 351", "SWHCI 452", "SWAPD 451", "SW 403", "DSAI 308", "ITNS 407", "ITNS 410"],
-            "sch": ["SCH 201", "SCH 202", "SCH 205", "SCH 206", "SCH 207", "SCH 232", "SCH 234", "SCH 235", "SCH 258", "SCH 260", "SCH 265", "SCH 266", "SCH 273", "SCH 275", "SCH 277", "SCH 288", "SCH 299"],
+            "APD_electives": [
+                "SWGCG 301", "SWGCG 351", "SWGCG 453",
+                "SWHCI 351", "SWHCI 452",
+                "SWAPD 451",
+                "SW 403", "DSAI 308",
+                "ITNS 407", "ITNS 410",
+                "CSAI 490", "SWHCI 453"
+            ],
+            "GCG_electives": [
+                "CSAI 302", "SWAPD 351", "SWAPD 352", "SWAPD 402",
+                "SWHCI 351", "SWHCI 452",
+                "SW 403", "DSAI 308",
+                "ITNS 407", "ITNS 410",
+                "SWHCI 453", "CSAI 490"
+            ],
+            "HCI_electives": [
+                "CSAI 302", "SWAPD 351", "SWAPD 352", "SWAPD 402",
+                "SWGCG 301", "SWGCG 351", "SWGCG 453",
+                "SW 403", "DSAI 308",
+                "ITNS 407", "ITNS 410",
+                "CSAI 490"
+            ],
             "elective_credits_required": 6
-            }
-    
+        }
     },
     
     "Information Technology": {
         "code": "IT",
         "total_credits": 132,
+        # 16 Univ Req + 53 School Req + 34 Major Req + 29 Concentration Req = 132 Cr
+        # Concentrations: ITNS (Networks, Security and Governance) | ITCC (Infrastructure and Cloud Computing)
         "year_1": {
-            "fall": ["CSAI 100", "CSAI 101", "CSAI 102", "CSAI 252", "ENGL 156", "MATH 103", "SCH 163"],
-            "spring": ["CSAI 151", "ENGL 157", "IT 101", "IT 102", "IT 103", "MATH 104", "General Education Electives"]
+            "fall": [
+                "CSAI 100",   # 1 cr - Introduction to Computational Sciences and AI
+                "CSAI 101",   # 2 cr - Fundamentals of Programming and Computer Science
+                "CSAI 102",   # 3 cr - Digital Logic and Computer Architecture
+                "CSAI 252",   # 3 cr - Introduction to Computer Networks
+                "ENGL 156",   # 2 cr - Technical English 1
+                "MATH 103",   # 3 cr - Calculus for Computational Sciences
+                "SCH 163"     # 2 cr - Sustainability, Social and Ethical Issues in Computing
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 151",   # 3 cr - Object-Oriented Programming
+                "ENGL 157",   # 2 cr - Technical English 2
+                "IT 101",     # 2 cr - Shell and Script Programming with UNIX
+                "IT 102",     # 2 cr - Ethical Hacking and Defense
+                "IT 103",     # 2 cr - Fundamentals of Information and Communication Systems
+                "MATH 104",   # 3 cr - Linear Algebra
+                "GE_ELECTIVE" # 2 cr - General Education Elective
+            ]               # Semester total: 16 cr
         },
         "year_2": {
-            "fall": ["CSAI 201", "CSAI 202", "CSAI 205", "IT 205", "MATH 105", "SCH 261"],
-            "spring": ["CSAI 204", "CSAI 251", "CSAI 253", "IT 206", "IT 220", "IT 222", "SCH 264"]
+            "fall": [
+                "CSAI 201",   # 3 cr - Data Structures
+                "CSAI 202",   # 3 cr - Introduction to Database Systems
+                "CSAI 205",   # 3 cr - Fundamentals of Circuits and Electronics
+                "IT 205",     # 2 cr - Enterprise System Architecture
+                "MATH 105",   # 3 cr - Probability and Statistics
+                "SCH 261"     # 2 cr - Engineering Project Management
+            ],              # Semester total: 16 cr
+            "spring": [
+                "CSAI 204",   # 3 cr - Operating Systems
+                "CSAI 251",   # 3 cr - Algorithm Design and Analysis
+                "CSAI 253",   # 3 cr - Machine Learning
+                "IT 206",     # 2 cr - Fundamentals of IT Governance and Risk Management
+                "IT 220",     # 2 cr - Networks Installation and Maintenance
+                "IT 222",     # 2 cr - Fundamentals of Multimedia Creation, Storage and Transfer
+                "SCH 264"     # 2 cr - Introduction to Entrepreneurship and Small Business Management
+            ]               # Semester total: 17 cr
         },
         "year_3": {
             "ITNS": {
-                "fall": ["CSAI 203", "CSAI 301", "IT 308", "ITNS 301", "MATH 205", "General Education Electives"],
-                "fall_sch_electives": 2,
-                "springspring": ["CSAI 351", "IT 309", "IT 310", "ITNS 302", "CSAI 399", "ITNS Elective", "General Education Electives"],
-                "spring_sch_electives": 1,
-                "summer": ["CSAI 399"]
+                "fall": [
+                    "CSAI 203",   # 3 cr - Introduction to Software Engineering
+                    "CSAI 301",   # 3 cr - Artificial Intelligence
+                    "IT 308",     # 2 cr - Cloud Computing Architecture
+                    "ITNS 301",   # 2 cr - Network Administration
+                    "MATH 205",   # 3 cr - Discrete Mathematics for Computational Sciences
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 15 cr
+                "spring": [
+                    "CSAI 351",      # 3 cr - Principles and Practices for Secure Computing
+                    "IT 309",        # 3 cr - IT User-Experience Design
+                    "IT 310",        # 3 cr - Foundations of Cybersecurity and Security Management
+                    "ITNS 302",      # 3 cr - IoT Systems and Application Development
+                    "ITNS_ELECTIVE", # 3 cr - Networks, Security and Governance Elective
+                    "GE_ELECTIVE"    # 2 cr - General Education Elective
+                ],              # Semester total: 17 cr
+                "summer": ["CSAI 399"]  # 4 cr - Internship (after 80 cr)
             },
             "ITCC": {
-                "fall": ["CSAI 203", "CSAI 301", "IT 308", "ITCC 301", "MATH 205", "General Education Electives"],
-                "spring": ["CSAI 351", "IT 309", "IT 310", "ITCC 302", "ITCC Elective", "General Education Electives"],
-                "summer": ["CSAI 399"]
+                "fall": [
+                    "CSAI 203",   # 3 cr - Introduction to Software Engineering
+                    "CSAI 301",   # 3 cr - Artificial Intelligence
+                    "IT 308",     # 2 cr - Cloud Computing Architecture
+                    "ITCC 301",   # 2 cr - Linux System Administration
+                    "MATH 205",   # 3 cr - Discrete Mathematics for Computational Sciences
+                    "GE_ELECTIVE" # 2 cr - General Education Elective
+                ],              # Semester total: 15 cr
+                "spring": [
+                    "CSAI 351",      # 3 cr - Principles and Practices for Secure Computing
+                    "IT 309",        # 3 cr - IT User-Experience Design
+                    "IT 310",        # 3 cr - Foundations of Cybersecurity and Security Management
+                    "ITCC 302",      # 3 cr - Cloud Infrastructure Administration
+                    "ITCC_ELECTIVE", # 3 cr - Infrastructure and Cloud Computing Elective
+                    "GE_ELECTIVE"    # 2 cr - General Education Elective
+                ],              # Semester total: 17 cr
+                "summer": ["CSAI 399"]  # 4 cr - Internship (after 80 cr)
             }
         },
         "year_4": {
             "ITNS": {
-                "fall": ["CSAI 498", "IT 402", "IT 411", "ITNS 403", "ITNS 404", "ITNS 406", "Program Elective"],
-                "fall_program_electives": 1,
-                "spring": ["CSAI 499", "ITNS 407", "ITNS 408", "ITNS Elective"],
-                "spring_program_electives": 1
+                "fall": [
+                    "CSAI 498",      # 1 cr - Senior Project - Part 1 (after 92 cr)
+                    "IT 402",        # 3 cr - Fundamentals of Cybersecurity and Encryption
+                    "IT 411",        # 3 cr - Enterprise Resources Planning
+                    "ITNS 403",      # 3 cr - Storage Area Networks
+                    "ITNS 404",      # 3 cr - Network Performance Monitoring and Troubleshooting
+                    "ITNS 406"       # 3 cr - Network Resilience and Hardening
+                ],              # Semester total: 16 cr
+                "spring": [
+                    "CSAI 499",      # 3 cr - Senior Project - Part 2
+                    "ITNS 407",      # 3 cr - IT Audit and Risk Management
+                    "ITNS 408",      # 3 cr - Network Security
+                    "ITNS_ELECTIVE", # 3 cr - Networks, Security and Governance Elective
+                    "ITNS_ELECTIVE", # 3 cr - Networks, Security and Governance Elective
+                    "ITNS_ELECTIVE"  # 3 cr - Networks, Security and Governance Elective (9 cr total)
+                ]               # Semester total: 15 cr
             },
             "ITCC": {
-                "fall": ["CSAI 498", "IT 402", "IT 411", "ITCC 403", "ITCC 404", "ITCC 405"],
-                "spring": ["CSAI 499", "ITCC 407", "ITCC 408", "ITCC Elective"]
+                "fall": [
+                    "CSAI 498",      # 1 cr - Senior Project - Part 1 (after 92 cr)
+                    "IT 402",        # 3 cr - Fundamentals of Cybersecurity and Encryption
+                    "IT 411",        # 3 cr - Enterprise Resources Planning
+                    "ITCC 403",      # 3 cr - Security Testing for Cloud Applications
+                    "ITCC 404",      # 3 cr - Windows Enterprise Administration
+                    "ITCC 405"       # 3 cr - Virtualization and Cloud Security
+                ],              # Semester total: 16 cr
+                "spring": [
+                    "CSAI 499",      # 3 cr - Senior Project - Part 2
+                    "ITCC 407",      # 3 cr - Cloud Services Management
+                    "ITCC 408",      # 3 cr - Application Development and Scripting in the Cloud
+                    "ITCC_ELECTIVE", # 3 cr - Infrastructure and Cloud Computing Elective
+                    "ITCC_ELECTIVE", # 3 cr - Infrastructure and Cloud Computing Elective
+                    "ITCC_ELECTIVE"  # 3 cr - Infrastructure and Cloud Computing Elective (9 cr total)
+                ]               # Semester total: 15 cr
             }
         },
         "electives": {
-            "program": ["IT 401", "ITNS 410", "ITNS 411", "ITNS 412", "ITNS 413", "ITNS 414", "ITNS 415",
-                        "ITCC 403", "ITCC 404", "ITCC 405", "ITCC 407", "ITCC 408"],
-            "sch": ["SCH 201", "SCH 202", "SCH 205", "SCH 206", "SCH 207", "SCH 232", "SCH 234", "SCH 235",
-                    "SCH 258", "SCH 260", "SCH 265", "SCH 266", "SCH 273", "SCH 275", "SCH 277", "SCH 288", "SCH 299"],
-            "elective_credits_required": 6
+            "ITNS_electives": [
+                "IT 401", "ITNS 410", "ITNS 411", "ITNS 412",
+                "ITNS 413", "ITNS 414", "ITNS 415",
+                "CSAI 302", "SW 402", "SWAPD 402", "CSAI 490"
+            ],
+            "ITCC_electives": [
+                "DSAI 473", "IT 401",
+                "ITCC 406", "ITCC 410", "ITCC 411", "ITCC 412",
+                "ITCC 413", "ITCC 414",
+                "CSAI 302", "SW 402", "SWAPD 402", "CSAI 490"
+            ],
+            "elective_credits_required": 9
         }
     },
     
     # ============================================================
     # SCHOOL OF BUSINESS STUDY PLANS
-    # Note: Business majors have fewer major-specific courses in early years
-    # Students take core business courses (BGEN, MGMT) before specializing
+    # Source: BUS_Curricula_2023.pdf
+    # All programs: 130 Cr = 21 Cr Univ Req + 70 Cr School Req + 39 Cr Program Req
+    # University Req: ENGL 154, ENGL 155 (4 Cr compulsory) + 17 Cr GE Electives
+    # School Req (55 Cr compulsory): BGEN 101/105/110/201/205/210, BLAW 201, ECON 101,
+    #   FINC 101, FINC 201, MGMT 101/105/201/205, MKTG 101, SCH 105/110, SCHN 201, SUST 201
+    #   + 12 Cr Sustainability Electives + BUS 399 Internship + BUS 499 Capstone (3 Cr)
     # ============================================================
     "Actuarial Analysis and Risk Management": {
-        "code": "BACT",
-        "total_credits": 140,
+        "code": "AARM",
+        "total_credits": 130,
+        # Year 1: 32 Cr
         "year_1": {
             "fall": ["BGEN 101", "ECON 101", "ENGL 154", "FINC 101", "MGMT 101", "SCH 105"],
-            "spring": ["BGEN 105", "BGEN 110", "ENGL 155", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+3+2+3+3+2 = 16 Cr
+            "spring": ["BGEN 105", "ENGL 155", "FINC 201", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+2+3+3+3+2 = 16 Cr
         },
+        # Year 2: 33 Cr
         "year_2": {
-            "fall": ["BGEN 201", "BLAW 201", "FINC 201", "MGMT 201", "General Education Electives"],
-            "spring": ["BGEN 205", "BGEN 210", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            "fall": ["BGEN 110", "BGEN 210", "BLAW 201", "MGMT 201", "General Education Electives"],
+            # 3+3+3+3+4 = 16 Cr
+            "spring": ["BGEN 201", "BGEN 205", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            # 3+3+3+3+3+2 = 17 Cr
         },
+        # Year 3: 34 Cr
         "year_3": {
             "fall": ["BACT 301", "BACT 305", "ECON 301", "FINC 315", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+2+3 = 17 Cr
             "spring": ["BACT 310", "BDAT 301", "BMAT 301", "ECON 305", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+2+3 = 17 Cr
             "summer": ["BUS 399"]
+            # Internship (0 Cr, 240 hrs)
         },
+        # Year 4: 31 Cr
         "year_4": {
             "fall": ["BACT 401", "BACT 402", "BACT 403", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+3 = 15 Cr
             "spring": ["BACT 404", "BDAT 401", "BUS 499", "General Education Electives", "Sustainability Electives"]
+            # 3+3+3+4+3 = 16 Cr
         },
         "electives": {
-            "general_education": "Varies per semester",
-            "sustainability": "Varies per semester"
+            "general_education_total": 17,
+            "sustainability_total": 12
         }
     },
 
     "Finance and Investment Management": {
-        "code": "FINC",
-        "total_credits": 140,
+        "code": "FIM",
+        "total_credits": 130,
+        # Year 1: 32 Cr
         "year_1": {
             "fall": ["BGEN 101", "ECON 101", "ENGL 154", "FINC 101", "MGMT 101", "SCH 105"],
-            "spring": ["BGEN 105", "BGEN 110", "ENGL 155", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+3+2+3+3+2 = 16 Cr
+            "spring": ["BGEN 105", "ENGL 155", "FINC 201", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+2+3+3+3+2 = 16 Cr
         },
+        # Year 2: 33 Cr
         "year_2": {
-            "fall": ["BGEN 201", "BLAW 201", "FINC 201", "MGMT 201", "General Education Electives"],
-            "spring": ["BGEN 205", "BGEN 210", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            "fall": ["BGEN 110", "BGEN 210", "BLAW 201", "MGMT 201", "General Education Electives"],
+            # 3+3+3+3+4 = 16 Cr
+            "spring": ["BGEN 201", "BGEN 205", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            # 3+3+3+3+3+2 = 17 Cr
         },
+        # Year 3: 34 Cr
         "year_3": {
             "fall": ["ECON 310", "ECON 315", "FINC 305", "FINC 310", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+2+3 = 17 Cr
             "spring": ["BIFT 301", "ECON 320", "ECON 325", "FINC 315", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+2+3 = 17 Cr
             "summer": ["BUS 399"]
+            # Internship (0 Cr, 240 hrs)
         },
+        # Year 4: 31 Cr
         "year_4": {
             "fall": ["FINC 401", "FINC 405", "FINC 410", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+4+3 = 16 Cr
             "spring": ["BCSE 401", "BUS 499", "FINC 415", "General Education Electives", "Sustainability Electives"]
+            # 3+3+3+3+3 = 15 Cr
         },
         "electives": {
-            "general_education": "Varies per semester",
-            "sustainability": "Varies per semester"
+            "general_education_total": 17,
+            "sustainability_total": 12
         }
     },
-    "Marketing, Entrepreneurship and Innovation Management": {
-        "code": "MKTG",
-        "total_credits": 140,
+
+    "Marketing, Entrepreneurship, and Innovation Management": {
+        "code": "MEIM",
+        "total_credits": 130,
+        # Year 1: 32 Cr
         "year_1": {
             "fall": ["BGEN 101", "ECON 101", "ENGL 154", "FINC 101", "MGMT 101", "SCH 105"],
-            "spring": ["BGEN 105", "BGEN 110", "ENGL 155", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+3+2+3+3+2 = 16 Cr
+            "spring": ["BGEN 105", "ENGL 155", "FINC 201", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+2+3+3+3+2 = 16 Cr
         },
+        # Year 2: 33 Cr
         "year_2": {
-            "fall": ["BGEN 201", "BLAW 201", "FINC 201", "MGMT 201", "General Education Electives"],
-            "spring": ["BGEN 205", "BGEN 210", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            "fall": ["BGEN 110", "BGEN 210", "BLAW 201", "MGMT 201", "General Education Electives"],
+            # 3+3+3+3+4 = 16 Cr
+            "spring": ["BGEN 201", "BGEN 205", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            # 3+3+3+3+3+2 = 17 Cr
         },
+        # Year 3: 32 Cr
         "year_3": {
             "fall": ["BENT 301", "BENT 305", "BTEM 301", "MKTG 301", "General Education Electives"],
+            # 3+3+3+3+4 = 16 Cr
             "spring": ["BENT 310", "BTEM 305", "MKTG 305", "MKTG 310", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+1+3 = 16 Cr
             "summer": ["BUS 399"]
+            # Internship (0 Cr, 240 hrs)
         },
+        # Year 4: 33 Cr
         "year_4": {
             "fall": ["BENT 401", "MKTG 401", "MKTG 410", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+4+3 = 16 Cr
             "spring": ["BUS 499", "MKTG 405", "MKTG 415", "General Education Electives", "Sustainability Electives"]
+            # 3+3+3+2+6 = 17 Cr
         },
         "electives": {
-            "general_education": "Varies per semester",
-            "sustainability": "Varies per semester"
+            "general_education_total": 17,
+            "sustainability_total": 12
         }
     },
-    
-    "Operations, Supply Chain and Technology Management": {
-        "code": "SCHN",
-        "total_credits": 140,
+
+    "Operations, Supply Chain, and Technology Management": {
+        "code": "OSCTM",
+        "total_credits": 130,
+        # Year 1: 32 Cr
         "year_1": {
             "fall": ["BGEN 101", "ECON 101", "ENGL 154", "FINC 101", "MGMT 101", "SCH 105"],
-            "spring": ["BGEN 105", "BGEN 110", "ENGL 155", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+3+2+3+3+2 = 16 Cr
+            "spring": ["BGEN 105", "ENGL 155", "FINC 201", "MGMT 105", "MKTG 101", "SCH 110"]
+            # 3+2+3+3+3+2 = 16 Cr
         },
+        # Year 2: 33 Cr
         "year_2": {
-            "fall": ["BGEN 201", "BLAW 201", "FINC 201", "MGMT 201", "General Education Electives"],
-            "spring": ["BGEN 205", "BGEN 210", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            "fall": ["BGEN 110", "BGEN 210", "BLAW 201", "MGMT 201", "General Education Electives"],
+            # 3+3+3+3+4 = 16 Cr
+            "spring": ["BGEN 201", "BGEN 205", "MGMT 205", "SCHN 201", "SUST 201", "General Education Electives"]
+            # 3+3+3+3+3+2 = 17 Cr
         },
+        # Year 3: 33 Cr
         "year_3": {
-            "fall": ["BCSE 301", "BLAW 301", "MGMT 301", "MGMT 311", "SCHN 305", "General Education Electives"],
-            "spring": ["MGMT 305", "MGMT 310", "SCHN 301", "General Education Electives", "Sustainability Electives"],
+            "fall": ["BCSE 301", "BLAW 301", "MGMT 301", "SCHN 305", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+2+3 = 17 Cr
+            "spring": ["MGMT 305", "MGMT 310", "MGMT 311", "SCHN 301", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+3+1+3 = 16 Cr
             "summer": ["BUS 399"]
+            # Internship (0 Cr, 240 hrs)
         },
+        # Year 4: 32 Cr
         "year_4": {
             "fall": ["SCHN 401", "SCHN 405", "SCHN 410", "General Education Electives", "Sustainability Electives"],
+            # 3+3+3+4+3 = 16 Cr
             "spring": ["BUS 499", "MGMT 401", "MGMT 405", "General Education Electives", "Sustainability Electives"]
+            # 3+3+3+4+3 = 16 Cr
         },
         "electives": {
-            "general_education": "Varies per semester",
-            "sustainability": "Varies per semester"
+            "general_education_total": 17,
+            "sustainability_total": 12
         }
     }
 }
@@ -1235,6 +2507,79 @@ COURSE_CATALOG = {
         "BACT 403": {"name": "Commercial Insurance and Management of Insurance Enterprise", "credits": 3, "level": "Senior", "prerequisites": ["BACT 301"], "description": "Comprehensive exploration of commercial insurance and fundamental principles of managing insurance enterprises, underwriting, risk analysis, and claims."},
         "BACT 404": {"name": "Casualty and Health Insurance Mathematics", "credits": 3, "level": "Senior", "prerequisites": ["BACT 305"], "description": "Mathematical principles, statistical methodologies, and actuarial techniques for casualty and health insurance risk assessment and management."}
     },
+
+    # BUSINESS DATA ANALYTICS (BDAT) - School of Business
+    "BDAT": {
+        "BDAT 301": {"name": "Applied Linear Models", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Statistical modeling using linear regression, model selection, diagnostics, and inference. Applications to business and risk management data."},
+        "BDAT 401": {"name": "Stochastic Processes", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Theory and applications of stochastic processes including Markov chains, Poisson processes, Brownian motion, and their use in actuarial and financial modeling."}
+    },
+
+    # BUSINESS MATHEMATICS (BMAT) - School of Business
+    "BMAT": {
+        "BMAT 301": {"name": "Introduction to Differential Equations", "credits": 3, "level": "Junior", "prerequisites": [], "description": "First and second order ordinary differential equations, systems of ODEs, Laplace transforms, and applications to business and actuarial problems."}
+    },
+
+    # BUSINESS LAW (BLAW) - School of Business
+    "BLAW": {
+        "BLAW 201": {"name": "Business Law Fundamentals", "credits": 3, "level": "Sophomore", "prerequisites": [], "description": "Foundations of business law including contracts, torts, agency, business organizations, intellectual property, and regulatory compliance in the business environment."},
+        "BLAW 301": {"name": "Negotiations and Dispute Settlement", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Negotiation strategies, mediation, arbitration, and dispute resolution mechanisms in business and supply chain contexts. Practical skills for managing commercial disputes."}
+    },
+
+    # ECONOMICS (ECON) - School of Business
+    "ECON": {
+        "ECON 101": {"name": "Principles of Economics", "credits": 3, "level": "Freshman", "prerequisites": [], "description": "Introduction to microeconomic and macroeconomic principles including supply and demand, market structures, GDP, inflation, monetary and fiscal policy."},
+        "ECON 301": {"name": "Intermediate Microeconomic Theory", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "Consumer theory, production and cost analysis, competitive and non-competitive markets, game theory, and welfare economics."},
+        "ECON 305": {"name": "Intermediate Macroeconomic Theory", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "National income determination, IS-LM model, open economy macroeconomics, growth theory, business cycles, and monetary and fiscal policy analysis."},
+        "ECON 310": {"name": "Intermediate Microeconomic Theory", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "Advanced consumer and producer theory, market equilibrium and efficiency, externalities, public goods, and information economics for finance students."},
+        "ECON 315": {"name": "Intermediate Macroeconomic Theory", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "Advanced national income models, monetary theory, exchange rates, balance of payments, and macroeconomic policy for finance students."},
+        "ECON 320": {"name": "Money and Banking", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "The role of money and financial institutions in the economy. Central banking, monetary policy transmission, banking regulation, financial crises, and credit markets."},
+        "ECON 325": {"name": "Data Analysis and Forecasting", "credits": 3, "level": "Junior", "prerequisites": ["ECON 101"], "description": "Econometric methods for economic and financial data. Time series analysis, regression, forecasting models, and their application to investment and policy analysis."}
+    },
+
+    # BUSINESS INFORMATION TECHNOLOGY (BIFT) - School of Business
+    "BIFT": {
+        "BIFT 301": {"name": "Database Management Systems", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Relational database design, SQL, data modeling, normalization, transaction management, and database applications for financial and business systems."}
+    },
+
+    # BUSINESS COMPUTER SCIENCE ELECTIVES (BCSE) - School of Business
+    "BCSE": {
+        "BCSE 301": {"name": "Database Management and Applications", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Database design principles, SQL, data storage, retrieval strategies, and enterprise application integration for supply chain and operations management."},
+        "BCSE 401": {"name": "Data Mining and Predictive Analytics", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Data mining techniques, predictive modeling, classification, clustering, association rules, and their business applications including fraud detection and customer analytics."}
+    },
+
+    # BUSINESS ENTREPRENEURSHIP & TECHNOLOGY MANAGEMENT (BTEM) - School of Business
+    "BTEM": {
+        "BTEM 301": {"name": "Management of Innovation", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Innovation management frameworks, open innovation, technology strategy, intellectual property, and building innovation capabilities in organizations."},
+        "BTEM 305": {"name": "Technology Commercialization", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Processes for commercializing new technologies: licensing, spin-offs, venture creation, technology transfer, market assessment, and go-to-market strategies."}
+    },
+
+    # SUSTAINABLE DEVELOPMENT (SUST) - School of Business
+    "SUST": {
+        "SUST 201": {"name": "Sustainable Development Goals Fundamentals", "credits": 3, "level": "Sophomore", "prerequisites": [], "description": "Introduction to the UN Sustainable Development Goals (SDGs) and their integration into business strategy, operations, and personal decision-making."},
+        "SUST 205": {"name": "Gender Equality and Women Empowerment", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Analysis of gender equality issues in business and society, women leadership, empowerment strategies, and SDG 5 implementation in organizational contexts."},
+        "SUST 210": {"name": "Sustainable Development Planning, Policy and Governance", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Sustainable development policy frameworks, governance structures, multi-stakeholder planning, and implementation of sustainability initiatives."},
+        "SUST 215": {"name": "Capacity Building and Mapping", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Methods for assessing and building organizational and community capacity for sustainable development. Tools for capability mapping and gap analysis."},
+        "SUST 220": {"name": "Corporate Social Responsibility", "credits": 3, "level": "Junior", "prerequisites": [], "description": "CSR theories, stakeholder management, ESG reporting, responsible business practices, and integrating social responsibility into corporate strategy."},
+        "SUST 225": {"name": "Sustainable Economics", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Economic frameworks for sustainability including green economy, circular economy, natural capital valuation, and environmental economics."},
+        "SUST 301": {"name": "Sustainable Development Project Management", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Project management methodologies adapted for sustainable development initiatives. Planning, execution, monitoring, and evaluation of sustainability projects."},
+        "SUST 305": {"name": "Community Development Management", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Principles and practices of community development, participatory approaches, social capital, and managing community-based development programs."},
+        "SUST 310": {"name": "Education Leadership and Management", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Leadership theories applied to educational institutions. Strategic planning, change management, quality assurance, and sustainable education systems."},
+        "SUST 315": {"name": "Climate Change and Private Business", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Climate change science, business risks and opportunities from climate change, carbon markets, net-zero strategies, and climate risk reporting for firms."},
+        "SUST 320": {"name": "Feasibility and Sustainability Analysis for Projects and Enterprises", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Integrated feasibility studies combining financial, social, environmental, and technical dimensions for sustainable project and enterprise development."},
+        "SUST 325": {"name": "NGO Management", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Management of non-governmental organizations: governance, fundraising, program delivery, impact measurement, and strategic leadership in the NGO sector."}
+    },
+
+    # HISTORY (HIS) - General Education Electives
+    "HIS": {
+        "HIS 302": {"name": "Egyptian History", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Survey of Egyptian history from ancient civilization through the modern era, covering political, cultural, economic, and social developments."},
+        "HIS 304": {"name": "Arab World History", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Historical survey of the Arab world covering the rise of Islam, the Ottoman period, colonialism, independence movements, and contemporary Arab societies."}
+    },
+
+    # BUS - BUSINESS SCHOOL INTERNSHIP AND CAPSTONE
+    "BUS": {
+        "BUS 399": {"name": "Internship", "credits": 0, "level": "Junior", "prerequisites": [], "description": "Mandatory summer internship completed after the third year. Students gain 240 hours of practical workplace experience in a field related to their program specialization."},
+        "BUS 499": {"name": "Capstone Project", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Integrative capstone project in which students apply and demonstrate knowledge and skills acquired throughout the program to solve a real-world business problem."}
+    },
     
     # AEROSPACE/SPACE ENGINEERING (SPC) - Official ZC Course Catalog
     "SPC": {
@@ -1271,31 +2616,42 @@ COURSE_CATALOG = {
         "SPC 409": {"name": "Flight Dynamics & Control", "credits": 3, "level": "Senior", "prerequisites": ["SPC 328"], "description": "Modern aircraft stability and control."},
         "SPC 410": {"name": "Gas Dynamics", "credits": 3, "level": "Senior", "prerequisites": ["ENGR 205", "ENGR 207"], "description": "Advanced compressible fluid dynamics."},
         "SPC 411": {"name": "Aircraft Autopilot and Guidance", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Aircraft autopilot loops, controller design."},
-        "SPC 412": {"name": "Digital Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Digital control systems, z-transform, stability."},
-        "SPC 413": {"name": "Attitude Determination and Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 228"], "description": "Rigid body dynamics, spacecraft attitude dynamics."},
-        "SPC 414": {"name": "Optimal Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Calculus of variations, dynamic programming, Pontryagin's principle."},
-        "SPC 415": {"name": "Thin Walled Structures", "credits": 3, "level": "Senior", "prerequisites": ["SPC 202"], "description": "Structural analysis of aerospace vehicles."},
-        "SPC 417": {"name": "Gas Turbine Engines", "credits": 3, "level": "Senior", "prerequisites": ["SPC 206", "SPC 337"], "description": "Aerospace propulsive devices design."},
-        "SPC 418": {"name": "Control Systems Design for Autonomous Vehicles", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Autonomous vehicle control, UAVs, ground vehicles."},
-        "SPC 419": {"name": "Turbomachinery", "credits": 2, "level": "Senior", "prerequisites": ["SPC 337"], "description": "Compressors and turbines for gas turbine engines."},
-        "SPC 420": {"name": "Low Speed Aerodynamics", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Inviscid flow, viscous boundary layers, panel methods."},
-        "SPC 422": {"name": "Aircraft Performance", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Aircraft performance analysis, takeoff, landing, range."},
-        "SPC 424": {"name": "Spacecraft and Space System Design", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Satellite and space platform design."},
-        "SPC 426": {"name": "Experimental Aerodynamics", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Wind tunnel testing, measurement techniques."},
-        "SPC 428": {"name": "Mechatronics and Robotics", "credits": 3, "level": "Senior", "prerequisites": ["SPC 210"], "description": "Robotics, vision, motion planning, kinematics."},
-        "SPC 435": {"name": "Aerospace Communication Systems", "credits": 3, "level": "Senior", "prerequisites": ["CIE 237"], "description": "Telecommunications for aerospace industry."},
-        "SPC 436": {"name": "Computational Fluid Dynamics", "credits": 2, "level": "Senior", "prerequisites": ["MATH 306"], "description": "Finite difference methods for PDEs and fluid dynamics."},
-        "SPC 439": {"name": "Aircraft Conceptual Design", "credits": 2, "level": "Senior", "prerequisites": [], "description": "System level aircraft sizing and design."},
-        "SPC 446": {"name": "Advanced Materials for Aerospace Struct", "credits": 2, "level": "Senior", "prerequisites": ["SPC 315"], "description": "Composites, smart structures, piezoelectrics."},
-        "SPC 447": {"name": "Advanced Aerospace Structures", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Electromagnetic wave interactions with surfaces."},
-        "SPC 460": {"name": "Non-Linear Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Phase plane analysis, Lyapunov stability, sliding mode control."},
-        "SPC 470": {"name": "Computer-Aided Design and Engineering", "credits": 3, "level": "Senior", "prerequisites": ["REE 312"], "description": "CAD/CAE using SolidWorks, ANSYS, COMSOL."},
-        "SPC 472": {"name": "Machine Intelligence", "credits": 2, "level": "Senior", "prerequisites": [], "description": "AI for intelligent agents, learning, decision-making."},
-        "SPC 477": {"name": "Airports and Airlines Management", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Aviation system, airlines and airports management."},
-        "SPC 491": {"name": "Jet Propulsion", "credits": 3, "level": "Senior", "prerequisites": ["ENGR 332", "SPC 308"], "description": "Air-breathing and rocket engine design."},
-        "SPC 497": {"name": "Selected topics in Aerospace Engineering", "credits": 0, "level": "Senior", "prerequisites": [], "description": "Special topics in aerospace engineering."},
-        "SPC 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "First part of capstone design project."},
-        "SPC 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["SPC 498"], "description": "Completion of capstone design project."},
+        "SPC 101": {"name": "Introduction to Aerospace Engineering", "credits": 2, "level": "Freshman", "prerequisites": [], "description": "Introduction to the aerospace engineering discipline, career paths, and fundamentals."},
+        "SPC 206": {"name": "Advanced Thermodynamics", "credits": 3, "level": "Sophomore", "prerequisites": ["ENGR 105"], "description": "Advanced thermodynamic analysis for aerospace applications."},
+        "SPC 210": {"name": "Control Systems", "credits": 3, "level": "Sophomore", "prerequisites": ["MATH 202"], "description": "Continuous-time and discrete-time feedback control, PID control, root locus, state space."},
+        "SPC 228": {"name": "Engineering Dynamics", "credits": 3, "level": "Sophomore", "prerequisites": ["MATH 101", "PHYS 125"], "description": "Kinematics and kinetics of particles and rigid bodies, Newton's laws, energy and momentum methods."},
+        "SPC 238": {"name": "Mechanical Vibration", "credits": 3, "level": "Sophomore", "prerequisites": ["SPC 228"], "description": "Free and forced vibration of single and multi-degree-of-freedom systems, resonance, damping."},
+        "SPC 302": {"name": "Advanced Control Systems", "credits": 3, "level": "Junior", "prerequisites": ["SPC 210"], "description": "Advanced control theory, state space representation, observers, optimal control."},
+        "SPC 304": {"name": "Orbital and Space Flight Mechanics", "credits": 2, "level": "Junior", "prerequisites": ["SPC 228"], "description": "Orbital mechanics, Kepler's laws, two-body problem, orbital maneuvers, spacecraft trajectory."},
+        "SPC 307": {"name": "Aerodynamics", "credits": 3, "level": "Junior", "prerequisites": ["ENGR 207"], "description": "Subsonic and supersonic aerodynamics, lift, drag, boundary layer theory, airfoil analysis."},
+        "SPC 315": {"name": "Thin-Walled Structures", "credits": 3, "level": "Junior", "prerequisites": ["REE 202"], "description": "Structural analysis of thin-walled beams, shear flow, torsion, buckling in aerospace structures."},
+        "SPC 322": {"name": "Machine Design II", "credits": 3, "level": "Junior", "prerequisites": ["REE 302"], "description": "Advanced machine design, fatigue, fracture mechanics, design for aerospace applications."},
+        "SPC 327": {"name": "Analog and Digital Electronics", "credits": 3, "level": "Junior", "prerequisites": ["ENGR 201"], "description": "Analog and digital electronic circuits for aerospace systems, amplifiers, filters, ADC/DAC."},
+        "SPC 332": {"name": "Flight Dynamics and Control", "credits": 3, "level": "Junior", "prerequisites": ["SPC 302"], "description": "Aircraft equations of motion, stability derivatives, flight control system design."},
+        "SPC 337": {"name": "Gas Dynamics", "credits": 3, "level": "Junior", "prerequisites": ["ENGR 105", "ENGR 207"], "description": "Compressible flow, isentropic flow, normal and oblique shocks, Prandtl-Meyer expansion."},
+        "SPC 411": {"name": "Aircraft Autopilot and Guidance", "credits": 2, "level": "Senior", "prerequisites": ["SPC 332"], "description": "Autopilot design, guidance laws, navigation systems for aircraft."},
+        "SPC 412": {"name": "Digital Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Digital control systems, z-transform, stability, discrete-time controller design."},
+        "SPC 413": {"name": "Attitude Determination and Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 228"], "description": "Rigid body dynamics, spacecraft attitude dynamics and control."},
+        "SPC 414": {"name": "Optimal Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Calculus of variations, dynamic programming, Pontryagin's minimum principle."},
+        "SPC 417": {"name": "Gas Turbine Engines", "credits": 3, "level": "Senior", "prerequisites": ["SPC 206", "SPC 337"], "description": "Thermodynamic analysis and design of gas turbine engines for aerospace propulsion."},
+        "SPC 418": {"name": "Control Systems Design for Autonomous Vehicles", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Autonomous vehicle control systems, UAVs and ground vehicles."},
+        "SPC 419": {"name": "Turbomachinery", "credits": 2, "level": "Senior", "prerequisites": ["SPC 337"], "description": "Compressors and turbines: design and performance analysis for gas turbine engines."},
+        "SPC 420": {"name": "Low Speed Aerodynamics", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Inviscid flow theory, viscous boundary layers, panel methods, low-speed wind tunnel."},
+        "SPC 422": {"name": "Aircraft Performance", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Aircraft performance analysis: takeoff, climb, cruise, landing, range and endurance."},
+        "SPC 424": {"name": "Spacecraft and Space System Design", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Conceptual design of spacecraft and space systems, mass budgets, power, thermal."},
+        "SPC 426": {"name": "Experimental Aerodynamics", "credits": 2, "level": "Senior", "prerequisites": ["SPC 307"], "description": "Wind tunnel testing, experimental measurement techniques in aerodynamics."},
+        "SPC 428": {"name": "Mechatronics and Robotics", "credits": 2, "level": "Senior", "prerequisites": ["SPC 210"], "description": "Mechatronics systems, robotics, motion planning and kinematics."},
+        "SPC 435": {"name": "Aerospace Communication Systems", "credits": 3, "level": "Senior", "prerequisites": ["CIE 237"], "description": "Telecommunications and communication systems for the aerospace industry."},
+        "SPC 436": {"name": "Computational Fluid Dynamics", "credits": 2, "level": "Senior", "prerequisites": ["MATH 306"], "description": "Finite difference and finite volume methods applied to fluid dynamics problems."},
+        "SPC 439": {"name": "Aircraft Conceptual Design", "credits": 2, "level": "Senior", "prerequisites": [], "description": "System-level aircraft conceptual sizing, airworthiness, and mission requirements."},
+        "SPC 446": {"name": "Advanced Materials for Aerospace Struct", "credits": 2, "level": "Senior", "prerequisites": ["SPC 315"], "description": "Composite materials, smart structures and piezoelectrics for aerospace applications."},
+        "SPC 447": {"name": "Advanced Aerospace Structures", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Advanced structural analysis methods for aerospace vehicle components."},
+        "SPC 460": {"name": "Non-Linear Control", "credits": 2, "level": "Senior", "prerequisites": ["SPC 302"], "description": "Phase plane analysis, Lyapunov stability theory, sliding mode control."},
+        "SPC 470": {"name": "Computer-Aided Design and Engineering", "credits": 3, "level": "Senior", "prerequisites": ["REE 302"], "description": "CAD/CAE using modern tools such as SolidWorks, ANSYS, and COMSOL."},
+        "SPC 477": {"name": "Airports and Airlines Management", "credits": 2, "level": "Senior", "prerequisites": [], "description": "International aviation system, airline operations and airport management."},
+        "SPC 497": {"name": "Selected topics in Aerospace Engineering", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Special topics in aerospace engineering; variable credits 1-3."},
+        "SPC 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "First part of two-semester capstone design project; requires 102 completed credits."},
+        "SPC 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["SPC 498"], "description": "Completion and demonstration of the capstone design project."},
         # Graduate Courses
         "SPC 504": {"name": "Optimal Control", "credits": 2, "level": "Graduate", "prerequisites": ["SPC 328"], "description": "Calculus of variations, dynamic programming, Pontryagin's principle for optimal control."},
         "SPC 506": {"name": "Computational Fluid Dynamics", "credits": 2, "level": "Graduate", "prerequisites": ["SPC 407"], "description": "Finite difference methods for PDEs, Navier-Stokes equations."},
@@ -1438,8 +2794,10 @@ COURSE_CATALOG = {
     },
     
     # BIOMEDICAL SCIENCES (BMS) - Official ZC Course Catalog (97 courses)
+    # BIOMEDICAL SCIENCES (BMS) - Complete Course Catalog
+    # Source: SCI_Curricula_2023.pdf, Sections 2.5 and 2.7
     "BMS": {
-        # Sophomore Level (10 courses)
+        # Sophomore Level - Major Requirements
         "BMS 201": {"name": "General Microbiology", "credits": 3, "level": "Sophomore", "prerequisites": ["BIOL 102"], "description": "Microorganisms, molecular biology of bacteria, microbial pathogens, microbial genetics."},
         "BMS 202": {"name": "Cell Biology", "credits": 3, "level": "Sophomore", "prerequisites": ["BIOL 102"], "description": "Cellular structure, functions, membrane, organelles, gene expression, cell cycle."},
         "BMS 203": {"name": "Principles of Genetics", "credits": 3, "level": "Sophomore", "prerequisites": ["BIOL 102"], "description": "Classical theory of heredity, molecular basis, DNA/RNA structure, recombinant DNA."},
@@ -1450,96 +2808,75 @@ COURSE_CATALOG = {
         "BMS 213": {"name": "Principles of Genetics Lab", "credits": 1, "level": "Sophomore", "prerequisites": [], "description": "Classical and molecular genetics: chi-square, gene mapping, DNA extraction, Southern blotting."},
         "BMS 214": {"name": "Biochemistry Lab", "credits": 1, "level": "Sophomore", "prerequisites": [], "description": "Protein purification, enzyme assays, kinetics, proteolysis, chromatography."},
         "BMS 215": {"name": "Human Physiology Lab", "credits": 1, "level": "Sophomore", "prerequisites": [], "description": "Nervous system, muscles, respiration, cardiac vascular, exercise physiology."},
-        # Junior Level (48 courses)
+        # Junior Level - Major and Concentration Requirements
         "BMS 301": {"name": "Molecular Biology", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202"], "description": "Essentials of molecular biology, DNA replication, transcription, translation."},
-        "BMS 302": {"name": "Functional Genomics and System Biology", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202", "BMS 203", "BMS 204"], "description": "Gene function, regulation, and complex systems interactions."},
         "BMS 303": {"name": "Experimental Design and Data Analysis", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Hypothesis formulation, experiment design, data analysis and conclusions."},
         "BMS 304": {"name": "Biomedical Scientific Ethics and Safety", "credits": 2, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Ethical, social, environmental issues, biosafety regulations."},
         "BMS 311": {"name": "Molecular Biology Lab", "credits": 1, "level": "Junior", "prerequisites": [], "description": "DNA isolation, PCR, RNA isolation, gene cloning."},
         "BMS 313": {"name": "Human Anatomy Lab", "credits": 1, "level": "Junior", "prerequisites": [], "description": "Human anatomy, tissue structure, skeletal system, organ dissection."},
-        "BMS 320": {"name": "Introduction to Bioinform and Prog Languag", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102", "CSCI 101", "MATH 102"], "description": "Computer science and mathematics applied to life sciences problems."},
-        "BMS 321": {"name": "Programming for Computational Biology", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102", "MATH 102"], "description": "Practical programming, scientific algorithms, simulation, optimization."},
+        "BMS 320": {"name": "Introduction to Bioinformatics and Programming Language", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102", "CSCI 101", "MATH 102"], "description": "Computer science and mathematics applied to life sciences problems."},
+        "BMS 321": {"name": "Programming for Computational Biology", "credits": 3, "level": "Junior", "prerequisites": ["MATH 102", "BIOL 102"], "description": "Practical programming, scientific algorithms, simulation, optimization."},
         "BMS 322": {"name": "Structural Biology", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Physical properties of proteins, nucleic acids, lipids, biological roles."},
         "BMS 323": {"name": "Comparative Biology", "credits": 3, "level": "Junior", "prerequisites": ["BMS 203"], "description": "Evolution theories and organism adaptation to environment."},
         "BMS 324": {"name": "Molecular Genetics and Cell Regulation", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202"], "description": "Human genetics, gene regulation, epigenetics, genetic variations."},
-        "BMS 325": {"name": "Clinical Sciences", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Clinical and translational sciences, disease presentation, clinical shadowing."},
+        "BMS 325": {"name": "Clinical Sciences and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Clinical and translational sciences, disease presentation, clinical shadowing."},
         "BMS 326": {"name": "Molecular Mechanisms of Cell Signaling", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202"], "description": "Cell signaling, signal transduction, cell fate during development and disease."},
         "BMS 327": {"name": "Neurobiology and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202"], "description": "Central nervous system, sensory and motor systems, synaptic transmission."},
-        "BMS 328": {"name": "Computer Science II", "credits": 3, "level": "Junior", "prerequisites": ["CSCI 101"], "description": "Design and analysis of algorithms, data structures, NP-completeness."},
+        "BMS 328": {"name": "Computer Science 2", "credits": 3, "level": "Junior", "prerequisites": ["CSCI 101"], "description": "Design and analysis of algorithms, data structures, NP-completeness."},
         "BMS 330": {"name": "Human Anatomy", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Basic human anatomy, organ systems, CNS, cardiovascular, respiratory."},
-        "BMS 331": {"name": "Numerical Analysis and Mat Lab", "credits": 3, "level": "Junior", "prerequisites": ["MATH 201"], "description": "Numerical analysis, differentiation, integration, ODEs, Matlab."},
+        "BMS 331": {"name": "Numerical Analysis and Matlab", "credits": 3, "level": "Junior", "prerequisites": ["MATH 201"], "description": "Numerical analysis, differentiation, integration, ODEs, Matlab."},
         "BMS 332": {"name": "Drug Discovery and Development", "credits": 3, "level": "Junior", "prerequisites": ["BMS 204"], "description": "Drug discovery process, hit identification, ADMET, clinical trials."},
         "BMS 333": {"name": "Drug Design and Computational Chemistry", "credits": 3, "level": "Junior", "prerequisites": ["BMS 204"], "description": "Lead discovery and optimization, computational chemistry foundations."},
-        "BMS 333L": {"name": "Drug Design & Computational Chem Lab", "credits": 1, "level": "Junior", "prerequisites": [], "description": "Computational chemistry techniques, geometry optimization."},
         "BMS 334": {"name": "Pharmacokinetics and Pharmacodynamics", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Drug ADME properties, pharmacodynamics, PK/PD modeling."},
-        "BMS 335": {"name": "Advanced Microbiology and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BMS 201"], "description": "Emerging infectious diseases, antibiotic resistance, microbial biotechnology."},
-        "BMS 336": {"name": "Stem Cells and Regenerative Medicine and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Stem cell biology, types, applications in therapy."},
+        "BMS 335": {"name": "Advanced Microbiology", "credits": 3, "level": "Junior", "prerequisites": ["BMS 201"], "description": "Emerging infectious diseases, antibiotic resistance, microbial biotechnology."},
+        "BMS 336": {"name": "Stem Cells and Regenerative Medicine Lecture and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Stem cell biology, types, applications in therapy."},
         "BMS 337": {"name": "Cancer Biology and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BMS 202"], "description": "Cell proliferation, differentiation, apoptosis, metastasis, oncogenesis."},
         "BMS 339": {"name": "Principles of Pharmacology and Toxicology", "credits": 3, "level": "Junior", "prerequisites": ["BMS 204", "BMS 205"], "description": "Drug mechanisms, receptor function, signal transduction, ADME."},
-        "BMS 340": {"name": "Advanced BMS Laboratory Techniques", "credits": 4, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Advanced laboratory skills, protocols, research techniques."},
+        "BMS 340": {"name": "Advanced Techniques in BMS", "credits": 4, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Advanced laboratory skills, protocols, research techniques."},
         "BMS 343": {"name": "Drug Design and Computational Chemistry Lab", "credits": 1, "level": "Junior", "prerequisites": [], "description": "Lead discovery, computational chemistry techniques."},
-        "BMS 344": {"name": "Human Embryology", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Embryological development, fertilization, gastrulation, organogenesis."},
+        "BMS 344": {"name": "Human Embryology and Practicum", "credits": 3, "level": "Junior", "prerequisites": ["BIOL 102"], "description": "Embryological development, fertilization, gastrulation, organogenesis."},
         "BMS 349": {"name": "Principles of Pharmacology and Toxicology Laboratory", "credits": 1, "level": "Junior", "prerequisites": [], "description": "Pharmacological investigation techniques, functional studies."},
-        "BMS 364": {"name": "Biophysics", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Physical principles in cell biology, polymer science, statistical physics."},
-        "BMS 399": {"name": "Internship (For BIOMEDICAL SCIENCES PROGRAM)", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Off campus activities, research labs, hospital shadowing, pharma labs."},
-        # Senior Level (32 courses)
-        "BMS 401": {"name": "Senior Project I", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Research project planning and execution."},
-        "BMS 401 D": {"name": "DDD Senior Project I", "credits": 2, "level": "Senior", "prerequisites": [], "description": "Drug Design and Development senior research project."},
-        "BMS 402": {"name": "Senior Project II", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Finalize project and thesis presentation."},
-        "BMS 404": {"name": "Biostatistics", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 101"], "description": "Statistical methods for biomedical data analysis."},
-        "BMS 405": {"name": "Medicinal and Biological Chemistry", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 203", "BMS 339"], "description": "Drug action principles, molecular mechanisms."},
-        "BMS 406": {"name": "Molecular Modeling and Targeted Drug Design", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 203", "BMS 333"], "description": "Structure and ligand-based drug design, virtual screening."},
-        "BMS 409": {"name": "Drug Target Identification and Validation", "credits": 3, "level": "Senior", "prerequisites": ["BMS 205", "BMS 339"], "description": "Target discovery and validation, siRNA, antisense, knockout mice."},
-        "BMS 415": {"name": "Medicinal and Biological Chemistry Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Synthesis of pharmaceutical substances, spectral interpretation."},
-        "BMS 416": {"name": "Molecular Modeling and Targeted Drug Design lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Computational drug design, virtual screening, visualization tools."},
-        "BMS 422": {"name": "Algorithmic Foundations of Comp Biology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 321", "MATH 201"], "description": "Algorithms for genomic analysis, sequence analysis, structure prediction."},
-        "BMS 423": {"name": "Integrative Biology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Integrated biosystems, comparative biology, physiological genomics."},
-        "BMS 425": {"name": "Protein Structure and Function", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204", "PHYS 102", "MATH 102"], "description": "Protein structure-function relationships, biophysical principles."},
-        "BMS 426": {"name": "Developmental Biology and Genomics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 203"], "description": "Growth and development, cell differentiation, morphogenesis."},
-        "BMS 428": {"name": "Pathology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 330"], "description": "Cellular and molecular basis of disease, inflammation, necrosis."},
-        "BMS 428 L": {"name": "Pathology Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Pathological processes, staining techniques, immunohistochemistry."},
-        "BMS 429": {"name": "Molecular Immunology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Immune system, immune cell interactions, autoimmunity."},
-        "BMS 430": {"name": "Advanced Strategies in Organic Synthesis", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 201", "CHEM 203"], "description": "Advanced organic chemistry, Click Chemistry, Combinatorial Chemistry."},
-        "BMS 432": {"name": "Structural Elucidation and Instrumental Analysis", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 201", "BMS 201"], "description": "Mass spectrometry, LC-MS, proteomics, metabolomics."},
-        "BMS 434": {"name": "Epigenetics in Health and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Epigenetic control of gene expression, cellular identity, disease."},
-        "BMS 435": {"name": "Legal Aspects in Drug Desig Development", "credits": 1, "level": "Senior", "prerequisites": [], "description": "National and international drug registration regulations."},
-        "BMS 438": {"name": "Human Pathophysiology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 330"], "description": "Pathophysiology of body systems and organ disorders."},
-        "BMS 444": {"name": "Metagenomics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Gene sequencing, microbial genomes, taxonomic characterization."},
-        "BMS 448": {"name": "Pathology Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Pathological processes, staining, immunohistochemistry."},
-        "BMS 451": {"name": "Biology of Ageing", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 301"], "description": "Theories of aging, aging disorders, molecular biology of aging."},
-        "BMS 452": {"name": "Mitochondria in Health and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 301"], "description": "Mitochondrial function, mitogenesis, mitochondrial diseases."},
-        "BMS 455": {"name": "Cellular and Molecular Imaging", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204"], "description": "Biomedical imaging, MRI, tomography, fluorescent microscopy."},
-        "BMS 456": {"name": "Forensic Biology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 204"], "description": "Molecular biology and chemistry for forensic investigations."},
-        "BMS 457": {"name": "Clinical Nutrition", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Food and health, nutrition disorders, obesity, diabetes."},
-        "BMS 458": {"name": "Fermentation", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Fermentation technology, bioprocess development, gene expression."},
-        "BMS 459": {"name": "Pathogens and Host Defense", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Pathogen biology, disease mechanisms, diagnostic tools."},
-        "BMS 460": {"name": "Development and Commercialization", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Product development from discovery to market."},
-        "BMS 462": {"name": "Pharmacogenomics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 204"], "description": "Genetic variations and drug response, cytochrome P450."},
-        "BMS 463": {"name": "Vaccines", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Vaccine types, construction technologies, biosafety."},
-        "BMS 465": {"name": "Virology", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Viral structure, replication, transcription, assembly."},
-        "BMS 467": {"name": "Bacteriophages as Antibacterial Agent", "credits": 3, "level": "Senior", "prerequisites": ["BMS 201"], "description": "Phage therapy, pharmacokinetics, safety, applications."},
-        "BMS 468": {"name": "Bioorganic & Natural Products Chemistry", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Natural products, biosynthesis, molecular recognition."},
-        "BMS 469": {"name": "Targeted Metabolism & Redox Biology", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Mitochondrial biology, bioenergetics, redox signaling."},
-        "BMS 470": {"name": "Animal Models of Diseases", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Scientific, ethical, legal aspects of animal research."},
-        "BMS 471": {"name": "Clinical Trials Design, Administration and Management", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 202", "BMS 333"], "description": "Clinical trial theory, design, financing, monitoring."},
-        "BMS 472": {"name": "Pharmaceutics", "credits": 4, "level": "Senior", "prerequisites": [], "description": "Drug design, molecular modeling, virtual screening."},
-        "BMS 473": {"name": "Foundations of Computational and Systems Biology", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 101", "MATH 102", "CSCI 101"], "description": "Mathematical models, computational analysis, genomics."},
-        "BMS 474": {"name": "Genomics and Data Sciences", "credits": 3, "level": "Senior", "prerequisites": ["MATH 201", "BMS 321"], "description": "Numerical methods for linear algebra, differential equations."},
-        "BMS 475": {"name": "Bio Chemistry of Hormones and Vitamins", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204"], "description": "Advanced biochemistry, signaling, metabolic regulation."},
-        "BMS 477": {"name": "The Human Genome and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 203"], "description": "DNA damage, repair mechanisms, genomic instability."},
-        "BMS 496": {"name": "Selected Topics in BMS", "credits": 1, "level": "Senior", "prerequisites": [], "description": "In-depth training on selected biomedical topics."},
-        "BMS 499": {"name": "Selected Topics in BMS", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Selected topics in biomedical sciences."},
-        # Graduate Level (9 courses)
-        "BMS 500 A": {"name": "Directed Research Field Study", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Off campus DDD research activities, industry, international labs."},
-        "BMS 500 B": {"name": "Directed Research Field Study", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Off campus DDD research activities, industry, international labs."},
-        "BMS 500 C": {"name": "Directed Research Field Study", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Off campus DDD research activities, industry, international labs."},
-        "BMS 500 D": {"name": "Directed Research Field Study", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Off campus DDD research activities, industry, international labs."},
-        "BMS 501": {"name": "Senior Project II", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Research project planning and execution."},
-        "BMS 502": {"name": "Senior Project III", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Finalize project and thesis presentation."},
-        "BMS 503": {"name": "Genome Stability & Drug Development", "credits": 3, "level": "Graduate", "prerequisites": ["BMS 203", "BMS 204", "BMS 301"], "description": "Genome stability, siRNA screening, drug targets."},
-        "BMS 504": {"name": "Targeting DNA Repair in Person Medicine", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "DNA repair drug targets, synthetic lethality, personalized medicine."},
-        "BMS 506": {"name": "Molecular Modeling and Targeted Drug Des", "credits": 4, "level": "Graduate", "prerequisites": ["PHYS 101", "CHEM 202", "BMS 333"], "description": "Advanced drug design, molecular modeling, virtual screening."},
-        "BMS 701": {"name": "Computational Methods in Biomedical Sciences", "credits": 3, "level": "Graduate", "prerequisites": [], "description": "Machine learning, algorithms, genomics, drug simulation."}
+        "BMS 364": {"name": "Biophysics", "credits": 3, "level": "Junior", "prerequisites": ["CHEM 202"], "description": "Physical basis underlying biological molecules, biophysical properties of proteins, nucleic acids."},
+        "BMS 399": {"name": "Internship", "credits": 2, "level": "Junior", "prerequisites": [], "description": "External training in a national or international industry or research institution. Pass/Fail."},
+        # Senior Level - Major, Concentration Requirements and Electives
+        "BMS 401": {"name": "Senior Project I", "credits": 3, "level": "Senior", "prerequisites": [], "description": "First part of two-semester research thesis project in BMS."},
+        "BMS 402": {"name": "Senior Project II", "credits": 3, "level": "Senior", "prerequisites": ["BMS 401"], "description": "Completion of two-semester research thesis project in BMS."},
+        "BMS 404": {"name": "Biostatistics", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 101"], "description": "Statistical methods for biological data: hypothesis testing, regression, ANOVA, survival analysis."},
+        "BMS 405": {"name": "Medicinal and Biological Chemistry", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 203", "BMS 339"], "description": "Medicinal chemistry: drug design, SAR, pharmacophore, lead optimization."},
+        "BMS 406": {"name": "Molecular Modeling and Targeted Drug Design", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 203", "BMS 333"], "description": "Computational approaches: molecular docking, QSAR, virtual screening, drug-receptor interactions."},
+        "BMS 409": {"name": "Drug Targets Identification and Validation", "credits": 3, "level": "Senior", "prerequisites": ["BMS 205", "BMS 339"], "description": "Target identification, validation approaches, druggability assessment."},
+        "BMS 415": {"name": "Medicinal and Biological Chemistry Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Synthesis and characterization of medicinal compounds."},
+        "BMS 416": {"name": "Molecular Modeling and Targeted Drug Design Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Computational drug design laboratory techniques."},
+        "BMS 422": {"name": "Algorithmic Foundations of Computational Biology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 321", "MATH 201"], "description": "Algorithms for sequence alignment, phylogenetics, genome assembly, protein structure prediction."},
+        "BMS 425": {"name": "Protein Structure and Function", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204", "PHYS 102", "MATH 102"], "description": "Structural biology of proteins: folding, function, methods of structure determination."},
+        "BMS 426": {"name": "Developmental Biology and Genetics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 203"], "description": "Developmental biology: fertilization, morphogenesis, organogenesis, genetic regulation of development."},
+        "BMS 428": {"name": "Pathology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 330"], "description": "General and systemic pathology: disease mechanisms, cell injury, inflammation, neoplasia."},
+        "BMS 429": {"name": "Molecular Immunology and Practicum", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Immunology: innate and adaptive immunity, immunopathology, vaccines, immunotherapy."},
+        "BMS 430": {"name": "Advanced Strategies in Organic Synthesis", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 201", "CHEM 203"], "description": "Advanced organic synthesis strategies for complex molecule synthesis."},
+        "BMS 432": {"name": "Structural Elucidation and Instrumental Analysis", "credits": 3, "level": "Senior", "prerequisites": ["CHEM 201", "BMS 201"], "description": "Spectroscopic methods (NMR, MS, IR) for structural elucidation of organic and biological molecules."},
+        "BMS 434": {"name": "Epigenetics in Health and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Epigenetic mechanisms, DNA methylation, histone modification, non-coding RNAs, disease epigenetics."},
+        "BMS 435": {"name": "Legal Aspects in Drug Design and Development", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Regulatory framework, intellectual property, FDA approval processes, clinical trial regulations."},
+        "BMS 438": {"name": "Human Pathophysiology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 330"], "description": "Mechanisms of disease: cardiovascular, respiratory, GI, renal, endocrine pathophysiology."},
+        "BMS 444": {"name": "Metagenomics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202"], "description": "Metagenomic approaches: microbiome analysis, environmental genomics, bioinformatics pipelines."},
+        "BMS 448": {"name": "Pathology Lab", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Histopathology laboratory techniques: tissue processing, staining, microscopic examination."},
+        "BMS 451": {"name": "Biology of Aging", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 301"], "description": "Mechanisms of aging: telomeres, oxidative stress, senescence, age-related diseases."},
+        "BMS 452": {"name": "Mitochondria in Health and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 301"], "description": "Mitochondrial biology, bioenergetics, mitochondrial diseases, therapeutics."},
+        "BMS 455": {"name": "Cellular and Molecular Imaging", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204"], "description": "Imaging modalities: fluorescence microscopy, super-resolution, live-cell imaging, image analysis."},
+        "BMS 456": {"name": "Forensic Biology", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 204"], "description": "Forensic DNA analysis, fingerprinting, toxicology, crime scene investigation."},
+        "BMS 457": {"name": "Clinical Nutrition", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Nutritional biochemistry, dietary requirements, therapeutic nutrition, clinical assessment."},
+        "BMS 458": {"name": "Fermentation", "credits": 3, "level": "Senior", "prerequisites": ["BMS 201"], "description": "Microbial fermentation, bioreactor design, fermentation products, industrial applications."},
+        "BMS 459": {"name": "Pathogens and Host Defense", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Host-pathogen interactions, virulence mechanisms, immune evasion, antimicrobial strategies."},
+        "BMS 460": {"name": "Development and Commercialization", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Technology transfer, biotech entrepreneurship, IP management, startup formation."},
+        "BMS 462": {"name": "Pharmacogenomics", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 204"], "description": "Genetic variation in drug response, personalized medicine, GWAS in pharmacology."},
+        "BMS 463": {"name": "Vaccines", "credits": 3, "level": "Senior", "prerequisites": ["BMS 429"], "description": "Vaccine types, development platforms, adjuvants, immunogenicity, regulatory aspects."},
+        "BMS 465": {"name": "Virology", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 102"], "description": "Viral structure, replication, pathogenesis, antiviral strategies, emerging viruses."},
+        "BMS 467": {"name": "Bacteriophages as Antibacterial Agent", "credits": 3, "level": "Senior", "prerequisites": ["BMS 201"], "description": "Phage biology, phage therapy, phage-host interactions, applications."},
+        "BMS 471": {"name": "Clinical Trials Design, Administration and Management", "credits": 4, "level": "Senior", "prerequisites": ["CHEM 202", "BMS 333"], "description": "Clinical trial design, protocols, regulatory compliance, data management, GCP."},
+        "BMS 473": {"name": "Foundations of Computational and Systems Biology", "credits": 3, "level": "Senior", "prerequisites": ["BIOL 101", "CSCI 101", "MATH 102"], "description": "Systems biology: network analysis, dynamic modeling, omics data integration."},
+        "BMS 474": {"name": "Genomics and Data Sciences", "credits": 3, "level": "Senior", "prerequisites": ["MATH 201", "BMS 321"], "description": "Next-generation sequencing, genome assembly, variant calling, genomic data analysis."},
+        "BMS 475": {"name": "Biochemistry of Hormones and Vitamins", "credits": 3, "level": "Senior", "prerequisites": ["BMS 204"], "description": "Hormonal signaling, steroid and peptide hormones, vitamin metabolism and function."},
+        "BMS 477": {"name": "The Human Genome and Disease", "credits": 3, "level": "Senior", "prerequisites": ["BMS 202", "BMS 203"], "description": "Human genome organization, genetic diseases, CRISPR-based therapeutics, gene therapy."},
+        "BMS 499": {"name": "Selected Topics in BMS", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Current topics in biomedical sciences; variable content."}
     },
     
     # NANOSCIENCE (NANOSC) - Official ZC Course Catalog (46 courses)
@@ -1693,6 +3030,88 @@ COURSE_CATALOG = {
     },
     
     # DATA SCIENCE AND AI (DSAI) - Official ZC Course Catalog
+    # CSAI SCHOOL-WIDE COURSES - Common to all CSAI programs (School Requirements)
+    # Source: CSAI_Curricula_2022.pdf, Section 2.2
+    "CSAI": {
+        # CSAI 100-level (Freshman)
+        "CSAI 100": {"name": "Introduction to Computational Sciences and AI", "credits": 1, "level": "Freshman", "prerequisites": [], "description": "Overview of computational sciences and artificial intelligence disciplines, research areas, and career paths."},
+        "CSAI 101": {"name": "Fundamentals of Programming and Computer Science", "credits": 2, "level": "Freshman", "prerequisites": [], "description": "Introduction to programming, algorithms, data representation, and fundamental computing concepts using Python."},
+        "CSAI 102": {"name": "Digital Logic and Computer Architecture", "credits": 3, "level": "Freshman", "prerequisites": [], "description": "Boolean algebra, logic gates, combinational and sequential circuits, memory, and basic computer architecture."},
+        # CSAI 151 (Freshman/Sophomore)
+        "CSAI 151": {"name": "Object-Oriented Programming", "credits": 3, "level": "Sophomore", "prerequisites": ["CSAI 101"], "description": "OOP concepts: classes, objects, inheritance, polymorphism, encapsulation, exception handling, file I/O."},
+        # CSAI 200-level (Sophomore)
+        "CSAI 201": {"name": "Data Structures", "credits": 3, "level": "Sophomore", "prerequisites": ["CSAI 151"], "description": "Arrays, linked lists, stacks, queues, trees, graphs, hashing, and algorithm complexity analysis."},
+        "CSAI 202": {"name": "Introduction to Database Systems", "credits": 3, "level": "Sophomore", "prerequisites": ["CSAI 151"], "description": "Relational model, SQL, ER diagrams, normalization, transactions, and database design principles."},
+        "CSAI 203": {"name": "Introduction to Software Engineering", "credits": 3, "level": "Sophomore", "prerequisites": ["CSAI 101"], "description": "SDLC, requirements engineering, software design, testing, maintenance, and agile methodologies."},
+        "CSAI 204": {"name": "Operating Systems", "credits": 3, "level": "Sophomore", "prerequisites": ["CSAI 201"], "description": "Processes, threads, scheduling, memory management, file systems, I/O, and virtualization."},
+        "CSAI 205": {"name": "Fundamentals of Circuits and Electronics", "credits": 3, "level": "Sophomore", "prerequisites": [], "description": "Circuit fundamentals, Ohm's law, Kirchhoff's laws, AC/DC analysis, op-amps, and digital electronics."},
+        # CSAI 251-252 (Junior)
+        "CSAI 251": {"name": "Algorithm Design and Analysis", "credits": 3, "level": "Junior", "prerequisites": ["CSAI 201"], "description": "Algorithm design paradigms: divide-and-conquer, greedy, dynamic programming, graph algorithms, NP-completeness."},
+        "CSAI 252": {"name": "Introduction to Computer Networks", "credits": 3, "level": "Junior", "prerequisites": [], "description": "OSI model, TCP/IP, routing, switching, network protocols, sockets, wireless, and network security basics."},
+        "CSAI 253": {"name": "Machine Learning", "credits": 3, "level": "Junior", "prerequisites": ["CSAI 201", "MATH 105"], "description": "Supervised and unsupervised learning, regression, classification, clustering, feature engineering, model evaluation."},
+        # CSAI 300-level (Junior/Senior)
+        "CSAI 301": {"name": "Artificial Intelligence", "credits": 3, "level": "Junior", "prerequisites": ["CSAI 201"], "description": "Search algorithms, knowledge representation, logic, planning, probabilistic reasoning, and AI applications."},
+        "CSAI 302": {"name": "Advanced Database Systems", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 202"], "description": "Query optimization, transaction management, distributed databases, NoSQL, and big data storage systems."},
+        "CSAI 351": {"name": "Principles and Practices for Secure Computing", "credits": 3, "level": "Junior", "prerequisites": ["CSAI 201"], "description": "Security principles, threat modeling, cryptography, authentication, network security, and secure coding practices."},
+        # CSAI 399/498/499 (Senior - School Req)
+        "CSAI 399": {"name": "Internship", "credits": 4, "level": "Senior", "prerequisites": [], "description": "Supervised internship in industry or research. Minimum 80 credit hours required. Graded Pass/Fail."},
+        "CSAI 490": {"name": "Strategic Governance of Intelligent Systems", "credits": 3, "level": "Senior", "prerequisites": [], "description": "AI governance frameworks, ethics in AI, regulatory landscape, risk management for intelligent systems."},
+        "CSAI 498": {"name": "Senior Project - Part 1", "credits": 1, "level": "Senior", "prerequisites": [], "description": "First part of two-semester senior design project. Minimum 92 credit hours required."},
+        "CSAI 499": {"name": "Senior Project - Part 2", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 498"], "description": "Completion and presentation of senior design project."}
+    },
+
+    # MATH COURSES USED IN CSAI PROGRAMS - School Requirements
+    "MATH_CSAI": {
+        "MATH 103": {"name": "Calculus for Computational Sciences", "credits": 3, "level": "Freshman", "prerequisites": [], "description": "Differential and integral calculus with applications to computing. Limits, derivatives, integration techniques."},
+        "MATH 104": {"name": "Linear Algebra", "credits": 3, "level": "Freshman", "prerequisites": [], "description": "Vectors, matrices, linear transformations, eigenvalues, eigenvectors, and applications in computing."},
+        "MATH 105": {"name": "Probability and Statistics", "credits": 3, "level": "Sophomore", "prerequisites": ["MATH 103"], "description": "Probability theory, random variables, distributions, statistical inference, regression, and hypothesis testing."},
+        "MATH 205": {"name": "Discrete Mathematics for Computational Sciences", "credits": 3, "level": "Sophomore", "prerequisites": [], "description": "Logic, sets, functions, combinatorics, graph theory, trees, and formal languages."},
+        "MATH 303": {"name": "Linear and Non-linear Programming for Computational Sciences", "credits": 3, "level": "Junior", "prerequisites": [], "description": "Optimization methods: linear programming, simplex method, duality, convex optimization, and gradient descent."},
+        "MATH 307": {"name": "Numerical Methods", "credits": 3, "level": "Junior", "prerequisites": ["MATH 104"], "description": "Numerical solutions of equations, interpolation, numerical integration, ODEs, and error analysis."}
+    },
+
+    # SCH COURSES (University and School Wide Requirements for CSAI)
+    "SCH_CSAI": {
+        "SCH 163": {"name": "Sustainability, Social and Ethical Issues in Computing", "credits": 2, "level": "Freshman", "prerequisites": [], "description": "Environmental sustainability, social impact, and ethical responsibilities in computing and AI."},
+        "SCH 261": {"name": "Engineering Project Management", "credits": 2, "level": "Sophomore", "prerequisites": [], "description": "Project planning, scheduling, risk management, cost estimation, and team management for engineering projects."},
+        "SCH 264": {"name": "Introduction to Entrepreneurship and Small Business Management", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Entrepreneurship principles, business plan development, startup management, and small business operations."},
+        "SCH 273": {"name": "Cognitive Psychology", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Cognitive processes: attention, perception, memory, language, reasoning, and decision-making. Required for HCI concentration."}
+    },
+
+    # IT CONCENTRATION COURSES
+    "ITNS": {
+        "ITNS 301": {"name": "Network Administration", "credits": 2, "level": "Junior", "prerequisites": ["CSAI 252"], "description": "Network configuration, management, monitoring, and troubleshooting for enterprise environments."},
+        "ITNS 302": {"name": "IoT Systems and Application Development", "credits": 3, "level": "Junior", "prerequisites": ["CSAI 252"], "description": "IoT architecture, protocols, sensor networks, edge computing, and IoT application development."},
+        "ITNS 403": {"name": "Storage Area Networks", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 252"], "description": "SAN architecture, Fibre Channel, iSCSI, NAS, storage virtualization, and data management."},
+        "ITNS 404": {"name": "Network Performance Monitoring and Troubleshooting", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 252"], "description": "Network performance metrics, monitoring tools, traffic analysis, and systematic troubleshooting methodologies."},
+        "ITNS 406": {"name": "Network Resilience and Hardening", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 252"], "description": "Network resilience design, redundancy, fault tolerance, DDoS mitigation, and network hardening techniques."},
+        "ITNS 407": {"name": "IT Audit and Risk Management", "credits": 3, "level": "Senior", "prerequisites": [], "description": "IT audit frameworks, risk assessment, COBIT, ISO 27001, compliance, and IT governance practices."},
+        "ITNS 408": {"name": "Network Security", "credits": 3, "level": "Senior", "prerequisites": ["IT 310"], "description": "Advanced network security, firewalls, IDS/IPS, VPNs, PKI, and security architecture design."},
+        "ITNS 410": {"name": "Penetration Testing", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Ethical hacking methodologies, vulnerability assessment, exploitation techniques, and reporting."},
+        "ITNS 411": {"name": "Network Programming", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Socket programming, network application development, REST APIs, and distributed systems programming."},
+        "ITNS 412": {"name": "IT Compliance and Quality Management", "credits": 3, "level": "Senior", "prerequisites": [], "description": "IT compliance frameworks, quality management systems, ITIL, and process improvement methodologies."},
+        "ITNS 413": {"name": "Emerging Networking Technologies", "credits": 3, "level": "Senior", "prerequisites": [], "description": "SDN, NFV, 5G networks, Wi-Fi 6, intent-based networking, and future network architectures."},
+        "ITNS 414": {"name": "Cyber Forensics", "credits": 3, "level": "Senior", "prerequisites": ["IT 310"], "description": "Digital forensics investigation, evidence collection, chain of custody, forensic tools, and legal aspects."},
+        "ITNS 415": {"name": "Wireless Security", "credits": 3, "level": "Senior", "prerequisites": ["IT 310"], "description": "Wireless network vulnerabilities, WPA3, 802.1X, rogue AP detection, and wireless intrusion prevention."}
+    },
+
+    "ITCC": {
+        "ITCC 301": {"name": "Linux System Administration", "credits": 2, "level": "Junior", "prerequisites": [], "description": "Linux OS administration, file systems, user management, shell scripting, and system services."},
+        "ITCC 302": {"name": "Cloud Infrastructure Administration", "credits": 3, "level": "Junior", "prerequisites": ["IT 308"], "description": "Cloud infrastructure management, IaaS, deployment automation, monitoring, and cost optimization."},
+        "ITCC 403": {"name": "Security Testing for Cloud Applications", "credits": 3, "level": "Senior", "prerequisites": ["IT 310"], "description": "Cloud security testing methodologies, OWASP, penetration testing for cloud environments."},
+        "ITCC 404": {"name": "Windows Enterprise Administration", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Windows Server, Active Directory, Group Policy, Hyper-V, and enterprise Windows management."},
+        "ITCC 405": {"name": "Virtualization and Cloud Security", "credits": 3, "level": "Senior", "prerequisites": ["IT 308"], "description": "Virtualization security, hypervisor hardening, container security, and cloud security architecture."},
+        "ITCC 406": {"name": "Migrating Data and Applications to the Cloud", "credits": 3, "level": "Senior", "prerequisites": ["IT 308"], "description": "Cloud migration strategies, data migration tools, application refactoring, and hybrid cloud architectures."},
+        "ITCC 407": {"name": "Cloud Services Management", "credits": 3, "level": "Senior", "prerequisites": ["IT 308"], "description": "Cloud service lifecycle management, SLAs, cost management, FinOps, and multi-cloud governance."},
+        "ITCC 408": {"name": "Application Development and Scripting in the Cloud", "credits": 3, "level": "Senior", "prerequisites": ["IT 308"], "description": "Cloud-native application development, serverless computing, microservices, and DevOps in the cloud."},
+        "ITCC 410": {"name": "Software Development Operations in Cloud Environments", "credits": 3, "level": "Senior", "prerequisites": ["CSAI 203", "IT 308"], "description": "DevOps practices, CI/CD pipelines, containerization with Docker/Kubernetes, and cloud deployment."},
+        "ITCC 411": {"name": "SaaS, IaaS and PaaS", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Cloud service models comparison, service selection, integration strategies, and management practices."},
+        "ITCC 412": {"name": "Advanced Cloud Security", "credits": 3, "level": "Senior", "prerequisites": ["IT 308", "IT 310"], "description": "Advanced cloud security architecture, zero trust, SIEM, SOAR, and cloud compliance frameworks."},
+        "ITCC 413": {"name": "IT Security and Policy Planning", "credits": 3, "level": "Senior", "prerequisites": ["IT 310"], "description": "Security policy development, incident response planning, BCP, DR, and security program management."},
+        "ITCC 414": {"name": "IS Strategy Management and Acquisition", "credits": 3, "level": "Senior", "prerequisites": [], "description": "IT strategy development, IT portfolio management, vendor selection, and technology acquisition."}
+    },
+
+    # DATA SCIENCE AND AI (DSAI) - Official ZC Course Catalog
     "DSAI": {
         "DSAI 103": {"name": "Data Acquisition in Data Science (ETL)", "credits": 3, "level": "Freshman", "prerequisites": ["CSAI 101"], "description": "Data acquisition process including extraction, transformation, and loading of data into target systems."},
         "DSAI 104": {"name": "Knowledge Representation and Reasoning", "credits": 2, "level": "Freshman", "prerequisites": ["CSAI 101"], "description": "Knowledge representation in symbolic form for automated reasoning, abductive reasoning, and constraint satisfaction."},
@@ -1816,7 +3235,7 @@ COURSE_CATALOG = {
         "ENV 120": {"name": "Microbiology and Environmental Health", "credits": 2, "level": "Freshman", "prerequisites": [], "description": "Environmental microbiology, biofilms, biodegradation, bioremediation, fermentation."},
         "ENV 203": {"name": "Environmental Chemistry", "credits": 3, "level": "Sophomore", "prerequisites": ["CHEM 201"], "description": "Analytical chemistry for environment, water and wastewater analysis, BOD, COD."},
         "ENV 204": {"name": "Environmental Engineering Chemistry", "credits": 3, "level": "Sophomore", "prerequisites": ["ENV 104"], "description": "Pollutant classification, air, water, soil pollution control, instrumental techniques."},
-        "ENV 207": {"name": "Material and Energy Balances", "credits": 3, "level": "Sophomore", "prerequisites": ["ENGR 205"], "description": "Conservation of mass and energy, unit operations, waste minimization."},
+        "ENV 207": {"name": "Material and Energy Balances", "credits": 3, "level": "Sophomore", "prerequisites": ["ENGR 105"], "description": "Conservation of mass and energy, unit operations, waste minimization."},
         "ENV 213": {"name": "Environmental Chemistry Lab", "credits": 1, "level": "Sophomore", "prerequisites": [], "description": "Water analysis for DO, pH, conductivity, turbidity, heavy metals, COD, BOD."},
         "ENV 219": {"name": "Climate Dynamics", "credits": 2, "level": "Sophomore", "prerequisites": [], "description": "Physical climatology, global energy budget, atmosphere and ocean circulations."},
         "ENV 220": {"name": "Environmental Microbiology", "credits": 3, "level": "Sophomore", "prerequisites": ["BIOL 101"], "description": "Prokaryotic microorganisms, metabolism, community dynamics, water and soil microbiology."},
@@ -1870,14 +3289,20 @@ COURSE_CATALOG = {
         "ENV 458": {"name": "Energy from Biomass and Waste", "credits": 3, "level": "Senior", "prerequisites": ["ENV 359"], "description": "Biogas, bioethanol, biodiesel production from waste and biomass."},
         "ENV 459": {"name": "Environmental Remote Sensing", "credits": 3, "level": "Senior", "prerequisites": ["ENV 219"], "description": "Remote sensing principles, data acquisition, airborne and satellite platforms."},
         "ENV 460": {"name": "Water-Quality Engineering in Natural Systems", "credits": 2, "level": "Senior", "prerequisites": ["ENV 204", "ENV 306"], "description": "Fate and transport in rivers, lakes, groundwater, remediation."},
-        "ENV 461": {"name": "Soil and Groundwater Remediation", "credits": 3, "level": "Senior", "prerequisites": ["ENV 204", "ENV 306"], "description": "Contaminated soil and groundwater remediation, site investigation."},
-        "ENV 465": {"name": "Environmental Project Management", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Project scope, time, cost, quality, risk, procurement management."},
-        "ENV 470": {"name": "Air Quality and Pollution Engineering", "credits": 3, "level": "Senior", "prerequisites": ["ENV 319", "ENV 207"], "description": "Air pollution control, emissions, meteorology, dispersion modeling."},
-        "ENV 475": {"name": "Industrial Reaction Engineering", "credits": 3, "level": "Senior", "prerequisites": ["ENV 257"], "description": "Heterogeneous reacting systems, fluid-solid reactors, scale-up."},
-        "ENV 480": {"name": "Urban Water Systems Design", "credits": 3, "level": "Senior", "prerequisites": ["ENV 406", "ENV 420"], "description": "Water distribution, wastewater collection, stormwater drainage, software."},
-        "ENV 497": {"name": "Selected Topics in Environmental Engineering", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Contemporary topics in environmental engineering."},
-        "ENV 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Problem identification, solution generation, sustainability requirements."},
-        "ENV 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["ENV 498"], "description": "Detailed design of senior project solution."},
+        "ENV 419": {"name": "Introduction to Integrated Water Resources Management", "credits": 3, "level": "Senior", "prerequisites": ["ENV 306"], "description": "IWRM principles, irrigation management, water economics, transboundary water resources."},
+        "ENV 430": {"name": "Urban Development and Environmental Planning", "credits": 3, "level": "Senior", "prerequisites": ["ENV 323"], "description": "Urban planning principles, environmental sustainability, green infrastructure, zoning."},
+        "ENV 446": {"name": "Water Desalination", "credits": 3, "level": "Senior", "prerequisites": ["ENV 320", "ENV 440"], "description": "Seawater desalination technologies, thermal processes (MSF, MED), membrane processes (RO, NF)."},
+        "ENV 451": {"name": "Industrial Bioprocesses", "credits": 3, "level": "Senior", "prerequisites": ["ENV 359"], "description": "Enzymes and microorganisms for industrial products, bioreactors, biofuels, biorefinery."},
+        "ENV 454": {"name": "Life Cycle Assessment", "credits": 3, "level": "Senior", "prerequisites": ["ENV 207"], "description": "LCA methodology, goal and scope definition, inventory analysis, impact assessment, ISO standards."},
+        "ENV 456": {"name": "Coastal Environmental Management", "credits": 3, "level": "Senior", "prerequisites": ["ENV 219"], "description": "Coastal zone management, water waves, hydrodynamics, sediment transport, marine pollution."},
+        "ENV 458": {"name": "Energy from Biomass and Waste", "credits": 3, "level": "Senior", "prerequisites": ["ENV 359"], "description": "Waste-to-energy technologies, biogas, bioethanol, biodiesel, thermal conversion processes."},
+        "ENV 459": {"name": "Environmental Remote Sensing", "credits": 3, "level": "Senior", "prerequisites": ["ENV 219", "PHYS 126"], "description": "Remote sensing principles, electromagnetic spectrum, data analysis for environmental monitoring."},
+        "ENV 460": {"name": "Water-Quality Engineering in Natural Systems", "credits": 2, "level": "Senior", "prerequisites": ["ENV 204", "ENV 306"], "description": "Water quality modeling in rivers, lakes, estuaries; nutrient cycles; eutrophication control."},
+        "ENV 461": {"name": "Soil and Groundwater Remediation", "credits": 3, "level": "Senior", "prerequisites": ["ENV 204", "ENV 306"], "description": "Contaminated site investigation, risk assessment, remediation technologies for soil and groundwater."},
+        "ENV 475": {"name": "Industrial Reaction Engineering", "credits": 3, "level": "Senior", "prerequisites": ["ENV 257"], "description": "Heterogeneous reacting systems, fluid-solid reactors, catalyst deactivation, scale-up considerations."},
+        "ENV 497": {"name": "Selected Topics in Environmental Engineering", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Contemporary topics in environmental engineering; variable credits depending on topic."},
+        "ENV 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Problem identification, solution generation and evaluation; requires 102 completed credits."},
+        "ENV 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["ENV 498"], "description": "Detailed design, prototyping, and demonstration of senior project solution."},
         # Graduate Level (21 courses)
         "ENV 506": {"name": "Water Desalination", "credits": 3, "level": "Graduate", "prerequisites": ["ENV 420", "ENV 425"], "description": "Seawater desalination technologies, thermal and membrane processes."},
         "ENV 510": {"name": "Process Analysis and Simulation", "credits": 3, "level": "Graduate", "prerequisites": ["ENV 330", "ENV 425"], "description": "Process simulation, dynamic analysis, cost evaluation, conceptual design."},
@@ -2047,7 +3472,7 @@ COURSE_CATALOG = {
         "REE 432": {"name": "Photovoltaic Systems", "credits": 3, "level": "Senior", "prerequisites": ["REE 321"], "description": "Photoelectric conversion, PV technologies, inverters, and grid integration."},
         "REE 434": {"name": "Wind Energy Systems", "credits": 3, "level": "Senior", "prerequisites": ["REE 319"], "description": "Wind meteorology, wind plant design, and grid integration."},
         "REE 466": {"name": "Machine Design", "credits": 3, "level": "Senior", "prerequisites": ["ENGR 221"], "description": "Design considerations, material selection, stress analysis, and shaft design."},
-        "REE 470": {"name": "Computer-Aided Design and Engineering", "credits": 3, "level": "Senior", "prerequisites": ["REE 312"], "description": "CAD for mechanical engineering, FEA, and CFD using SolidWorks, ANSYS, COMSOL."},
+        "REE 470": {"name": "Computer-Aided Design and Engineering", "credits": 3, "level": "Senior", "prerequisites": ["REE 302"], "description": "CAD for mechanical engineering, FEA, and CFD using SolidWorks, ANSYS, COMSOL."},
         "REE 476": {"name": "Heating, Ventilation, and Air Conditioning Systems", "credits": 2, "level": "Senior", "prerequisites": ["REE 306"], "description": "HVAC system types, components, energy efficiency, and design principles."},
         "REE 477": {"name": "Modern Control Techniques", "credits": 2, "level": "Senior", "prerequisites": ["REE 320"], "description": "Nonlinear systems, adaptive control, and model predictive control."},
         "REE 478": {"name": "Industrial Control", "credits": 2, "level": "Senior", "prerequisites": ["REE 320"], "description": "PLCs, DCS, SCADA systems, and industrial communication networks."},
@@ -2068,9 +3493,9 @@ COURSE_CATALOG = {
         "REE 493": {"name": "Turbine Blade Design", "credits": 2, "level": "Senior", "prerequisites": ["REE 418"], "description": "Turbine blade aerodynamics, structural design, and wind resource modeling."},
         "REE 494": {"name": "Special Topics in Adv Thermal Systems", "credits": 2, "level": "Senior", "prerequisites": ["REE 425"], "description": "Solar thermal energy conversion, radiation measurement, and applications."},
         "REE 495": {"name": "Electric Vehicles", "credits": 2, "level": "Senior", "prerequisites": ["REE 321"], "description": "Power converters in EVs, battery management, motor drives, and chargers."},
-        "REE 496": {"name": "Selected Topics in Renewable Energy Engineering", "credits": 0, "level": "Senior", "prerequisites": [], "description": "Selected topics of interest not covered elsewhere in the curriculum."},
-        "REE 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Problem identification, solution generation, and project planning."},
-        "REE 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["REE 498"], "description": "Detailed technical design and final project report."},
+        "REE 496": {"name": "Selected Topics in Renewable Energy Engineering", "credits": 3, "level": "Senior", "prerequisites": [], "description": "Selected topics of interest not covered elsewhere; variable credits 1-3."},
+        "REE 498": {"name": "Senior Design Project I", "credits": 1, "level": "Senior", "prerequisites": [], "description": "Problem identification, solution generation and planning; requires 102 completed credits."},
+        "REE 499": {"name": "Senior Design Project II", "credits": 3, "level": "Senior", "prerequisites": ["REE 498"], "description": "Detailed technical design and final project report; last two semesters."},
         # Graduate Level
         "REE 501": {"name": "Sustainable Energy Development", "credits": 2, "level": "Graduate", "prerequisites": [], "description": "Energy systems, renewable technologies, and sustainability assessment."},
         "REE 503": {"name": "Renewable Energy Law and Economics", "credits": 2, "level": "Graduate", "prerequisites": [], "description": "Energy market regulation and economic evaluation of energy projects."},
@@ -2528,11 +3953,15 @@ class RuleBasedDataGenerator:
             school = "General Education"
             if dept in ["SPC", "CIE", "ENV", "NANENG", "REE", "EBE"]:
                 school = "School of Engineering"
-            elif dept in ["BMS", "NANOSC", "PEU", "MATSCI"]:
+            elif dept in ["BMS", "NANOSC", "PEU", "PHYS", "MATSCI"]:
+                # PEU kept for backward compatibility; PHYS is the actual department code
+                # used for Physics of Universe courses per SCI_Curricula_2023.pdf
                 school = "School of Science"
             elif dept in ["DSAI", "SW", "IT"]:
                 school = "School of Computational Sciences and Artificial Intelligence"
-            elif dept in ["BACT", "FINC", "MKTG", "BENT", "SCHN", "MGMT"]:
+            elif dept in ["BACT", "FINC", "MKTG", "BENT", "SCHN", "MGMT",
+                          "BGEN", "BLAW", "ECON", "BDAT", "BMAT", "BTEM",
+                          "BIFT", "BCSE", "SUST", "BUS"]:
                 school = "School of Business"
             elif dept == "AIE":
                 school = "School of Engineering (Graduate)"
