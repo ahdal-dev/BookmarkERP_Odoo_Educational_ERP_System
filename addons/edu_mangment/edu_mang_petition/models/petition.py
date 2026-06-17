@@ -396,13 +396,75 @@ class StudentPetition(models.Model):
         self.write({'state': 'cancelled'})
 
     def _send_submission_notification(self):
-        """Send email notification to admins when petition is submitted"""
-        pass
+        """Post a chatter message and send an email to admin group on petition submission."""
+        for petition in self:
+            try:
+                petition.message_post(
+                    body=_(
+                        'A new petition <b>%s</b> has been submitted by %s '
+                        'and is awaiting review.'
+                    ) % (petition.name, petition.student_id.name),
+                    subject=_('New Petition Submitted: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=self._get_admin_partner_ids(),
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Submission notification failed for petition %s', petition.name, exc_info=True
+                )
 
     def _send_approval_notification(self):
-        """Send email notification to student when petition is approved"""
-        pass
+        """Send an email to the student whose petition was approved."""
+        for petition in self:
+            if not petition.student_id.email:
+                continue
+            try:
+                petition.message_post(
+                    body=_('Your petition <b>%s</b> has been <b>approved</b>.') % petition.name,
+                    subject=_('Petition Approved: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=[petition.student_id.id],
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Approval notification failed for petition %s', petition.name, exc_info=True
+                )
 
     def _send_rejection_notification(self):
-        """Send email notification to student when petition is rejected"""
-        pass
+        """Send an email to the student whose petition was rejected."""
+        for petition in self:
+            if not petition.student_id.email:
+                continue
+            try:
+                reason_text = (
+                    _('<br/>Reason: %s') % petition.rejection_reason
+                    if petition.rejection_reason else ''
+                )
+                petition.message_post(
+                    body=_(
+                        'Your petition <b>%s</b> has been <b>rejected</b>.%s'
+                    ) % (petition.name, reason_text),
+                    subject=_('Petition Rejected: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=[petition.student_id.id],
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Rejection notification failed for petition %s', petition.name, exc_info=True
+                )
+
+    def _get_admin_partner_ids(self):
+        """Return partner IDs of all users in the ERP admin group."""
+        try:
+            admin_group = self.env.ref('edu_mang_auth.group_erp_admin', raise_if_not_found=False)
+            if admin_group:
+                return admin_group.users.mapped('partner_id').ids
+        except Exception:
+            pass
+        return []

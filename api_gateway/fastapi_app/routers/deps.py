@@ -17,12 +17,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 
 # Re-read from env so routers work whether imported by main.py or run standalone.
-ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8081")
-ODOO_DB = os.getenv("ODOO_DB", "edu_demo_new")
+ODOO_URL      = os.getenv("ODOO_URL", "http://odoo:8081")
+ODOO_DB       = os.getenv("ODOO_DB", "edu_demo_new")
 ODOO_USERNAME = os.getenv("ODOO_USERNAME", "admin")
-ODOO_PASSWORD = os.getenv("ODOO_PASSWORD", "admin")
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ODOO_PASSWORD = os.getenv("ODOO_PASSWORD") or ""   # validated by main.py fail-fast
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or "" # validated by main.py fail-fast
+JWT_ALGORITHM  = os.getenv("JWT_ALGORITHM", "HS256")
 
 logger = logging.getLogger(__name__)
 _bearer = HTTPBearer()

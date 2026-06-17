@@ -21,7 +21,8 @@ os.environ.setdefault("OCR_SERVICE_URL", "http://mock-ocr:5000")
 os.environ.setdefault("ODOO_URL", "http://mock-odoo:8069")
 os.environ.setdefault("ODOO_DB", "test_db")
 os.environ.setdefault("ODOO_USERNAME", "admin")
-os.environ.setdefault("ODOO_PASSWORD", "admin")
+# ODOO_PASSWORD is required by main.py fail-fast guard — must be set before import
+os.environ["ODOO_PASSWORD"] = os.environ.get("ODOO_PASSWORD", "test-password")
 
 from main import app, JWT_SECRET_KEY, JWT_ALGORITHM
 
@@ -41,9 +42,11 @@ def client():
 # ============================================================================
 
 def _make_token(role: str, username: str = "test_user") -> str:
+    import uuid
     payload = {
         "user_id": 1, "username": username,
         "email": f"{username}@example.com", "role": role,
+        "jti": str(uuid.uuid4()), "type": "access",
         "exp": datetime.utcnow() + timedelta(hours=1),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)

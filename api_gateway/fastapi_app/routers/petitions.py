@@ -13,7 +13,7 @@ import logging
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .deps import TokenData, call_kw, get_current_token, odoo_session, require_roles
 
@@ -31,20 +31,20 @@ CHAIR_ROLES   = ("department_chair", "super_admin")
 
 class NewPetitionRequest(BaseModel):
     petition_type_id: int
-    subject: str
-    description: str
-    course_id: Optional[int] = None
-    requested_date: Optional[str] = None
+    subject:          str = Field(..., min_length=3, max_length=200)
+    description:      str = Field(..., min_length=10, max_length=5000)
+    course_id:        Optional[int] = None
+    requested_date:   Optional[str] = None
 
 
 class TierActionRequest(BaseModel):
     action: Literal["approve", "reject", "escalate"]
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(default=None, max_length=2000)
 
 
 class OverrideRequest(BaseModel):
     decision: Literal["approve", "reject"]
-    reason: str
+    reason:   str = Field(..., min_length=5, max_length=2000)
 
 
 # ---------------------------------------------------------------------------
