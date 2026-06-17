@@ -21,14 +21,30 @@ import string
 import pytest
 import httpx
 
-pytestmark = [pytest.mark.slow, pytest.mark.perf]
-
 ODOO_URL      = os.getenv("ODOO_URL",      "http://localhost:8081")
 ODOO_DB       = os.getenv("ODOO_DB",       "edu_demo_new")
 ODOO_USERNAME = os.getenv("ODOO_USERNAME", "admin")
 ODOO_PASSWORD = os.getenv("ODOO_PASSWORD", "admin")
 TOTAL_SEATS   = 49
 NUM_STUDENTS  = 50
+
+
+def _odoo_is_reachable() -> bool:
+    try:
+        import socket
+        host = ODOO_URL.split("://")[-1].split(":")[0]
+        port = int(ODOO_URL.split(":")[-1].rstrip("/")) if ":" in ODOO_URL.split("://")[-1] else 8081
+        with socket.create_connection((host, port), timeout=2):
+            return True
+    except Exception:
+        return False
+
+
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.perf,
+    pytest.mark.skipif(not _odoo_is_reachable(), reason=f"Odoo not reachable at {ODOO_URL}"),
+]
 
 
 async def _odoo_rpc(client: httpx.AsyncClient, model: str, method: str, args: list, kwargs: dict = None):

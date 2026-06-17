@@ -15,7 +15,7 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def odoo_client():
     client = OdooClient()
-    client.uid = None
+    client._uid = None
     return client
 
 @pytest.fixture
@@ -51,11 +51,11 @@ class TestOdooClientAuthenticate:
             MC.return_value.__aexit__ = AsyncMock(return_value=False)
             uid = await odoo_client.authenticate()
             assert uid == 2
-            assert odoo_client.uid == 2
+            assert odoo_client._uid == 2
 
     @pytest.mark.asyncio
     async def test_authenticate_returns_cached_uid(self, odoo_client):
-        odoo_client.uid = 99
+        odoo_client._uid = 99
         assert await odoo_client.authenticate() == 99
 
     @pytest.mark.asyncio
@@ -84,7 +84,7 @@ class TestOdooClientAuthenticate:
 class TestOdooClientCreateApplication:
     @pytest.mark.asyncio
     async def test_create_application_success(self, odoo_client, admission_data, sample_odoo_create_response):
-        odoo_client.uid = 2
+        odoo_client._uid = 2
         mock_resp = _mock_response(sample_odoo_create_response)
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_resp
@@ -97,7 +97,7 @@ class TestOdooClientCreateApplication:
 
     @pytest.mark.asyncio
     async def test_create_application_odoo_error_raises_500(self, odoo_client, admission_data):
-        odoo_client.uid = 2
+        odoo_client._uid = 2
         mock_resp = _mock_response({"jsonrpc": "2.0", "error": {"message": "Access Denied"}})
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_resp
@@ -109,5 +109,14 @@ class TestOdooClientCreateApplication:
             assert exc_info.value.status_code == 500
 
 class TestOdooClientHelpers:
-    def test_get_country_id_returns_65(self, odoo_client):
-        assert odoo_client._get_country_id("Egypt") == 65
+    @pytest.mark.asyncio
+    async def test_get_country_id_falls_back_to_65_on_error(self):
+        """When Odoo is unreachable, _get_country_id falls back to 65 (Egypt)."""
+        from main import _get_country_id
+        mock_client = AsyncMock()
+        mock_client.post.side_effect = Exception("connection refused")
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        with patch("main.httpx.AsyncClient", return_value=mock_client):
+            result = await _get_country_id("Egypt")
+        assert result == 65

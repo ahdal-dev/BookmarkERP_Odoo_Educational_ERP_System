@@ -27,7 +27,6 @@ class TestAllowedFile:
         assert allowed_file(filename) == expected
 
     @pytest.mark.parametrize("filename", [
-        "document.pdf",
         "archive.zip",
         "script.py",
         "readme.txt",
@@ -38,6 +37,10 @@ class TestAllowedFile:
     def test_invalid_extensions(self, filename):
         assert allowed_file(filename) is False
 
+    def test_pdf_is_allowed(self):
+        """PDF is a valid upload format for document extraction."""
+        assert allowed_file("document.pdf") is True
+
     def test_allowed_extensions_constant(self):
         """Verify the set of allowed extensions hasn't changed unexpectedly."""
-        assert ALLOWED_EXTENSIONS == {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp'}
+        assert ALLOWED_EXTENSIONS == {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp', '.pdf'}

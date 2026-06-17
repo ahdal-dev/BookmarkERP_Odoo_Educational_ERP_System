@@ -19,7 +19,8 @@ class TestProcessUploadedImage:
         """Should return error dict when ID card model is not loaded."""
         from app.controllers.ocr_controller import process_uploaded_image
 
-        result = process_uploaded_image("fake_image.png")
+        with patch('app.controllers.ocr_controller.os.path.exists', return_value=True):
+            result = process_uploaded_image("fake_image.png")
 
         assert isinstance(result, dict)
         assert "error" in result
@@ -31,7 +32,8 @@ class TestProcessUploadedImage:
         """Should return error dict when object detection model is not loaded."""
         from app.controllers.ocr_controller import process_uploaded_image
 
-        result = process_uploaded_image("fake_image.png")
+        with patch('app.controllers.ocr_controller.os.path.exists', return_value=True):
+            result = process_uploaded_image("fake_image.png")
 
         assert isinstance(result, dict)
         assert "error" in result
@@ -41,13 +43,15 @@ class TestProcessUploadedImage:
     @patch('app.controllers.ocr_controller.model_job', MagicMock())
     @patch('app.controllers.ocr_controller.model_id_card', MagicMock())
     def test_returns_result_on_success(self, mock_process):
-        """Should return process_image result when both models loaded."""
+        """Should return process_image result when both models loaded and ID detected."""
         from app.controllers.ocr_controller import process_uploaded_image
 
         expected = {"name": "John Doe", "nid": "12345678901234"}
         mock_process.return_value = expected
 
-        result = process_uploaded_image("test_image.png")
+        with patch('app.controllers.ocr_controller.os.path.exists', return_value=True), \
+             patch('app.controllers.ocr_controller.detect_id_card', return_value=(None, [1])):
+            result = process_uploaded_image("test_image.png")
 
         assert result == expected
         mock_process.assert_called_once()
@@ -61,7 +65,9 @@ class TestProcessUploadedImage:
 
         mock_process.side_effect = RuntimeError("GPU memory error")
 
-        result = process_uploaded_image("test_image.png")
+        with patch('app.controllers.ocr_controller.os.path.exists', return_value=True), \
+             patch('app.controllers.ocr_controller.detect_id_card', return_value=(None, [1])):
+            result = process_uploaded_image("test_image.png")
 
         assert isinstance(result, dict)
         assert "error" in result
@@ -76,6 +82,8 @@ class TestProcessUploadedImage:
 
         mock_process.return_value = {"error": "No ID card detected"}
 
-        result = process_uploaded_image("test_image.png")
+        with patch('app.controllers.ocr_controller.os.path.exists', return_value=True), \
+             patch('app.controllers.ocr_controller.detect_id_card', return_value=(None, [1])):
+            result = process_uploaded_image("test_image.png")
 
         assert result == {"error": "No ID card detected"}

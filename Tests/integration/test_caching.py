@@ -67,16 +67,18 @@ async def test_role_written_to_cache_on_first_call():
     redis = _FakeRedis()
     assert await redis.get("role:99") is None  # cache miss
 
-    # Patch the Odoo HTTP calls
-    mock_response = MagicMock()
-    mock_response.json.side_effect = [
-        # auth call
-        {"result": {"uid": 1}},
-        # read user groups
+    # _resolve_role_with_client makes 3 POST calls but _odoo_service_auth
+    # (the auth call) does NOT read .json() from its response.
+    # Only the two call_kw calls consume json() responses:
+    #   1. /web/dataset/call_kw (res.users.read)  → {result: [{group_ids: [10]}]}
+    #   2. /web/dataset/call_kw (ir.model.data.search_read) → {result: [{...}]}
+    responses = iter([
         {"result": [{"group_ids": [10]}]},
-        # ir.model.data search
-        {"result": [{"name": "group_erp_student", "res_id": 10}]},
-    ]
+        {"result": [{"module": "edu_mang_auth", "name": "group_erp_student", "res_id": 10}]},
+    ])
+
+    mock_response = MagicMock()
+    mock_response.json.side_effect = lambda: next(responses)
 
     mock_client = AsyncMock()
     mock_client.post = AsyncMock(return_value=mock_response)

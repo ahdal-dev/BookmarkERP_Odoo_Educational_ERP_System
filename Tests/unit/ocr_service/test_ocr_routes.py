@@ -15,10 +15,9 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def client(tmp_path):
     """Create a test client with mocked dependencies."""
-    # Patch dependencies BEFORE importing the app
-    with patch('app.services.detection_service.YOLO', MagicMock()), \
-         patch('app.services.detection_service.os.path.exists', return_value=False), \
-         patch('app.routes.UPLOAD_FOLDER', str(tmp_path)), \
+    # Only patch upload folder and templates; os.path.exists must remain real
+    # so that routes.py can verify uploaded files were saved correctly.
+    with patch('app.routes.UPLOAD_FOLDER', str(tmp_path)), \
          patch('app.routes.templates') as mock_templates:
 
             mock_templates.TemplateResponse.return_value = "<html>Mock</html>"
@@ -51,10 +50,10 @@ class TestOCREndpointValidation:
         assert response.status_code == 422
 
     def test_invalid_extension_returns_400(self, client):
-        """Non-image file should return 400."""
+        """Non-image file (e.g. .txt) should return 400."""
         response = client.post(
             "/ocr",
-            files={"file": ("document.pdf", b"fake pdf content", "application/pdf")}
+            files={"file": ("notes.txt", b"plain text content", "text/plain")}
         )
         assert response.status_code == 400
         assert "Invalid file type" in response.json()["detail"]

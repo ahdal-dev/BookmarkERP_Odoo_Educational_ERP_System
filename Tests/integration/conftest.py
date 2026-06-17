@@ -23,6 +23,8 @@ os.environ.setdefault("ODOO_DB", "test_db")
 os.environ.setdefault("ODOO_USERNAME", "admin")
 # ODOO_PASSWORD is required by main.py fail-fast guard — must be set before import
 os.environ["ODOO_PASSWORD"] = os.environ.get("ODOO_PASSWORD", "test-password")
+# Include both allowed origins so CORS tests pass
+os.environ["CORS_ORIGINS"] = "http://localhost:5173,http://allowed.example.com"
 
 from main import app, JWT_SECRET_KEY, JWT_ALGORITHM
 
@@ -58,11 +60,11 @@ def student_token():
 
 @pytest.fixture
 def admin_token():
-    return _make_token("admin", "admin_user")
+    return _make_token("super_admin", "admin_user")
 
 @pytest.fixture
 def staff_token():
-    return _make_token("admission_staff", "staff_user")
+    return _make_token("admission_officer", "staff_user")
 
 @pytest.fixture
 def student_auth_header(student_token):

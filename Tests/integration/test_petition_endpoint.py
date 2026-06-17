@@ -58,19 +58,25 @@ def _auth(role: str) -> dict:
 
 @respx.mock
 def test_student_submits_petition_returns_200(client):
+    # Auth
     respx.post(_ODOO_URL + "/web/session/authenticate").mock(
         return_value=Response(200, json={"jsonrpc": "2.0", "result": {"uid": 2}})
     )
-    respx.post(_ODOO_URL + "/web/dataset/call_kw").mock(
-        return_value=Response(200, json={"jsonrpc": "2.0", "result": [{"partner_id": [5, "Test Student"]}]})
-    ).mock(
-        return_value=Response(200, json={"jsonrpc": "2.0", "result": 42})
-    ).mock(
-        return_value=Response(200, json={"jsonrpc": "2.0", "result": None})
-    ).mock(
-        return_value=Response(200, json={"jsonrpc": "2.0", "result": [
+    # submit_petition makes 4 sequential call_kw requests:
+    #   1. res.users.read      → partner_id
+    #   2. student.petition.create → petition id
+    #   3. student.petition.action_submit → None
+    #   4. student.petition.read → record details
+    _call_kw_responses = iter([
+        Response(200, json={"jsonrpc": "2.0", "result": [{"partner_id": [5, "Test Student"]}]}),
+        Response(200, json={"jsonrpc": "2.0", "result": 42}),
+        Response(200, json={"jsonrpc": "2.0", "result": None}),
+        Response(200, json={"jsonrpc": "2.0", "result": [
             {"name": "PET/001", "state": "submitted", "current_tier": "instructor"}
-        ]})
+        ]}),
+    ])
+    respx.post(_ODOO_URL + "/web/dataset/call_kw").mock(
+        side_effect=lambda req: next(_call_kw_responses)
     )
     resp = client.post(
         "/api/v1/petitions/new",
