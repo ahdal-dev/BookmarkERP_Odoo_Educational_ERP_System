@@ -830,7 +830,7 @@ if __name__ == "__main__":
     _default_data = (SERVICE_DIR / "transcripts.json"
                      if (SERVICE_DIR / "transcripts.json").exists()
                      else SERVICE_DIR.parent.parent / "data" / "transcripts.json")
-
+    print(f"Default transcripts.json path: {_default_data}")
     parser = argparse.ArgumentParser(description="Train the grade predictor model.")
     parser.add_argument("--data", type=Path, default=_default_data,
                         help="Path to transcripts.json")

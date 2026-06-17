@@ -75,7 +75,9 @@ jobs:
 
       - name: Run tracking
         run: |
-          python services/grade_predictor_service/train.py
+          python services/grade_predictor_service/train.py \
+            --data data/transcripts.json \
+            --out services/grade_predictor_service/models/grade_predictor_v3.pkl
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
