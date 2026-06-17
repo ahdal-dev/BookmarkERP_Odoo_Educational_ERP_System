@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-exporter-deployment
+  namespace: default
+  labels:
+    app: edu-erp
+    component: nginx-exporter
+    tier: observability
+  annotations:
+    description: "Nginx Prometheus Exporter — scrapes nginx stub_status and exposes metrics"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edu-erp
+      component: nginx-exporter
+  template:
+    metadata:
+      labels:
+        app: edu-erp
+        component: nginx-exporter
+        tier: observability
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: nginx-exporter
+          image: nginx/nginx-prometheus-exporter:1.1.0
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - '-nginx.scrape-uri=http://nginx-service.default.svc.cluster.local:80/nginx_status'
+
+          ports:
+            - name: metrics
+              containerPort: 9113
+              protocol: TCP
+
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 15
+      dnsPolicy: ClusterFirst

@@ -87,12 +87,12 @@ services:
       dockerfile: Dockerfile
     container_name: edu_erp_fastapi_gateway
     restart: unless-stopped
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     environment:
       # Service URLs
       - OCR_SERVICE_URL=http://ocr_microservice:5000
-      - ODOO_URL=http://odoo:8069
+      - ODOO_URL=http://host.docker.internal:8081
       
       # Odoo Configuration
       - ODOO_DB=edu_demo_new

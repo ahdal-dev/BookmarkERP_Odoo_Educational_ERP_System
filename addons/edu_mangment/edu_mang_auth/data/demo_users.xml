@@ -69,5 +69,13 @@
             <field name="active">True</field>
         </record>
 
+        <!-- NOTE: Demo users for the 6 additional RBAC roles (instructor,
+             advisor, chair, registrar, support, prospective) are created by
+             data/create_role_users.py via the Odoo shell rather than here.
+             Creating res.users in this data file fails because edu_mang_auth
+             loads (pos. ~52/123) before the `account` module registers the
+             res.partner.autopost_bills NOT-NULL default, breaking the partner
+             INSERT. The shell script runs against the fully-loaded registry. -->
+
     </data>
 </odoo>

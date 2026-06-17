@@ -67,3 +67,10 @@ api_gateway/nginx/ssl/*.pem
 mlartifacts/
 mlruns/
 
+# Coverage reports (pytest-cov + coverage.py)
+htmlcov/
+htmlcov_odoo/
+coverage.xml
+coverage_odoo.xml
+.coverage
+.coverage.*

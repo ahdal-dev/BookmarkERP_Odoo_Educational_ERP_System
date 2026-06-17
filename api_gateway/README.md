@@ -11,7 +11,7 @@ This API Gateway implements a modern microservices architecture for an Education
        │
        ▼
 ┌─────────────────────────────────────────────────────┐
-│  NGINX (Reverse Proxy & Load Balancer)             │
+│  NGINX (Reverse Proxy & Load Balancer)              │
 │  • Rate Limiting (Leaky Bucket)                     │
 │  • JWT Token Validation                             │
 │  • SSL/TLS Termination                              │

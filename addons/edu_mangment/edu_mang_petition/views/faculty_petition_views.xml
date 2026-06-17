@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ============================================================ -->
+        <!-- education.department views                                    -->
+        <!-- ============================================================ -->
+
+        <record id="view_education_department_list" model="ir.ui.view">
+            <field name="name">education.department.list</field>
+            <field name="model">education.department</field>
+            <field name="arch" type="xml">
+                <list string="Departments" default_order="name">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="chair_id"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_education_department_form" model="ir.ui.view">
+            <field name="name">education.department.form</field>
+            <field name="model">education.department</field>
+            <field name="arch" type="xml">
+                <form string="Academic Department">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                            </group>
+                            <group>
+                                <field name="chair_id" options="{'no_create': True}"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Courses">
+                                <field name="course_ids" readonly="1">
+                                    <list>
+                                        <field name="code"/>
+                                        <field name="display_name"/>
+                                        <field name="instructor_user_id"/>
+                                        <field name="available_seats"/>
+                                        <field name="registration_open" widget="boolean_toggle"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_education_department" model="ir.actions.act_window">
+            <field name="name">Academic Departments</field>
+            <field name="res_model">education.department</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create your first department</p>
+                <p>Departments route escalated petitions to the Department Chair.</p>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- Faculty petition queue views                                  -->
+        <!-- ============================================================ -->
+
+        <record id="view_petition_list_faculty" model="ir.ui.view">
+            <field name="name">student.petition.list.faculty</field>
+            <field name="model">student.petition</field>
+            <field name="arch" type="xml">
+                <list string="Petition Queue" default_order="submitted_date asc"
+                      create="0" delete="0">
+                    <field name="name"/>
+                    <field name="student_id"/>
+                    <field name="petition_type_id"/>
+                    <field name="subject"/>
+                    <field name="course_id"/>
+                    <field name="current_tier" widget="badge"
+                           decoration-info="current_tier == 'instructor'"
+                           decoration-warning="current_tier == 'advisor'"
+                           decoration-danger="current_tier == 'chair'"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'approved'"
+                           decoration-danger="state == 'rejected'"
+                           decoration-warning="state in ('submitted', 'under_review')"/>
+                    <field name="days_pending" string="Days"/>
+                    <field name="is_escalated" widget="boolean"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_petition_form_faculty" model="ir.ui.view">
+            <field name="name">student.petition.form.faculty</field>
+            <field name="model">student.petition</field>
+            <field name="arch" type="xml">
+                <form string="Petition Review" create="0" delete="0">
+                    <header>
+                        <!-- Tier actions — visible while petition is active -->
+                        <button name="tier_approve" string="Approve" type="object"
+                                class="btn-success"
+                                invisible="state not in ('submitted', 'under_review')"
+                                groups="edu_mang_auth.group_erp_instructor"/>
+                        <button name="tier_reject" string="Reject" type="object"
+                                class="btn-danger"
+                                invisible="state not in ('submitted', 'under_review')"
+                                groups="edu_mang_auth.group_erp_instructor"/>
+                        <button name="action_escalate" string="Escalate to Chair" type="object"
+                                class="btn-warning"
+                                invisible="state not in ('submitted', 'under_review') or current_tier == 'chair'"
+                                groups="edu_mang_auth.group_erp_instructor"/>
+                        <!-- Chair-only override — available even after rejection -->
+                        <button name="chair_override" string="Override" type="object"
+                                class="btn-secondary"
+                                invisible="state not in ('submitted', 'under_review', 'approved', 'rejected')"
+                                groups="edu_mang_auth.group_erp_department_chair"/>
+                        <field name="current_tier" widget="statusbar"
+                               statusbar_visible="instructor,advisor,chair,done"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="student_id" readonly="1"/>
+                                <field name="petition_type_id" readonly="1"
+                                       options="{'no_create': True}"/>
+                                <field name="subject" readonly="1"/>
+                                <field name="course_id" readonly="1"/>
+                                <field name="department_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="state" widget="badge"
+                                       decoration-success="state == 'approved'"
+                                       decoration-danger="state == 'rejected'"
+                                       decoration-warning="state in ('submitted','under_review')"/>
+                                <field name="submitted_date" readonly="1"/>
+                                <field name="days_pending" readonly="1"/>
+                                <field name="is_escalated" readonly="1"/>
+                                <field name="requested_date" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Description">
+                                <field name="description" readonly="1" widget="html"/>
+                            </page>
+                            <page string="Overload Details"
+                                  invisible="petition_type_id.code != 'overload'">
+                                <group>
+                                    <field name="current_credits" readonly="1"/>
+                                    <field name="requested_credits" readonly="1"/>
+                                </group>
+                                <field name="reason_for_overload" readonly="1"/>
+                            </page>
+                            <page string="Decision Trail">
+                                <field name="decision_ids" readonly="1">
+                                    <list>
+                                        <field name="decision_date"/>
+                                        <field name="tier" widget="badge"
+                                               decoration-info="tier == 'instructor'"
+                                               decoration-warning="tier == 'advisor'"
+                                               decoration-danger="tier == 'chair'"/>
+                                        <field name="action" widget="badge"
+                                               decoration-success="action == 'approve'"
+                                               decoration-danger="action == 'reject'"
+                                               decoration-warning="action == 'escalate'"
+                                               decoration-muted="action == 'override'"/>
+                                        <field name="user_id"/>
+                                        <field name="reason"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Override Details"
+                                  invisible="not is_escalated"
+                                  groups="edu_mang_auth.group_erp_department_chair">
+                                <group>
+                                    <field name="override_user_id" readonly="1"/>
+                                    <field name="override_reason" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="Attachments">
+                                <field name="attachment_ids" readonly="1"
+                                       widget="many2many_binary"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_petition_faculty_queue" model="ir.actions.act_window">
+            <field name="name">Petition Queue</field>
+            <field name="res_model">student.petition</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('state', 'in', ['submitted', 'under_review'])]</field>
+            <field name="views" eval="[(ref('view_petition_list_faculty'), 'list'),
+                                       (ref('view_petition_form_faculty'), 'form')]"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">No petitions in your queue</p>
+                <p>Petitions routed to your tier will appear here.</p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

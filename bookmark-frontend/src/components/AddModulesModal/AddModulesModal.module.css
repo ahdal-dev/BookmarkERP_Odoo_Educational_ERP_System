@@ -1,0 +1,216 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 13, 13, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: overlayIn 0.2s ease;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 640px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 28px 28px 0 28px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0d0d0d;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #7a7a72;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #7a7a72;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f4f3ee;
+  color: #0d0d0d;
+}
+
+.searchWrap {
+  position: relative;
+  margin: 20px 28px 0 28px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e5e3db;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #f9f8f3;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #4caf27;
+  background: #fff;
+}
+
+.error {
+  margin: 12px 28px 0 28px;
+  padding: 10px 14px;
+  background: #fff0ed;
+  color: #c0392b;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 28px 28px 28px;
+  overflow-y: auto;
+}
+
+.moduleCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid #e5e3db;
+  border-radius: 14px;
+  transition: all 0.2s;
+}
+
+.moduleCard:hover {
+  border-color: #4caf27;
+  background: #f9fff6;
+}
+
+.moduleIcon {
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f8f3;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.moduleInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.moduleName {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0d0d0d;
+}
+
+.moduleDesc {
+  font-size: 12px;
+  color: #7a7a72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.installBtn {
+  padding: 8px 18px;
+  border: 2px solid #0d0d0d;
+  border-radius: 20px;
+  background: #0d0d0d;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.installBtn:hover:not(:disabled) {
+  background: #4caf27;
+  border-color: #4caf27;
+}
+
+.installBtn.installed {
+  background: transparent;
+  color: #4caf27;
+  border-color: #4caf27;
+  cursor: default;
+}
+
+.installBtn:disabled {
+  opacity: 0.7;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 28px;
+  color: #7a7a72;
+  font-size: 14px;
+}

@@ -1,0 +1,234 @@
+# ================================================================
+# Grafana Dashboard Auto-Provisioning
+# ================================================================
+# Pre-built dashboard for the Educational ERP system.
+# Includes panels for: Request Rate, Latency, Error Rate,
+# Active Connections, and OCR Processing Time.
+# ================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: grafana
+    tier: observability
+  annotations:
+    description: "Dashboard provider config + pre-built ERP dashboard"
+data:
+  # Dashboard provider configuration
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'edu-erp-dashboards'
+        orgId: 1
+        folder: 'Educational ERP'
+        type: file
+        disableDeletion: false
+        editable: true
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
+
+  # Pre-built ERP Dashboard JSON
+  edu-erp-dashboard.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "title": "🌐 HTTP Request Rate (req/sec)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total[5m])) by (handler)",
+              "legendFormat": "{{handler}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": { "fillOpacity": 10, "lineWidth": 2 }
+            }
+          }
+        },
+        {
+          "title": "⚡ Response Latency p95 (seconds)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, handler))",
+              "legendFormat": "p95 — {{handler}}",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, handler))",
+              "legendFormat": "p99 — {{handler}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": { "mode": "palette-classic" },
+              "custom": { "fillOpacity": 5 }
+            }
+          }
+        },
+        {
+          "title": "❌ HTTP Error Rate (5xx)",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+              "legendFormat": "Error %",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "📊 OCR Requests Total",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "sum(ocr_requests_total)",
+              "legendFormat": "Total OCR",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "fixedColor": "blue", "mode": "fixed" }
+            }
+          }
+        },
+        {
+          "title": "🔗 Nginx Active Connections",
+          "type": "gauge",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "nginx_connections_active",
+              "legendFormat": "Active",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 50 },
+                  { "color": "red", "value": 100 }
+                ]
+              },
+              "max": 200
+            }
+          }
+        },
+        {
+          "title": "🏥 Service Health Status",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "up",
+              "legendFormat": "{{job}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                { "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } }, "type": "value" }
+              ]
+            }
+          }
+        },
+        {
+          "title": "⏱️ OCR Processing Duration (seconds)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(ocr_processing_duration_seconds_bucket[5m])) by (le, operation))",
+              "legendFormat": "p95 — {{operation}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": { "mode": "palette-classic" }
+            }
+          }
+        },
+        {
+          "title": "📝 NID Extraction Results",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "targets": [
+            {
+              "expr": "sum(nid_extractions_total) by (result)",
+              "legendFormat": "{{result}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 39,
+      "tags": ["edu-erp", "monitoring", "fastapi", "odoo"],
+      "templating": {
+        "list": [
+          {
+            "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Datasource",
+            "name": "DS_PROMETHEUS",
+            "query": "prometheus",
+            "type": "datasource"
+          }
+        ]
+      },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Educational ERP — Service Overview",
+      "uid": "edu-erp-overview",
+      "version": 1
+    }

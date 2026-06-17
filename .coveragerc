@@ -1,0 +1,92 @@
+# ============================================================================
+# Coverage.py Configuration — Odoo Custom ERP Modules
+# ============================================================================
+# Scoped to measure ONLY the custom addons under addons/edu_mangment/*.
+# Excludes: Odoo core, third-party addons (OpenEduCat), virtual environments,
+#           test directories, and boilerplate files.
+#
+# Usage:
+#   coverage run odoo/odoo-bin -c config/odoo.conf ...
+#   coverage report
+#   coverage html
+#   coverage xml
+# ============================================================================
+
+[run]
+# ── Source scope ─────────────────────────────────────────────────────────
+# Only measure code inside your custom modules.
+source =
+    addons/edu_mangment/custom_registration
+    addons/edu_mangment/edu_mang_admission
+    addons/edu_mangment/edu_mang_auth
+    addons/edu_mangment/edu_mang_petition
+    addons/edu_mangment/edu_mang_website
+    addons/edu_mangment/edu_portal_gateway
+
+# Enable branch coverage (if / else paths)
+branch = True
+
+# ── Omit patterns ───────────────────────────────────────────────────────
+# These paths are NEVER measured, even if they fall inside a source package.
+omit =
+    # Test directories inside each custom module
+    */tests/*
+    */test_*
+
+    # Module boilerplate
+    */__init__.py
+    */__manifest__.py
+
+    # Odoo core source
+    odoo/*
+
+    # Third-party / community addons (OpenEduCat)
+    addons/open_edu_cat/*
+
+    # Virtual environments
+    venv/*
+    env/*
+    .venv/*
+
+    # Static assets, migrations, data files
+    */static/*
+    */data/*
+    */demo/*
+    */migrations/*
+    */security/*
+
+
+[report]
+# ── Minimum threshold ───────────────────────────────────────────────────
+# Build fails (exit code 2) if total coverage is below 80%.
+fail_under = 70
+
+# Show which lines were missed
+show_missing = True
+
+# Hide fully-covered files to reduce noise
+skip_covered = True
+
+# Exclude common un-testable patterns
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.
+    raise NotImplementedError
+    pass
+    except ImportError
+    if TYPE_CHECKING:
+    _logger\.debug
+
+# Decimal precision for percentages
+precision = 2
+
+
+[html]
+# Output directory for the interactive HTML report
+directory = htmlcov_odoo
+
+
+[xml]
+# XML report consumed by CI / Codecov / SonarQube
+output = coverage_odoo.xml

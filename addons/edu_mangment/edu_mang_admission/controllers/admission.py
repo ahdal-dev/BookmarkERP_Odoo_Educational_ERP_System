@@ -26,7 +26,7 @@ class AdmissionController(http.Controller):
             return request.render('website.404')
     
     @http.route('/admission/submit', type='http', auth='public', methods=['POST'], 
-                csrf=False)
+                website=True, csrf=False)
     def admission_submit(self, **kwargs):
         try:
             name = request.params.get('name', '').strip()
@@ -74,11 +74,23 @@ class AdmissionController(http.Controller):
             
             transcript_document = False
             transcript_filename = False
-            
+
             if 'transcript_document' in request.httprequest.files:
                 file = request.httprequest.files['transcript_document']
                 if file and file.filename:
-                    transcript_document = base64.b64encode(file.read())
+                    _ALLOWED_MIME = {'image/jpeg', 'image/png', 'application/pdf'}
+                    _MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+                    content_type = file.content_type or ''
+                    if content_type not in _ALLOWED_MIME:
+                        return request.redirect(
+                            '/admission/apply?error=invalid_file_type'
+                        )
+                    raw = file.read()
+                    if len(raw) > _MAX_SIZE:
+                        return request.redirect(
+                            '/admission/apply?error=file_too_large'
+                        )
+                    transcript_document = base64.b64encode(raw)
                     transcript_filename = file.filename
             
             try:

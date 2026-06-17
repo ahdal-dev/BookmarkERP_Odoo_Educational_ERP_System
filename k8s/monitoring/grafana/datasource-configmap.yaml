@@ -1,0 +1,34 @@
+# ================================================================
+# Grafana Datasource Auto-Provisioning
+# ================================================================
+# Automatically configures Prometheus as the default data source
+# on Grafana startup. No manual UI configuration required.
+# Mounted to /etc/grafana/provisioning/datasources/
+# ================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+  labels:
+    app: edu-erp
+    component: grafana
+    tier: observability
+  annotations:
+    description: "Auto-provisions Prometheus as Grafana's default data source"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service.monitoring.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          timeInterval: "15s"
+          httpMethod: POST
+        version: 1

@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edu-erp-config
+  namespace: default
+  labels:
+    app: edu-erp
+    component: config
+data:
+  # FastAPI Configuration
+  FASTAPI_ENV: "production"
+  PYTHONUNBUFFERED: "1"
+  TZ: "Africa/Cairo"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRATION_HOURS: "24"
+  LOG_LEVEL: "INFO"
+  
+  # Service URLs (internal Kubernetes DNS discovery)
+  OCR_SERVICE_URL: "http://ocr-service:5000"
+  ODOO_URL: "http://odoo-service:8069"
+  ODOO_DB: "edu_demo_new"
+  
+  # Nginx Configuration
+  NGINX_WORKER_PROCESSES: "auto"
+  NGINX_WORKER_CONNECTIONS: "1024"
+  NGINX_CLIENT_MAX_BODY_SIZE: "20M"
+  NGINX_GZIP_ENABLED: "on"
+  
+  # Odoo Configuration
+  ODOO_PORT: "8069"
+  ODOO_LONGPOLLING_PORT: "8072"
+  ODOO_WORKERS: "4"
+  ODOO_TIMEOUT: "600"
+  
+  # Feature Flags & Profiles
+  ENABLE_OCR: "true"
+  ENABLE_MONITORING: "true"
+  ACTIVE_PROFILE: "production"
