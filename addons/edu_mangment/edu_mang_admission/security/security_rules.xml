@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Public / portal users may only see their OWN admission record.
+            They match on email because unauthenticated submitters don't have a
+            user account yet. Internal users (group_user) have no such restriction
+            so admission officers can see every application.
+        -->
+        <record id="rule_admission_public_own_only" model="ir.rule">
+            <field name="name">Admission: public sees own record only (by email)</field>
+            <field name="model_id" ref="model_school_admission"/>
+            <field name="domain_force">[('email', '=', user.email)]</field>
+            <field name="groups" eval="[(4, ref('base.group_public'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_admission_portal_own_only" model="ir.rule">
+            <field name="name">Admission: portal user sees own record only</field>
+            <field name="model_id" ref="model_school_admission"/>
+            <field name="domain_force">[('email', '=', user.email)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

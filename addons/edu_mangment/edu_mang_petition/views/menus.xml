@@ -23,10 +23,26 @@
               sequence="20" 
               groups="edu_mang_petition.group_petition_admin"/>
     
-    <menuitem id="menu_petition_types" 
-              name="Petition Types" 
-              parent="menu_petition_root" 
-              action="edu_mang_petition.action_petition_type" 
-              sequence="30" 
+    <menuitem id="menu_petition_types"
+              name="Petition Types"
+              parent="menu_petition_root"
+              action="edu_mang_petition.action_petition_type"
+              sequence="30"
               groups="edu_mang_petition.group_petition_admin"/>
+
+    <!-- Faculty queue — visible to all faculty roles (instructor implies up) -->
+    <menuitem id="menu_petition_faculty_queue"
+              name="Petition Queue"
+              parent="menu_petition_root"
+              action="edu_mang_petition.action_petition_faculty_queue"
+              sequence="15"
+              groups="edu_mang_auth.group_erp_instructor"/>
+
+    <!-- Department management — Super Admin only -->
+    <menuitem id="menu_petition_departments"
+              name="Departments"
+              parent="menu_petition_root"
+              action="edu_mang_petition.action_education_department"
+              sequence="40"
+              groups="edu_mang_auth.group_erp_admin"/>
 </odoo>
