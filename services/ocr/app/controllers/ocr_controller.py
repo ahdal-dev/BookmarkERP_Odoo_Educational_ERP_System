@@ -1,19 +1,23 @@
 from app.services.processing_service import process_image, detect_id_card
 from app.services.detection_service import model_id_card, model_job
-from app.services.backup_model import (
-    ocr_image, 
-    ocr_pdf, 
-    detect_doc_type, 
-    extract_structured,
-    force_convert_numerals,
-    PROMPTS,
-    is_pdf
-)
 import logging
 import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _load_backup_model_components():
+    from app.services.backup_model import (
+        ocr_image,
+        ocr_pdf,
+        detect_doc_type,
+        extract_structured,
+        force_convert_numerals,
+        PROMPTS,
+        is_pdf,
+    )
+    return ocr_image, ocr_pdf, detect_doc_type, extract_structured, force_convert_numerals, PROMPTS, is_pdf
 
 def process_with_yolo_only(image_path):
     """
@@ -145,6 +149,16 @@ def process_uploaded_image_with_mistral(image_path, doc_type=None):
         Dictionary with extracted structured data or error message
     """
     try:
+        (
+            ocr_image,
+            ocr_pdf,
+            detect_doc_type,
+            extract_structured,
+            force_convert_numerals,
+            PROMPTS,
+            is_pdf,
+        ) = _load_backup_model_components()
+
         if not os.path.exists(image_path):
             logger.error(f"File not found: {image_path}")
             return {"error": f"File not found: {image_path}"}

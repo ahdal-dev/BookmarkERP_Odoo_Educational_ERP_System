@@ -1,7 +1,13 @@
 import os
 
-import cv2
-import pytesseract
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
 import os
 import platform
 import logging
@@ -10,13 +16,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Only set tesseract path on Windows
-if platform.system() == 'Windows':
+if pytesseract is not None and platform.system() == 'Windows':
     pytesseract.pytesseract.tesseract_cmd = r"Tesseract-OCR/tesseract.exe"
 # On Linux (Docker), tesseract is installed via apt and is in PATH
 
 def extract_text(image, bbox, lang='ara'):
     """Extract text from a region of an image using Tesseract OCR."""
     try:
+        if cv2 is None or pytesseract is None:
+            logger.error("OCR dependencies (cv2/pytesseract) are not installed")
+            return ""
+
         if image is None or image.size == 0:
             logger.error("Invalid or empty image provided")
             return ""

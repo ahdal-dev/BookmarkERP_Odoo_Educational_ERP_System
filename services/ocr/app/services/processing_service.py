@@ -1,4 +1,7 @@
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None
 import os
 import logging
 from app.services.nid_service import nid_ocr
@@ -11,6 +14,10 @@ logger = logging.getLogger(__name__)
 def detect_id_card(image_path, model):
     """Detect ID card in the image using YOLO model."""
     try:
+        if cv2 is None:
+            logger.error("cv2 is not installed")
+            return None, []
+
         if not os.path.exists(image_path):
             logger.error(f"Image not found: {image_path}")
             return None, []

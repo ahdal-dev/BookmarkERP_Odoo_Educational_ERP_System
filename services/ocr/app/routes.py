@@ -2,14 +2,10 @@ import os
 import logging
 from fastapi import APIRouter, UploadFile, File, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-
-from app.controllers.ocr_controller import (
-    process_uploaded_image, 
-    process_uploaded_image_with_mistral,
-    process_with_yolo_only,
-    process_with_mistral_only
-)
+try:
+    from fastapi.templating import Jinja2Templates
+except ImportError:
+    Jinja2Templates = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +15,26 @@ router = APIRouter()
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-templates = Jinja2Templates(directory=os.path.join("app", "templates"))
+templates = (
+    Jinja2Templates(directory=os.path.join("app", "templates"))
+    if Jinja2Templates is not None
+    else None
+)
+
+
+def process_uploaded_image(*args, **kwargs):
+    from app.controllers.ocr_controller import process_uploaded_image as _process_uploaded_image
+    return _process_uploaded_image(*args, **kwargs)
+
+
+def process_with_yolo_only(*args, **kwargs):
+    from app.controllers.ocr_controller import process_with_yolo_only as _process_with_yolo_only
+    return _process_with_yolo_only(*args, **kwargs)
+
+
+def process_with_mistral_only(*args, **kwargs):
+    from app.controllers.ocr_controller import process_with_mistral_only as _process_with_mistral_only
+    return _process_with_mistral_only(*args, **kwargs)
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp', '.pdf'}
@@ -38,6 +53,8 @@ async def health():
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    if templates is None:
+        raise HTTPException(status_code=500, detail="Jinja2 is required for template rendering")
     return templates.TemplateResponse(
         "index.html",
         {"request": request}

@@ -1,5 +1,11 @@
-import cv2
-import easyocr
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+try:
+    import easyocr
+except ImportError:
+    easyocr = None
 import numpy as np
 import logging
 
@@ -9,6 +15,10 @@ logger = logging.getLogger(__name__)
 def nid_ocr(image_path):
     """Extract Arabic NID numbers from an image using EasyOCR."""
     try:
+        if cv2 is None or easyocr is None:
+            logger.error("OCR dependencies (cv2/easyocr) are not installed")
+            return ""
+
         img = cv2.imread(image_path)
         if img is None:
             logger.error(f"Error: Image not found at {image_path}")
