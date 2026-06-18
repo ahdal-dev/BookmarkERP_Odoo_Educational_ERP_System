@@ -58,12 +58,19 @@
                                 <field name="student_id" options="{'create': false, 'no_create': True}" readonly="1" groups="edu_mang_petition.group_petition_admin"/>
                                 <field name="petition_type_id" options="{'create': false}"/>
                                 <field name="subject"/>
+                                <field name="course_id" options="{'no_create': True}"/>
+                                <field name="department_id" readonly="1"/>
                             </group>
                             <group>
                                 <field name="requested_date"/>
                                 <field name="desired_completion_date"/>
                                 <field name="submitted_date" readonly="1"/>
                                 <field name="days_pending" readonly="1"/>
+                                <field name="current_tier" widget="badge"
+                                       decoration-info="current_tier == 'instructor'"
+                                       decoration-warning="current_tier == 'advisor'"
+                                       decoration-danger="current_tier == 'chair'"/>
+                                <field name="is_escalated" readonly="1"/>
                             </group>
                         </group>
                         <notebook>
@@ -90,6 +97,27 @@
                                 </group>
                                 <field name="comments" nolabel="1" placeholder="Add review comments here..."/>
                                 <field name="rejection_reason" nolabel="1" placeholder="Reason for rejection..."/>
+                            </page>
+                            <page string="Decision Trail">
+                                <field name="decision_ids" readonly="1" nolabel="1">
+                                    <list>
+                                        <field name="decision_date"/>
+                                        <field name="tier" widget="badge"/>
+                                        <field name="action" widget="badge"
+                                               decoration-success="action == 'approve'"
+                                               decoration-danger="action == 'reject'"
+                                               decoration-warning="action == 'escalate'"
+                                               decoration-muted="action == 'override'"/>
+                                        <field name="user_id"/>
+                                        <field name="reason"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Override Details" invisible="not is_escalated">
+                                <group>
+                                    <field name="override_user_id" readonly="1"/>
+                                    <field name="override_reason" readonly="1"/>
+                                </group>
                             </page>
                             <page string="Attachments">
                                 <field name="attachment_ids" nolabel="1" widget="many2many_binary"/>

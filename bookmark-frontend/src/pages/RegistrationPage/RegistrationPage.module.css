@@ -1,0 +1,130 @@
+.filterBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.searchGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.filterLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 999px;
+  padding: 0 4px 0 16px;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  padding: 10px 0;
+  color: var(--color-primary-black);
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.searchBtn:hover {
+  background: var(--color-lime-dark);
+}
+
+.dropdowns {
+  display: flex;
+  gap: 10px;
+}
+
+.select {
+  padding: 10px 16px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 999px;
+  background: var(--color-bg-white);
+  font-size: 0.85rem;
+  color: var(--color-primary-black);
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+
+.select:focus {
+  border-color: var(--color-lime);
+}
+
+.statusGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.empty {
+  padding: 80px 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+.paginationWrap {
+  padding: 16px 0;
+}
+
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dropdowns {
+    flex-direction: column;
+  }
+}

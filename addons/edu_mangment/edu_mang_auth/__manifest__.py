@@ -13,17 +13,14 @@ This module provides PURE authentication without website dependencies:
 - Security rules and access control
 - JSON API endpoints for authentication
 
-This is the core authentication module. For website portal UI
-(login pages, dashboards, templates), install edu_mang_website.
+This is the core authentication module. The student-facing portal UI
+is provided by the React frontend (bookmark-frontend).
 
 Key Features:
 - User groups with role-based permissions
 - Record rules for data access control
 - Session check API endpoint
 - Role detection and redirect URL determination
-
-Note: This module does NOT include website templates or dashboard UI.
-Install 'edu_mang_website' for the full portal experience.
     """,
     'author': 'Educational ERP Team',
     'website': 'https://www.TEAM.com',
@@ -31,6 +28,7 @@ Install 'edu_mang_website' for the full portal experience.
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
+        'views/auth_views.xml',
         'data/demo_users.xml',
     ],
     'demo': [

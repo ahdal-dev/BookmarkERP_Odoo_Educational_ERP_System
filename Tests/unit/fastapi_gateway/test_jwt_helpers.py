@@ -113,15 +113,23 @@ class TestRBACChecker:
     """Test the RBACChecker dependency class."""
 
     @pytest.fixture
+    def mock_request(self):
+        """Create a minimal mock FastAPI Request with no Redis state."""
+        req = MagicMock()
+        req.app.state.redis = None
+        req.url.path = "/api/v1/test"
+        return req
+
+    @pytest.fixture
     def mock_credentials(self, valid_jwt_token):
-        """Create mock HTTPAuthorizationCredentials."""
+        """Create mock HTTPAuthorizationCredentials for a prospective student."""
         creds = MagicMock()
         creds.credentials = valid_jwt_token
         return creds
 
     @pytest.fixture
     def mock_admin_credentials(self, admin_jwt_token):
-        """Create mock admin HTTPAuthorizationCredentials."""
+        """Create mock HTTPAuthorizationCredentials for a super-admin."""
         creds = MagicMock()
         creds.credentials = admin_jwt_token
         return creds
@@ -134,59 +142,53 @@ class TestRBACChecker:
         return creds
 
     @pytest.mark.asyncio
-    async def test_valid_student_with_allowed_role(self, mock_credentials):
+    async def test_valid_student_with_allowed_role(self, mock_request, mock_credentials):
         """Prospective student token should pass when role is allowed."""
-        checker = RBACChecker([UserRole.PROSPECTIVE_STUDENT, UserRole.ADMIN])
-        token_data = await checker(mock_credentials)
+        checker = RBACChecker([UserRole.PROSPECTIVE_STUDENT, UserRole.SUPER_ADMIN])
+        token_data = await checker(mock_request, mock_credentials)
 
         assert isinstance(token_data, TokenData)
         assert token_data.username == "test_student"
         assert token_data.role == UserRole.PROSPECTIVE_STUDENT
 
     @pytest.mark.asyncio
-    async def test_admin_with_admin_only_role(self, mock_admin_credentials):
-        """Admin token should pass when admin role is required."""
-        checker = RBACChecker([UserRole.ADMIN])
-        token_data = await checker(mock_admin_credentials)
+    async def test_admin_with_admin_only_role(self, mock_request, mock_admin_credentials):
+        """Super-admin token should pass when super_admin role is required."""
+        checker = RBACChecker([UserRole.SUPER_ADMIN])
+        token_data = await checker(mock_request, mock_admin_credentials)
 
-        assert token_data.role == UserRole.ADMIN
+        assert token_data.role == UserRole.SUPER_ADMIN
 
     @pytest.mark.asyncio
-    async def test_student_denied_admin_only_endpoint(self, mock_credentials):
-        """Student token should be rejected on admin-only endpoints.
-        
-        NOTE: The RBACChecker's broad `except Exception` block catches the
-        403 HTTPException and re-raises it as 401. The test matches the
-        actual behavior, not the intended behavior.
-        """
-        checker = RBACChecker([UserRole.ADMIN])
+    async def test_student_denied_admin_only_endpoint(self, mock_request, mock_credentials):
+        """Student token should be rejected (403) on admin-only endpoints."""
+        checker = RBACChecker([UserRole.SUPER_ADMIN])
 
         with pytest.raises(HTTPException) as exc_info:
-            await checker(mock_credentials)
+            await checker(mock_request, mock_credentials)
 
-        # The broad except converts 403 → 401
-        assert exc_info.value.status_code == 401
-        assert "Authentication failed" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 403
+        assert "Insufficient permissions" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    async def test_invalid_token_returns_401(self):
+    async def test_invalid_token_returns_401(self, mock_request):
         """A garbage token should trigger a 401 response."""
         creds = MagicMock()
         creds.credentials = "garbage.token.string"
         checker = RBACChecker([UserRole.PROSPECTIVE_STUDENT])
 
         with pytest.raises(HTTPException) as exc_info:
-            await checker(creds)
+            await checker(mock_request, creds)
 
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_expired_token_returns_401(self, mock_expired_credentials):
+    async def test_expired_token_returns_401(self, mock_request, mock_expired_credentials):
         """Expired tokens should trigger a 401 response."""
         checker = RBACChecker([UserRole.PROSPECTIVE_STUDENT])
 
         with pytest.raises(HTTPException) as exc_info:
-            await checker(mock_expired_credentials)
+            await checker(mock_request, mock_expired_credentials)
 
         assert exc_info.value.status_code == 401
 
@@ -199,11 +201,16 @@ class TestUserRoleEnum:
     """Test the UserRole enum values."""
 
     def test_all_roles_exist(self):
-        """All expected roles should be defined."""
+        """All 9 canonical RBAC roles must be defined."""
         assert UserRole.PROSPECTIVE_STUDENT.value == "prospective_student"
-        assert UserRole.ADMISSION_STAFF.value == "admission_staff"
-        assert UserRole.ADMIN.value == "admin"
-        assert UserRole.SYSTEM.value == "system"
+        assert UserRole.ADMISSION_OFFICER.value  == "admission_officer"
+        assert UserRole.STUDENT.value            == "student"
+        assert UserRole.INSTRUCTOR.value         == "instructor"
+        assert UserRole.ACADEMIC_ADVISOR.value   == "academic_advisor"
+        assert UserRole.DEPARTMENT_CHAIR.value   == "department_chair"
+        assert UserRole.REGISTRAR.value          == "registrar"
+        assert UserRole.SUPPORT_TECHNICIAN.value == "support_technician"
+        assert UserRole.SUPER_ADMIN.value        == "super_admin"
 
     def test_invalid_role_raises(self):
         """An unknown role string should raise ValueError."""

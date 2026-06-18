@@ -57,17 +57,66 @@ class StudentPetition(models.Model):
     days_pending = fields.Integer(string='Days Pending', compute='_compute_days_pending')
     is_own_petition = fields.Boolean(string='Is Own Petition', compute='_compute_is_own_petition')
 
+    # ------------------------------------------------------------------
+    # Multi-tier routing (Instructor -> Advisor -> Chair) + override
+    # ------------------------------------------------------------------
+    course_id = fields.Many2one(
+        'education.course', string='Related Course', tracking=True,
+        help='Course-specific petitions are routed to this course\'s '
+             'instructor at the Instructor tier.',
+    )
+    department_id = fields.Many2one(
+        'education.department', string='Department',
+        related='course_id.department_id', store=True, readonly=True,
+        help='Owning department, used to route escalations to the Chair.',
+    )
+    current_tier = fields.Selection([
+        ('instructor', 'Instructor'),
+        ('advisor', 'Academic Advisor'),
+        ('chair', 'Department Chair'),
+        ('done', 'Closed'),
+    ], string='Current Tier', tracking=True,
+        help='Which faculty tier currently owns this petition for review.')
+    is_escalated = fields.Boolean(
+        string='Escalated', default=False, tracking=True,
+        help='True once a Department Chair has pulled this petition for final '
+             'escalation/override.',
+    )
+    override_reason = fields.Text(
+        string='Override Reason',
+        help='Justification recorded when a Department Chair overrides the '
+             'prior instructor/advisor rulings.',
+    )
+    override_user_id = fields.Many2one(
+        'res.users', string='Overridden By', readonly=True,
+    )
+    decision_ids = fields.One2many(
+        'petition.decision', 'petition_id', string='Decision Trail',
+    )
+
     def _is_auth_student(self):
         """Check if user has auth student group"""
-        return self.env.user.has_group('edu_mangment.group_erp_student')
-    
+        return self.env.user.has_group('edu_mang_auth.group_erp_student')
+
     def _is_auth_admin(self):
         """Check if user has auth admin group"""
-        return self.env.user.has_group('edu_mangment.group_erp_admin')
-    
+        return self.env.user.has_group('edu_mang_auth.group_erp_admin')
+
     def _is_auth_admission_officer(self):
         """Check if user has auth admission officer group"""
-        return self.env.user.has_group('edu_mangment.group_erp_admission_officer')
+        return self.env.user.has_group('edu_mang_auth.group_erp_admission_officer')
+
+    def _is_auth_instructor(self):
+        """Check if user has auth instructor group"""
+        return self.env.user.has_group('edu_mang_auth.group_erp_instructor')
+
+    def _is_auth_advisor(self):
+        """Check if user has auth academic advisor group"""
+        return self.env.user.has_group('edu_mang_auth.group_erp_academic_advisor')
+
+    def _is_auth_chair(self):
+        """Check if user has auth department chair group"""
+        return self.env.user.has_group('edu_mang_auth.group_erp_department_chair')
 
     def _get_default_student(self):
         """Get the current user's partner record as the student"""
@@ -131,15 +180,157 @@ class StudentPetition(models.Model):
         return super(StudentPetition, self).write(vals)
 
     def action_submit(self):
-        """Submit petition for review"""
+        """Submit petition for review and route it to the first faculty tier."""
         for petition in self:
             if petition.state != 'draft':
                 raise ValidationError(_('Only draft petitions can be submitted.'))
             petition.write({
                 'state': 'submitted',
-                'submitted_date': fields.Datetime.now()
+                'submitted_date': fields.Datetime.now(),
+                'current_tier': petition._initial_tier(),
             })
             petition._send_submission_notification()
+
+    def _initial_tier(self):
+        """First tier to own a freshly-submitted petition.
+
+        Course-specific petitions start at the Instructor tier (if the course
+        has an instructor); otherwise they go straight to the Advisor tier.
+        """
+        self.ensure_one()
+        if self.course_id and self.course_id.instructor_user_id:
+            return 'instructor'
+        return 'advisor'
+
+    def _next_tier(self):
+        """Instructor -> Advisor -> Chair progression."""
+        self.ensure_one()
+        order = ['instructor', 'advisor', 'chair']
+        if self.current_tier in order:
+            idx = order.index(self.current_tier)
+            if idx + 1 < len(order):
+                return order[idx + 1]
+        return 'done'
+
+    # ------------------------------------------------------------------
+    # Tier decision engine
+    # ------------------------------------------------------------------
+    def _log_decision(self, tier, action, user, reason=None):
+        """Append an immutable line to the petition's decision audit trail."""
+        self.ensure_one()
+        self.env['petition.decision'].sudo().create({
+            'petition_id': self.id,
+            'tier': tier,
+            'action': action,
+            'user_id': user.id,
+            'reason': reason,
+        })
+
+    def _acting_user(self, acting_user_id=None):
+        """Resolve the acting user. The API gateway runs as a service account
+        and passes the real actor via ``acting_user_id``; interactive backend
+        use falls back to ``self.env.user``."""
+        if acting_user_id:
+            return self.env['res.users'].sudo().browse(acting_user_id)
+        return self.env.user
+
+    def tier_approve(self, acting_user_id=None, reason=None):
+        """Approve at the current tier. Advances to the next tier; reaching the
+        end (or an explicit final tier) finalises the petition as approved."""
+        for petition in self:
+            if petition.state not in ('submitted', 'under_review'):
+                raise ValidationError(_('Only active petitions can be reviewed.'))
+            user = petition._acting_user(acting_user_id)
+            if petition.student_id == user.partner_id:
+                raise ValidationError(_('You cannot review your own petition.'))
+            petition._log_decision(petition.current_tier, 'approve', user, reason)
+            nxt = petition._next_tier()
+            if nxt == 'done':
+                petition.write({
+                    'state': 'approved',
+                    'current_tier': 'done',
+                    'reviewer_id': user.id,
+                    'review_date': fields.Date.today(),
+                    'approved_date': fields.Datetime.now(),
+                    'comments': reason or petition.comments,
+                })
+                petition._send_approval_notification()
+            else:
+                petition.write({'state': 'under_review', 'current_tier': nxt})
+        return True
+
+    def tier_reject(self, acting_user_id=None, reason=None):
+        """Reject at the current tier. Terminal unless a Chair later overrides."""
+        for petition in self:
+            if petition.state not in ('submitted', 'under_review'):
+                raise ValidationError(_('Only active petitions can be reviewed.'))
+            if not reason:
+                raise ValidationError(_('Please provide a reason for rejection.'))
+            user = petition._acting_user(acting_user_id)
+            if petition.student_id == user.partner_id:
+                raise ValidationError(_('You cannot review your own petition.'))
+            petition._log_decision(petition.current_tier, 'reject', user, reason)
+            petition.write({
+                'state': 'rejected',
+                'current_tier': 'done',
+                'reviewer_id': user.id,
+                'review_date': fields.Date.today(),
+                'rejected_date': fields.Datetime.now(),
+                'rejection_reason': reason,
+            })
+            petition._send_rejection_notification()
+        return True
+
+    def action_escalate(self, acting_user_id=None, reason=None):
+        """Pull the petition up to the Department Chair tier for final review."""
+        for petition in self:
+            user = petition._acting_user(acting_user_id)
+            petition._log_decision(petition.current_tier or 'advisor',
+                                   'escalate', user, reason)
+            petition.write({
+                'state': 'under_review',
+                'current_tier': 'chair',
+                'is_escalated': True,
+            })
+        return True
+
+    def chair_override(self, acting_user_id=None, decision='approve', reason=None):
+        """Department Chair final override of prior rulings.
+
+        ``decision`` is 'approve' or 'reject'. An override reason is mandatory
+        and the chair's identity is recorded for the audit trail.
+        """
+        if decision not in ('approve', 'reject'):
+            raise ValidationError(_("Override decision must be 'approve' or 'reject'."))
+        for petition in self:
+            user = petition._acting_user(acting_user_id)
+            if not petition._is_chair_user(user):
+                raise AccessError(_('Only a Department Chair can override a petition.'))
+            if not reason:
+                raise ValidationError(_('An override reason is required.'))
+            if petition.student_id == user.partner_id:
+                raise ValidationError(_('You cannot override your own petition.'))
+            petition._log_decision('chair', 'override', user, reason)
+            vals = {
+                'current_tier': 'done',
+                'is_escalated': True,
+                'override_reason': reason,
+                'override_user_id': user.id,
+                'reviewer_id': user.id,
+                'review_date': fields.Date.today(),
+            }
+            if decision == 'approve':
+                vals.update({'state': 'approved', 'approved_date': fields.Datetime.now()})
+            else:
+                vals.update({'state': 'rejected', 'rejected_date': fields.Datetime.now(),
+                             'rejection_reason': reason})
+            petition.write(vals)
+        return True
+
+    def _is_chair_user(self, user):
+        """Whether ``user`` holds the Department Chair group."""
+        return user.has_group('edu_mang_auth.group_erp_department_chair') or \
+            user.has_group('edu_mang_auth.group_erp_admin')
 
     def _check_admin_access(self):
         """Check if current user has admin access"""
@@ -205,13 +396,75 @@ class StudentPetition(models.Model):
         self.write({'state': 'cancelled'})
 
     def _send_submission_notification(self):
-        """Send email notification to admins when petition is submitted"""
-        pass
+        """Post a chatter message and send an email to admin group on petition submission."""
+        for petition in self:
+            try:
+                petition.message_post(
+                    body=_(
+                        'A new petition <b>%s</b> has been submitted by %s '
+                        'and is awaiting review.'
+                    ) % (petition.name, petition.student_id.name),
+                    subject=_('New Petition Submitted: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=self._get_admin_partner_ids(),
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Submission notification failed for petition %s', petition.name, exc_info=True
+                )
 
     def _send_approval_notification(self):
-        """Send email notification to student when petition is approved"""
-        pass
+        """Send an email to the student whose petition was approved."""
+        for petition in self:
+            if not petition.student_id.email:
+                continue
+            try:
+                petition.message_post(
+                    body=_('Your petition <b>%s</b> has been <b>approved</b>.') % petition.name,
+                    subject=_('Petition Approved: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=[petition.student_id.id],
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Approval notification failed for petition %s', petition.name, exc_info=True
+                )
 
     def _send_rejection_notification(self):
-        """Send email notification to student when petition is rejected"""
-        pass
+        """Send an email to the student whose petition was rejected."""
+        for petition in self:
+            if not petition.student_id.email:
+                continue
+            try:
+                reason_text = (
+                    _('<br/>Reason: %s') % petition.rejection_reason
+                    if petition.rejection_reason else ''
+                )
+                petition.message_post(
+                    body=_(
+                        'Your petition <b>%s</b> has been <b>rejected</b>.%s'
+                    ) % (petition.name, reason_text),
+                    subject=_('Petition Rejected: %s') % petition.name,
+                    message_type='email',
+                    subtype_xmlid='mail.mt_comment',
+                    partner_ids=[petition.student_id.id],
+                )
+            except Exception:
+                import logging
+                logging.getLogger(__name__).warning(
+                    'Rejection notification failed for petition %s', petition.name, exc_info=True
+                )
+
+    def _get_admin_partner_ids(self):
+        """Return partner IDs of all users in the ERP admin group."""
+        try:
+            admin_group = self.env.ref('edu_mang_auth.group_erp_admin', raise_if_not_found=False)
+            if admin_group:
+                return admin_group.users.mapped('partner_id').ids
+        except Exception:
+            pass
+        return []

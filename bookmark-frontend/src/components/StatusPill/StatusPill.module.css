@@ -1,0 +1,32 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.green {
+  background: rgba(76, 175, 39, 0.15);
+  color: #3d8e1f;
+}
+
+.yellow {
+  background: rgba(245, 200, 66, 0.2);
+  color: #b8860b;
+}
+
+.coral {
+  background: rgba(232, 97, 58, 0.15);
+  color: #c0452a;
+}
+
+.black {
+  background: var(--color-primary-black);
+  color: #ffffff;
+}

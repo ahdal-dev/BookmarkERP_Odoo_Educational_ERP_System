@@ -1,0 +1,32 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-bg-white);
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.option {
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.option:hover:not(.active) {
+  color: var(--color-primary-black);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.active {
+  background: var(--color-primary-black);
+  color: #ffffff;
+}
