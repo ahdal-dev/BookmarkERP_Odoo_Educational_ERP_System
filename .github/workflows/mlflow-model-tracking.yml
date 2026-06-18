@@ -47,7 +47,9 @@ jobs:
 
       - name: Run tracking
         run: |
-          python services/student_performance_service/app/train.py
+          python services/student_performance_service/app/train.py \
+            --data data/transcripts.json \
+            --out services/student_performance_service/models
         env:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
           PYTHONPATH: ${{ github.workspace }}
