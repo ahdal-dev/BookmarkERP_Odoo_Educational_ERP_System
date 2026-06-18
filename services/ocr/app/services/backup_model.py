@@ -612,81 +612,79 @@ MIME_MAP = {
 
 # Per-document OCR instructions derived from real document layout analysis
 OCR_INSTRUCTIONS = {
-    "birth_certificate": """This is an Egyptian birth certificate (صورة قيد الميلاد).
-Extract ALL Arabic and English text EXACTLY as it appears, label by label.
+    "birth_certificate": """This is an Egyptian civil registry birth certificate (صورة قيد الميلاد).
+Extract ALL Arabic text EXACTLY as it appears, field by field.
 
-The document has this exact structure:
+The document has this exact structure — read right to left:
 
-TOP AREA:
-- Document serial number (top-left corner)
-- Date line below it
-- Website top-right: www.cso.gov.eg
+BELOW THE TITLE — before any section label:
+- الرقم القومي: child's 14-digit national ID (appears here, before "بيانات المولود")
 
-SECTION bيانات المولود (right column):
-- الجنسية: [value]
-- محل الميلاد: [value]
-- تاريخ الميلاد: [value written in Arabic words]
-- الديانة: [value]
-- النوع: [value]
+SECTION — بيانات المولود (child's data):
+- First field: child's full name (e.g. خديجة) — appears as the FIRST item inside this section
+- الجنسية: nationality
+- محل الميلاد: place of birth (city / district)
+- تاريخ الميلاد: date of birth written entirely in Arabic words (e.g. سبعة مارس ألفان وخمسة عشر) — NEVER in numbers
+- النوع: gender (ذكر or أنثى)
+- الديانة: religion
 
-SECTION بيانات المُبلِّغ (left column, same row):
-- Full name of reporter
-- الرقم القومي: [14-digit number]
-- الديانة: [value]
+SECTION — بيانات الأب (father's data):
+- Father's full Arabic name
+- الرقم القومي: father's 14-digit national ID
+- الديانة: father's religion
+- الجنسية: father's nationality
 
-SECTION بيانات الأب:
-- Father full name
-- الرقم القومي: [14-digit number]
-- الديانة: [value]
-- الجنسية: [value]
+SECTION — بيانات الأم (mother's data):
+- Mother's full Arabic name
+- الرقم القومي: mother's 14-digit national ID
+- الديانة: mother's religion
+- الجنسية: mother's nationality
 
-SECTION بيانات الأم:
-- Mother full name
-- الرقم القومي: [14-digit number]
-- الديانة: [value]
-- الجنسية: [value]
+BOTTOM REGISTRATION TABLE:
+- رقم مسلسل: serial/registration number at the bottom
+- Witness names (س من row)
+- Event date, registration date, issue date
 
-BOTTOM TABLE:
-Row فتحة: dates
-Row س من: witness names
-Row د.أ / د.إ: event date / issue date
-رقم مسلسل: serial number at bottom
-
-Extract every label and its value. Preserve Arabic numerals exactly.""",
+CRITICAL:
+- The child's national ID is at the TOP of the document — do NOT confuse it with father's or mother's ID.
+- تاريخ الميلاد is written in Arabic words — copy verbatim, it will be converted later.
+- Preserve all Arabic-Indic numerals exactly as printed (٠١٢٣٤٥٦٧٨٩).
+- Output as structured markdown with clear section labels.""",
 
     "thanawiya_amma": """This is an Egyptian Thanawiya Amma (ثانوية عامة) secondary school certificate.
 Extract ALL text EXACTLY as it appears.
 
-TOP-RIGHT HEADER (right to left):
-- رقم الجلوس: [number]
-- الرقم القومي: [14-digit number]
-- اسم الطالب: [full name]
-- المديرية: [value]
-- الإدارة التعليمية: [value]
-- المدرسة: [value]
-- اللغة الأولى: [value]
-- اللغة الثانية: [value]
+HEADER (top area, each field as "Label : Value", read right to left):
+- رقم الجلوس : [number]           ← seat number (6-7 digits, shorter than national ID)
+- الرقم القومي : [14-digit number] ← student's national ID
+- اسم الطالب / اسم الطالبة : [full Arabic name, may be 4-5 words]
+- المديرية : [value]
+- الإدارة التعليمية : [value]
+- المدرسة : [full school name, may include words like ثانوية / بنين / بنات]
+- اللغة الأولى : [value]
+- اللغة الثانية : [value]
 
-SUBJECTS TABLE:
-Headers are rotated vertically. Two score rows per subject:
-- Top row = max_score
-- Bottom row = actual score
-A dash means subject not taken — skip it.
-The rightmost column المجموع الكلي is the total — NOT a subject.
+SUBJECTS TABLE (subject names printed vertically/rotated):
+For each subject column, extract:
+  - Subject name (rotated header text)
+  - Top row = max_score. If it appears as "X/Y" (e.g. 80/40), the max_score = X (the larger number).
+  - Bottom row = actual score achieved
+  - Dash or empty = not taken, skip entirely
+The column "المجموع الكلي" = grand total, label it clearly, do NOT treat as a subject.
 
-NON-COUNTED SUBJECTS (bottom-right small table):
+NON-COUNTED SUBJECTS (small table, bottom-right):
 - التربية الدينية, التربية الوطنية, الاقتصاد والإحصاء
-- Result: اجتياز or رسوب
+- Each shows: اجتياز or رسوب, and a score fraction
 
 TOTAL SCORE:
-- Written in Arabic words on a dedicated line
-- Also shown as fraction (e.g. 264/500)
+- Arabic words line: e.g. مائتان وأربعة وستون درجات فقط
+- Fraction line: e.g. ٢٦٤ من ٥٠٠
 
 BOTTOM:
 - Certificate number (e.g. 1-1/21-0218493)
 - Stamp, barcode, photo presence
 
-Extract every value. Do NOT skip any subject score.""",
+Extract every value exactly. Do NOT skip any subject.""",
 
     "passport": """This is an Egyptian passport.
 Extract ALL text exactly — both Arabic and English.
@@ -711,10 +709,17 @@ MRZ LINES (bottom — extract CHARACTER BY CHARACTER verbatim):
 
 Output as structured markdown.""",
 
-    "_default": """Extract ALL text from this document image.
-Keep every label next to its value.
-For Arabic, maintain right-to-left reading order.
-Include ALL numbers, dates, and names exactly as written.
+    "_default": """This is an Arabic or bilingual document image. Your task is to extract ALL text for document type identification.
+
+CRITICAL — read carefully:
+1. Extract ALL Arabic text exactly as it appears — preserve every word, do NOT translate or summarize.
+2. Extract ALL English text exactly as it appears.
+3. Keep every label next to its value (e.g. "الجنسية: مصر").
+4. Include ALL section headers (e.g. بيانات المولود, بيانات الأب, بيانات الأم, صورة قيد الميلاد).
+5. Include ALL numbers exactly as printed (Arabic-Indic or Western).
+6. Include website URLs, watermarks, stamps, and any small printed text.
+7. Maintain document structure — list items in the order they appear top to bottom.
+
 Return as structured markdown.""",
 }
 
@@ -806,12 +811,40 @@ DETECTION_HINTS = {
 }
 
 
+# Single keyword that alone is 100% conclusive for a doc type
+STRONG_KEYWORDS = {
+    "birth_certificate": [
+        "صورة قيد الميلاد", "قيد الميلاد", "www.cso.gov.eg", "cso.gov.eg",
+        "بيانات المولود", "بيانات الأب", "بيانات الأم",
+    ],
+    "passport": ["p<egy", "date of expiry", "mrz", "جواز سفر"],
+    "thanawiya_amma": ["اللغة الاولي",
+        "رقم الجلوس", "المجموع الكلي", "ثانوية عامة",
+        "الإدارة التعليمية", "مراجعة أولى", "مراجعة ثانية",
+        "درجات فقط", "اجتياز", "التربية الدينية",
+        "1-1/21", "1-1/20", "1-1/22", "1-1/23",  # certificate number prefix pattern
+    ],
+    "ig_transcript":     ["igcse", "cambridge", "centre number"],
+    "american_transcript": ["grade point average", "credits earned"],
+}
+
+
 def detect_doc_type(ocr_text):
-    """Two-stage detection: keyword heuristic then LLM fallback."""
+    """Three-stage detection: strong keyword → scored keywords → LLM fallback."""
+    # Arabic text is not affected by .lower() but keep it for English keywords
     text_lower = ocr_text.lower()
 
+    # Stage 1: single strong keyword is conclusive
+    # Check both lowercased (for English) and original (for Arabic)
+    for doc_type, keywords in STRONG_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text_lower or kw in ocr_text:
+                logger.info(f"✅ Strong keyword match → {doc_type} ('{kw}')")
+                return doc_type
+
+    # Stage 2: scored keywords — check both lowercased and original for Arabic
     scores = {
-        doc_type: sum(1 for kw in keywords if kw in text_lower)
+        doc_type: sum(1 for kw in keywords if kw in text_lower or kw in ocr_text)
         for doc_type, keywords in DETECTION_HINTS.items()
     }
     logger.info(f"Keyword scores: {scores}")
@@ -821,8 +854,8 @@ def detect_doc_type(ocr_text):
     best_score = sorted_scores[0]
     second_score = sorted_scores[1] if len(sorted_scores) > 1 else 0
 
-    if best_score >= 2 and best_score > second_score:
-        logger.info(f"✅ Heuristic confident: {best_type}")
+    if best_score >= 1 and best_score > second_score:
+        logger.info(f"✅ Heuristic confident: {best_type} (score={best_score})")
         return best_type
 
     logger.info("Heuristic uncertain — LLM fallback...")
@@ -833,22 +866,39 @@ def _llm_detect(ocr_text, hint_scores=None):
     """LLM-based detection with hint context."""
     hint_str = f"\nKeyword hint scores: {hint_scores}\n" if hint_scores else ""
 
-    prompt = f"""You are a document classifier for Egyptian and international documents.
-OCR text may contain Arabic, English, or mixed content with noise.
+    prompt = f"""You are a document type classifier for Egyptian government and academic documents.
+The OCR text below may be noisy, partially Arabic, or have garbled words.
 {hint_str}
-Classify as EXACTLY one of:
-passport | birth_certificate | thanawiya_amma | ig_transcript | american_transcript
+Classify the document as EXACTLY one of these five types:
+  passport | birth_certificate | thanawiya_amma | ig_transcript | american_transcript
 
-- passport: has P<EGY, MRZ lines, Date of Expiry, passport number
-- birth_certificate: has صورة قيد الميلاد, three sections بيانات المولود/الأب/الأم
-- thanawiya_amma: has رقم الجلوس, subject score table, المجموع الكلي
-- ig_transcript: has centre number, candidate number, Cambridge/IGCSE grades
-- american_transcript: has GPA, credits, semester, high school
+HOW TO IDENTIFY EACH TYPE:
+- birth_certificate : Egyptian civil registry record. Look for ANY of:
+    صورة قيد الميلاد, قيد الميلاد, بيانات المولود, بيانات الأب, بيانات الأم,
+    cso.gov.eg, مصلحة الأحوال المدنية, رقم مسلسل, تاريخ الميلاد, محل الميلاد
+    It has THREE people sections (child, father, mother). NO MRZ lines.
 
-Reply with ONLY the key. No punctuation. No explanation.
+- passport : travel document. Look for:
+    P<EGY, MRZ lines (two rows of letters/numbers/<<), Date of Expiry,
+    passport number (alphanumeric ~9 chars), جواز سفر
+    It has MRZ lines at the bottom. birth_certificate does NOT.
+
+- thanawiya_amma : Egyptian secondary certificate. Look for:
+    ثانوية عامة, رقم الجلوس, المجموع الكلي, subject score table
+
+- ig_transcript : Cambridge/IGCSE result. Look for:
+    IGCSE, Cambridge, centre number, candidate number, A* grades
+
+- american_transcript : US school transcript. Look for:
+    GPA, credits, semester, grade point average
+
+⚠️  If you see Arabic sections for child/father/mother data → it is birth_certificate, NOT passport.
+⚠️  Only classify as passport if you see MRZ lines or جواز سفر explicitly.
+
+Reply with ONLY the document type key. No punctuation. No explanation.
 
 --- OCR Text ---
-{ocr_text[:1500]}"""
+{ocr_text[:2000]}"""
 
     try:
         detected = _chat([{"role": "user", "content": prompt}]).strip().lower()
@@ -897,60 +947,68 @@ Return ONLY the cleaned text — no explanation.
 PROMPTS = {
 
     # ── Birth Certificate ─────────────────────────────────────────────────────
-    "birth_certificate": """You are extracting data from an Egyptian birth certificate (صورة قيد الميلاد).
+    "birth_certificate": """You are extracting data from an Egyptian civil registry birth certificate (صورة قيد الميلاد).
 
-The document has FOUR labeled sections:
+The OCR text below was extracted from a scanned document. It contains FOUR people's data. Read carefully — do NOT mix up which data belongs to whom.
 
-SECTION 1 — بيانات المولود (right column):
-  الجنسية         → child's nationality (e.g. مصر)
-  محل الميلاد     → place of birth
-  تاريخ الميلاد   → date in Arabic words (e.g. "سبعة مارس ألفان وخمسة عشر" = 2015-03-07)
-  الديانة         → religion
-  النوع           → gender (ذكر=male, أنثى=female)
+══ THE DOCUMENT HAS THIS EXACT ORDER (top to bottom) ══
 
-SECTION 2 — بيانات المُبلِّغ (left column, same area as section 1):
-  This is the REPORTER of the birth — a different person from the father.
-  Full Arabic name of reporter
-  الرقم القومي    → reporter's 14-digit national ID
-  الديانة         → reporter's religion
+① Title "صورة قيد الميلاد" — watermark, ignore.
 
-SECTION 3 — بيانات الأب:
-  Father's full Arabic name (line appearing before الرقم القومي)
-  الرقم القومي    → father's 14-digit national ID
-  الديانة         → father's religion
-  الجنسية         → father's nationality
+② CHILD'S NATIONAL ID — appears immediately below the title, before the "بيانات المولود" label:
+   الرقم القومي : [number] → child_national_id (14 digits)
 
-SECTION 4 — بيانات الأم:
-  Mother's full Arabic name (line appearing before الرقم القومي)
-  الرقم القومي    → mother's 14-digit national ID
-  الديانة         → mother's religion
-  الجنسية         → mother's nationality
+③ SECTION LABEL "بيانات المولود" — the child's section starts here:
+   - FIRST field inside this section = child's name → child_name (e.g. خديجة)
+   - الجنسية      → nationality (child's, e.g. مصر)
+   - محل الميلاد  → place_of_birth (e.g. القاهرة / السيده زينب)
+   - تاريخ الميلاد → ALWAYS written in Arabic WORDS, never as numbers.
+                     Example: "سبعة مارس سنة ألف وتسعمائة وخمسة عشر"
+                     Convert to YYYY-MM-DD:
+                     يناير=01, فبراير=02, مارس=03, إبريل/أبريل=04, مايو=05, يونيو=06,
+                     يوليو=07, أغسطس=08, سبتمبر=09, أكتوبر=10, نوفمبر=11, ديسمبر=12
+                     Store raw Arabic string in date_of_birth_raw.
+                     ⚠️ Numeric dates like 30/12/1981 come from the bottom table — do NOT use for date_of_birth.
+   - النوع        → gender (ذكر=male, أنثى=female)
+   - الديانة      → religion (child's)
 
-BOTTOM REGISTRATION TABLE:
-  Row "فتحة"   → opening/registration entry dates
-  Row "س من"   → witness names (شاهد)
-  Row "د.أ"    → event date (تاريخ الواقعة)
-  Row "د.إ"    → issue date (تاريخ الإخراج)
-  رقم مسلسل    → the large serial number printed at bottom
+④ SECTION "بيانات الأب" — father's data:
+   - Full Arabic name (often preceded by "من") → father_name
+   - الرقم القومي → father_national_id (14 digits)
+   - الديانة      → father_religion
+   - الجنسية      → father_nationality
 
-CRITICAL RULES:
-1. child_name is NOT labeled on this form — infer only from رقم مسلسل record line.
-   If not clearly found, return null. NEVER use reporter_name as child_name.
-2. reporter_name and father_name are DIFFERENT people.
-3. تاريخ الميلاد is always in Arabic written words — convert to YYYY-MM-DD.
-4. All 14-digit national IDs may be in Arabic numerals — convert to Western digits.
+⑤ SECTION "بيانات الأم" — mother's data:
+   - Full Arabic name → mother_name
+   - الرقم القومي → mother_national_id (14 digits)
+   - الديانة      → mother_religion
+   - الجنسية      → mother_nationality
 
-Return ONLY this JSON (no markdown, no explanation):
+⑥ BOTTOM REGISTRATION TABLE:
+   - رقم مسلسل → serial_number (long purely-numeric, e.g. 1849211163)
+   - Row "س من" → witnesses (array of names)
+   - Row "د.أ"  → event_date
+   - Row "د.إ"  → issue_date
+   ⚠️ All dates in this table are numeric — do NOT use them as date_of_birth.
+
+══ CRITICAL RULES ══
+1. child_national_id = the الرقم القومي that appears BEFORE the "بيانات المولود" label (section ②).
+2. child_name = the FIRST name inside the "بيانات المولود" section (section ③).
+3. date_of_birth = Arabic word string from section ③ only — never a number.
+4. Father and mother have their own national IDs in sections ④ and ⑤ — do NOT mix with child's.
+5. Convert all Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) → Western (0123456789).
+6. All national IDs are exactly 14 digits after conversion.
+
+Return ONLY this JSON (no markdown fences, no explanation):
 {
   "child_name": null,
+  "child_national_id": null,
   "date_of_birth": null,
+  "date_of_birth_raw": null,
   "place_of_birth": null,
   "gender": null,
   "religion": null,
   "nationality": null,
-  "reporter_name": null,
-  "reporter_national_id": null,
-  "reporter_religion": null,
   "father_name": null,
   "father_national_id": null,
   "father_religion": null,
@@ -960,58 +1018,94 @@ Return ONLY this JSON (no markdown, no explanation):
   "mother_religion": null,
   "mother_nationality": null,
   "serial_number": null,
-  "registration_number": null,
   "event_date": null,
-  "registration_date": null,
   "issue_date": null,
-  "authority": null,
   "witnesses": [],
   "additional_details": {}
 }""",
 
     # ── Thanawiya Amma ────────────────────────────────────────────────────────
-    "thanawiya_amma": """You are extracting data from an Egyptian Thanawiya Amma (ثانوية عامة) certificate.
+    "thanawiya_amma": """You are extracting data from an Egyptian Thanawiya Amma (ثانوية عامة) secondary certificate.
 
-HEADER (top-right, read right to left):
-  رقم الجلوس         → seat number
-  الرقم القومي       → 14-digit national ID
-  اسم الطالب         → student full name
-  المديرية           → directorate/governorate
-  الإدارة التعليمية  → educational administration
-  المدرسة            → school name
-  اللغة الأولى       → first foreign language
-  اللغة الثانية      → second foreign language
+══ HEADER (top area, read right to left) ══
+Each field appears as "Label : Value". Extract exactly:
+  رقم الجلوس          → seat_number      (numeric, e.g. 1138465)
+  الرقم القومي        → national_id      (14 digits, e.g. 30310011405375)
+  اسم الطالب / اسم الطالبة → student_name  (full Arabic name, e.g. عبدالوهاب اشرف ابراهيم احمد محمد)
+  المديرية            → directorate      (e.g. القاهرة)
+  الإدارة التعليمية   → educational_administration (e.g. الساحل)
+  المدرسة             → school           (full school name, e.g. ناصر الثانوية العسكرية بنين)
+  اللغة الأولى        → first_language   (e.g. لغة انجليزية)
+  اللغة الثانية       → second_language  (e.g. لغة فرنسية)
 
-SUBJECTS TABLE:
-Subject headers are rotated vertically — read carefully.
-Two score rows per column:
-  Top row    = max_score (الدرجة العظمى)
-  Bottom row = actual score achieved
+══ SUBJECTS TABLE ══
+The table has two score rows. Process it column by column, right to left.
 
-Common subject columns (right to left):
-  اللغة الأجنبية الأولى, اللغة الأجنبية الثانية, التاريخ, الجغرافيا,
-  فلسفة ومنطق, علم النفس والاجتماع, الكيمياء, الجيولوجيا والعلوم البيئية,
-  الفيزياء, الأحياء, الرياضيات التطبيقية, الرياضيات البحتة
+STEP 1 — identify the TWO score rows:
+  ROW A (upper row): contains max scores in format "X/Y" (e.g. ٨٠/٤٠ or 80/40)
+                     max_score = the FIRST (larger) number only. Ignore the second.
+                     e.g. "٨٠/٤٠" → max_score = 80
+                     e.g. "٦٠/٣٠" → max_score = 60
+                     e.g. "٥٠/٢٥" → max_score = 50
+  ROW B (lower row): contains the student's actual score as a plain integer.
+                     A dash "—" or "-" = not taken.
 
-Example: top="80", bottom="49" → score=49, max_score=80
-A dash "—" or "-" in a cell = subject not taken → skip entirely.
-The column labeled المجموع الكلي is the TOTAL — do NOT add it to subjects array.
+STEP 2 — for each subject column (right to left):
+  - Read the rotated vertical subject name
+  - Read ROW A value → extract max_score (first number before "/")
+  - Read ROW B value → extract score
+  - If ROW B is a dash or empty → skip this subject entirely, do not include it
+  - If both rows have numbers → add to subjects array
 
-NON-COUNTED SUBJECTS (bottom-right small table, pass/fail only):
+STEP 3 — skip the total column:
+  The rightmost or leftmost column labeled "المجموع الكلي" contains the grand total.
+  Do NOT include it in the subjects array.
+
+Subject names appear in this order (right to left):
+  1. اللغة الأجنبية الأولى   (max usually 80)
+  2. اللغة الأجنبية الثانية  (max usually 50)
+  3. التاريخ                  (max usually 60)
+  4. الجغرافيا               (max usually 60)
+  5. فلسفة ومنطق             (max usually 60)
+  6. علم النفس والاجتماع     (max usually 60)
+  7. الكيمياء                (max usually 60)
+  8. الجيولوجيا والعلوم البيئية (max usually 60)
+  9. الفيزياء                (max usually 60)
+  10. الأحياء               (max usually 60)
+  11. الرياضيات التطبيقية   (max usually 60)
+  12. الرياضيات البحتة      (max usually 60)
+
+Concrete example from a real certificate:
+  Column "اللغة الأجنبية الأولى": ROW A = "٨٠/٤٠", ROW B = "٤٩"
+  → {"subject": "اللغة الأجنبية الأولى", "score": 49, "max_score": 80}
+
+  Column with ROW B = "-" → skip entirely.
+
+  Column "المجموع الكلي": ROW A = "٤١٠/٢٠٥", ROW B = "٢٦٤" → this is the TOTAL, skip from subjects.
+
+══ NON-COUNTED SUBJECTS (small table, bottom-right) ══
   التربية الدينية, التربية الوطنية, الاقتصاد والإحصاء
-  Results: اجتياز = "pass", رسوب = "fail"
+  Each shows اجتياز = "pass" or رسوب = "fail"
 
-TOTAL:
-  Arabic words line (e.g. "مائتان وأربعة وستون") → convert to integer (264)
-  Fraction line (e.g. "من ٧٣٤/٢٦٤") → total_score=264, total_max_score=500 (or as shown)
+══ TOTAL SCORE ══
+  Arabic words line (e.g. "مائتان وأربعة وستون درجات فقط") → total_score as integer (264)
+  Fraction line (e.g. "٢٦٤ من ٥٠٠") → total_max_score = second number (500)
+  ⚠️ Use ONLY the printed total — never sum subjects yourself.
 
-CRITICAL RULES:
-- Convert ALL Arabic numerals to Western: ٠١٢٣٤٥٦٧٨٩ → 0123456789
-- total_score: use the EXPLICITLY printed total ONLY — NEVER sum subjects yourself
-- status: "pass" if ناجح, "fail" if راسب
-- has_barcode / has_photo / has_official_stamp: true or false based on what is visible
+══ BOTTOM ══
+  Certificate number (e.g. 1-1/21-0218493) → certificate_number
+  Photo visible in top-left corner → has_photo: true
+  Official stamp visible → has_official_stamp: true
+  Barcode visible → has_barcode: true
 
-Return ONLY this JSON (no markdown, no explanation):
+══ CRITICAL RULES ══
+1. Convert ALL Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) → Western (0123456789) everywhere.
+2. national_id is exactly 14 digits.
+3. seat_number is the رقم الجلوس — a shorter number (6-7 digits), NOT the national ID.
+4. student_name is the full name after "اسم الطالب" or "اسم الطالبة" — can be long (4-5 words).
+5. school is the full school name after "المدرسة" — may include words like ثانوية, بنين, بنات.
+
+Return ONLY this JSON (no markdown fences, no explanation):
 {
   "student_name": null,
   "seat_number": null,
@@ -1124,7 +1218,7 @@ Rules:
 
 # Fields that must be non-null/non-empty for a successful extraction
 REQUIRED_FIELDS = {
-    "birth_certificate":   ["father_name", "mother_name", "date_of_birth", "serial_number"],
+    "birth_certificate":   ["child_name", "child_national_id", "father_name", "mother_name", "date_of_birth", "serial_number"],
     "thanawiya_amma":      ["student_name", "seat_number", "subjects", "total_score"],
     "passport":            ["full_name_en", "passport_number", "date_of_birth", "expiry_date"],
     "ig_transcript":       ["student_name", "candidate_number", "subjects"],

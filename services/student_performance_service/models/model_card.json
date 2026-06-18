@@ -1,0 +1,42 @@
+{
+  "schema_version": "5.0",
+  "created_at": "2026-06-18T11:14:09.045752+00:00",
+  "task": "plan-conditioned next-semester GPA prediction (+ CQR interval + P(at-risk))",
+  "seed": 42,
+  "n_students_train": 187,
+  "n_students_test": 321,
+  "features": {
+    "total": 112,
+    "plan": 24,
+    "history": 88
+  },
+  "regressor": {
+    "params": {
+      "n_estimators": 355,
+      "max_depth": 5,
+      "learning_rate": 0.03396265837274448,
+      "subsample": 0.8349337395484047,
+      "colsample_bytree": 0.7602956552325142,
+      "min_child_weight": 4,
+      "reg_alpha": 0.6375542321808795,
+      "reg_lambda": 1.463222759150509
+    },
+    "test_RMSE": 0.5638,
+    "test_R2": 0.767,
+    "test_MAE": 0.2884
+  },
+  "interval": {
+    "method": "CQR",
+    "target_coverage": 0.9,
+    "empirical_coverage": 0.91,
+    "mean_width": 1.714
+  },
+  "classifier": {
+    "clf_F1": 0.725,
+    "clf_precision": 0.654,
+    "clf_recall": 0.814,
+    "clf_ROC_AUC": 0.952,
+    "clf_PR_AUC": 0.822,
+    "clf_Brier": 0.083
+  }
+}
