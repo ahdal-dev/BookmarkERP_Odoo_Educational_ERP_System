@@ -1,0 +1,35 @@
+graph TD
+    A([🎓 Start: Visit Admissions Portal]) --> B[Create Account / Log In]
+    B --> C[Fill Out Application Form]
+    C --> D{All Required
+Fields Complete?}
+    D -- No --> C
+    D -- Yes --> E[Upload Supporting Documents
+e.g. Transcripts, ID, Photo]
+    E --> F[(OCR Engine Triggered:
+Extract & Validate Document Data)]
+    F --> G{OCR Validation
+Passed?}
+    G -- No: Unreadable / Missing --> H[Display Error & Prompt Re-upload]
+    H --> E
+    G -- Yes --> I[(ERP DB: Save Application
+& Generate Reference Number)]
+    I --> J[Send Confirmation Email
+with Reference Number]
+    J --> K[Candidate Visits Application Tracker]
+    K --> L[(Query ERP: Fetch
+Application Status)]
+    L --> M{Application
+Status?}
+    M -- Under Review --> N[Display: 'Under Review' Message]
+    M -- Additional Docs Needed --> O[Notify Candidate to Upload More Docs]
+    O --> E
+    M -- Decision Made --> P{Admission
+Decision}
+    P -- Accepted --> Q[Display Acceptance Notice
+& Next Steps Link]
+    P -- Rejected --> R[Display Rejection Notice
+& Feedback if Available]
+    Q --> S([✅ End: Candidate Proceeds
+to Enrollment])
+    R --> T([❌ End: Application Closed])

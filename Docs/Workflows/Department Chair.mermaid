@@ -1,0 +1,43 @@
+graph TD
+    A([🏛️ Start: Receive Escalated
+Petition Notification]) --> B[(ERP DB: Fetch Full Petition
+Audit Trail & All Prior Decisions)]
+    B --> C[Review Complete History:
+Student Record, Instructor Decision,
+Advisor Recommendation]
+    C --> D{Sufficient Context
+to Decide?}
+    D -- No --> E[Request Supplementary Info
+from Relevant Party]
+    E --> F[(ERP DB: Log Info Request
+& Notify Instructor or Advisor)]
+    F --> G[Await Response
+& Re-review Submission]
+    G --> C
+    D -- Yes --> H[Conduct Executive Review
+of Academic & Policy Merits]
+    H --> I{Department Chair
+Decision}
+    I -- Override: Approve --> J[Document Override Rationale
+with Chair Signature]
+    J --> K[(ERP DB: Record Override Approval
+& Update Petition Status)]
+    K --> L[Notify Student, Instructor
+& Advisor: Petition Approved]
+    L --> M[(ERP DB: Trigger Registration
+System to Enact Approval)]
+    I -- Uphold Rejection --> N[Document Final Rejection
+with Chair Authority Note]
+    N --> O[(ERP DB: Record Final Rejection
+& Close Petition)]
+    O --> P[Notify Student:
+Final Decision — No Further Appeal]
+    I -- Conditional Approval --> Q[Set Conditions
+e.g. Grade Minimums, Restrictions]
+    Q --> R[(ERP DB: Save Conditional
+Approval Terms)]
+    R --> S[Notify Student:
+Conditional Approval & Terms]
+    M --> T([✅ End: Petition Fully Resolved])
+    P --> T
+    S --> T

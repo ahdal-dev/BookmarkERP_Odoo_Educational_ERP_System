@@ -1,0 +1,41 @@
+graph TD
+    A([🔐 Start: Log In to ERP Backend]) --> B{Authentication
+Successful?}
+    B -- No --> C[Display Error & Retry]
+    C --> A
+    B -- Yes --> D[(ERP DB: Load Admission
+Pipeline Dashboard)]
+    D --> E[View Kanban / List of
+Pending Applications]
+    E --> F[Select an Application
+to Review]
+    F --> G[(ERP DB: Fetch Full
+Applicant Profile & Documents)]
+    G --> H[View Applicant Details
+OCR-Extracted Data & Raw Docs]
+    H --> I{Need Docs
+for Offline Review?}
+    I -- Yes --> J[Download Document Package
+PDF Bundle]
+    J --> K[Conduct Offline Review]
+    K --> H
+    I -- No --> L{Sufficient Info
+to Decide?}
+    L -- No --> M[Flag Application:
+Request Additional Information]
+    M --> N[(ERP DB: Update Status to
+'Pending Info' & Notify Candidate)]
+    N --> E
+    L -- Yes --> O{Admission
+Decision}
+    O -- Accept --> P[(ERP DB: Update Status to
+'Accepted' & Trigger Offer Letter)]
+    O -- Reject --> Q[(ERP DB: Update Status to
+'Rejected' & Log Reason)]
+    O -- Waitlist --> R[(ERP DB: Update Status to
+'Waitlisted')]
+    P --> S[Next Application in Queue?]
+    Q --> S
+    R --> S
+    S -- Yes --> E
+    S -- No --> T([✅ End: Pipeline Review Session Complete])
