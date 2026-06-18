@@ -4,6 +4,7 @@ import google.generativeai as genai
 import google.ai.generativelanguage as glm
 
 from llm import MODEL_NAME, get_gemini  # noqa: F401  (get_gemini ensures genai is configured)
+from runtime_config import get_model_name, get_system_prompt
 from odoo_client import OdooError, OdooConnectionError
 from agent_tools import SYSTEM_DOWN_MSG
 import agent_tools
@@ -222,7 +223,9 @@ def run_agent(
 ) -> dict:
     get_gemini()  # ensure genai.configure(api_key=...) has been called
     model = genai.GenerativeModel(
-        MODEL_NAME, tools=TOOL_DECLARATIONS, system_instruction=AGENT_SYSTEM_PROMPT
+        get_model_name(),
+        tools=TOOL_DECLARATIONS,
+        system_instruction=get_system_prompt(AGENT_SYSTEM_PROMPT),
     )
 
     history_block = ""

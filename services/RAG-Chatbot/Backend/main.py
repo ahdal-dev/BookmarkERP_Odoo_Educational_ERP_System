@@ -1003,3 +1003,56 @@ def sa_soft_delete_org(org_id: uuid.UUID, db: Session = Depends(get_db)):
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "RAG backend is running"}
+
+
+# ---------- Admin config push (from Odoo custom_chatbot_admin) ----------
+import runtime_config
+from pydantic import BaseModel
+
+
+class AdminConfig(BaseModel):
+    token: str
+    llm_api_key: Optional[str] = None
+    llm_model: Optional[str] = None
+    rag_top_k: Optional[int] = None
+    rag_llm_snippets: Optional[int] = None
+    system_prompt: Optional[str] = None
+
+
+@app.post("/admin/config")
+def admin_config(cfg: AdminConfig):
+    """Receive chatbot configuration pushed from the Odoo settings UI.
+
+    Authorized via a shared secret (CHATBOT_ADMIN_TOKEN). RAG params and the
+    API key are read from the environment at call-time, so updating os.environ
+    applies them live; the model name and system prompt are import-time
+    constants elsewhere, so they are stored as runtime overrides.
+    """
+    expected = os.getenv("CHATBOT_ADMIN_TOKEN", "")
+    if not expected or cfg.token != expected:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+
+    if cfg.llm_api_key:
+        os.environ["GEMINI_API_KEY"] = cfg.llm_api_key
+    if cfg.llm_model:
+        os.environ["GEMINI_MODEL"] = cfg.llm_model
+    if cfg.rag_top_k:
+        os.environ["RAG_TOP_K"] = str(cfg.rag_top_k)
+    if cfg.rag_llm_snippets:
+        os.environ["RAG_LLM_SNIPPETS"] = str(cfg.rag_llm_snippets)
+
+    runtime_config.set_overrides(
+        llm_model=cfg.llm_model,
+        system_prompt=cfg.system_prompt,
+    )
+
+    return {
+        "status": "ok",
+        "applied": {
+            "llm_model": runtime_config.get_model_name(),
+            "rag_top_k": os.getenv("RAG_TOP_K"),
+            "rag_llm_snippets": os.getenv("RAG_LLM_SNIPPETS"),
+            "system_prompt_override": bool(cfg.system_prompt),
+            "llm_api_key_set": bool(cfg.llm_api_key),
+        },
+    }

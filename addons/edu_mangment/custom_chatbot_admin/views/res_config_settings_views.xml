@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_chatbot" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.chatbot</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="45"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Chatbot" string="Chatbot" name="custom_chatbot_admin"
+                     groups="custom_chatbot_admin.group_chatbot_admin">
+                    <block title="Backend Connection" name="chatbot_connection">
+                        <setting string="Backend URL"
+                                 help="Base URL of the FastAPI chatbot service.">
+                            <field name="chatbot_backend_url" placeholder="http://localhost:8000"/>
+                        </setting>
+                        <setting string="Admin Token"
+                                 help="Shared secret authorizing configuration pushes (CHATBOT_ADMIN_TOKEN).">
+                            <field name="chatbot_admin_token" widget="password"/>
+                        </setting>
+                        <setting string="RAG Organization ID"
+                                 help="Target organization UUID in the RAG backend for synced documents.">
+                            <field name="chatbot_rag_org_id"/>
+                        </setting>
+                        <setting string="RAG Service User ID"
+                                 help="Admin user UUID in the RAG backend used for uploads/deletes.">
+                            <field name="chatbot_rag_user_id"/>
+                        </setting>
+                    </block>
+                    <block title="LLM &amp; RAG Parameters" name="chatbot_llm">
+                        <setting string="LLM API Key" help="Maps to GEMINI_API_KEY on the backend.">
+                            <field name="chatbot_llm_api_key" widget="password"/>
+                        </setting>
+                        <setting string="LLM Model" help="Maps to GEMINI_MODEL on the backend.">
+                            <field name="chatbot_llm_model" placeholder="gemini-1.5-flash"/>
+                        </setting>
+                        <setting string="RAG Top K" help="Chunks retrieved by the similarity search (RAG_TOP_K).">
+                            <field name="chatbot_rag_top_k"/>
+                        </setting>
+                        <setting string="RAG LLM Snippets" help="Top chunks passed to the LLM (RAG_LLM_SNIPPETS).">
+                            <field name="chatbot_rag_llm_snippets"/>
+                        </setting>
+                        <setting string="System Prompt Override"
+                                 help="Optional override for the agent system prompt. Leave empty to keep the backend default.">
+                            <field name="chatbot_system_prompt" widget="text"/>
+                        </setting>
+                    </block>
+                    <block title="Apply" name="chatbot_apply">
+                        <setting string="Push Configuration"
+                                 help="Send the settings above to the running chatbot backend.">
+                            <button name="action_push_config_to_backend" type="object"
+                                    string="Push Configuration to Backend"
+                                    class="btn-primary"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Convenience action opening Settings on the Chatbot tab -->
+    <record id="action_chatbot_settings" model="ir.actions.act_window">
+        <field name="name">Chatbot Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'custom_chatbot_admin', 'bin_size': False}</field>
+    </record>
+</odoo>
