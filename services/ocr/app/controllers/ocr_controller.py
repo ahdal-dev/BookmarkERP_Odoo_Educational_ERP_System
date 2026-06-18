@@ -1,10 +1,11 @@
 from app.services.processing_service import process_image, detect_id_card
 from app.services.detection_service import model_id_card, model_job
 from app.services.backup_model import (
-    ocr_image, 
-    ocr_pdf, 
-    detect_doc_type, 
+    ocr_image,
+    ocr_pdf,
+    detect_doc_type,
     extract_structured,
+    extract_with_retry,
     force_convert_numerals,
     PROMPTS,
     is_pdf
@@ -212,13 +213,28 @@ def process_uploaded_image_with_mistral(image_path, doc_type=None):
             valid_types = [k for k in PROMPTS.keys() if k != "detect"]
             return {"error": f"Invalid document type: {doc_type}. Valid types: {valid_types}"}
 
+        # Step 2b: Re-run OCR with document-aware prompt for images
+        # The first OCR pass was generic; now we know the doc type, re-run with
+        # a targeted prompt so the model focuses on the right fields and layout.
+        if not is_pdf(image_path):
+            logger.info(f"Re-running OCR with {doc_type}-aware prompt...")
+            try:
+                pages = ocr_image(image_path, doc_hint=doc_type)
+                full_text = ""
+                for page in pages:
+                    if hasattr(page, 'markdown'):
+                        full_text += f"\n\n## Page {page.index + 1}\n\n{page.markdown}"
+                logger.info("Doc-aware OCR complete")
+            except Exception as e:
+                logger.warning(f"Doc-aware OCR failed, using generic text: {e}")
+
         # Step 3: Structured extraction
         logger.info(f"Extracting structured data as '{doc_type}'...")
 
         try:
             if len(pages) == 1:
-                result, raw = extract_structured(full_text, PROMPTS[doc_type])
-                result = force_convert_numerals(result)
+                result = extract_with_retry(full_text, doc_type)
+                raw = ""
                 
                 logger.info(f"Extraction complete for single page document")
                 return {
