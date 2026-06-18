@@ -613,6 +613,10 @@ app.mount("/metrics", make_asgi_app())
 from routers import petitions as petitions_router
 app.include_router(petitions_router.router)
 
+# Academic Agent (chatbot) proxy router
+from routers import chatbot as chatbot_router
+app.include_router(chatbot_router.router)
+
 # ============================================================================
 # Middleware — observability and audit logging
 # ============================================================================

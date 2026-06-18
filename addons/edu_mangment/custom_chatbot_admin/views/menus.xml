@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root menu -->
+    <menuitem id="menu_chatbot_root"
+              name="Chatbot"
+              sequence="90"
+              groups="custom_chatbot_admin.group_chatbot_admin"/>
+
+    <!-- RAG Documents -->
+    <menuitem id="menu_chatbot_rag_documents"
+              name="RAG Documents"
+              parent="menu_chatbot_root"
+              action="action_chatbot_rag_document"
+              sequence="10"
+              groups="custom_chatbot_admin.group_chatbot_admin"/>
+
+    <!-- Settings -->
+    <menuitem id="menu_chatbot_settings"
+              name="Settings"
+              parent="menu_chatbot_root"
+              action="action_chatbot_settings"
+              sequence="20"
+              groups="custom_chatbot_admin.group_chatbot_admin"/>
+</odoo>

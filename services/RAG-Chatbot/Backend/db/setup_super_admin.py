@@ -6,7 +6,7 @@ Run this script once to set up your first super-admin account.
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import get_db, engine
 from models import SuperAdmin, Base

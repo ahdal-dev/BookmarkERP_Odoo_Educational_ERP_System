@@ -15,3 +15,10 @@ venv/
 # Ignore OS files
 .DS_Store
 Thumbs.db
+
+# Generic sample RAG corpora — not part of the Academic ERP agent. Kept out of
+# the repo/runtime path; the integrated microservice runs with ENABLE_RAG=false.
+Docs/Insurance Data/
+Docs/Medical Data/
+Docs/Sports Data/
+Docs/ML&DL Data/

@@ -20,7 +20,7 @@ else
     ROOT_PIP = venv/bin/pip
 endif
 
-.PHONY: help venv install db-init superadmin run test clean
+.PHONY: help venv install install-agent db-init superadmin run agent worker test clean
 
 # Default target: show help instructions
 help:
@@ -35,7 +35,11 @@ help:
 	@echo "                            Usage: make superadmin USERNAME=admin PASSWORD=pass"
 	@echo ""
 	@echo "Run & Test Commands:"
-	@echo "  make run                  Start the FastAPI web server with Uvicorn reload"
+	@echo "  make run                  Start the legacy standalone RAG/admin server (port 8001)"
+	@echo "  make agent                Start the integrated Academic Agent microservice (port 8001)"
+	@echo "  make worker               Start the RabbitMQ worker (registration/petition writes)"
+	@echo "  make seed                 Seed Odoo with chatbot test data (students/courses/etc.)"
+	@echo "  make install-agent        Install only the slim Academic Agent dependencies"
 	@echo "  make test                 Run database connection and models validation tests"
 	@echo "  make clean                Clean all Python cache (__pycache__) and .pyc files"
 	@echo "======================================================================"
@@ -47,10 +51,15 @@ venv:
 	@echo "  Windows: venv\\Scripts\\activate"
 	@echo "  Unix/macOS: source venv/bin/activate"
 
-# Install backend dependencies
+# Install backend dependencies (full legacy RAG/admin stack)
 install: venv
 	$(ROOT_PIP) install --upgrade pip
 	$(ROOT_PIP) install -r Backend/requirements.txt
+
+# Install the slim Academic Agent microservice dependencies only
+install-agent: venv
+	$(ROOT_PIP) install --upgrade pip
+	$(ROOT_PIP) install -r Backend/requirements-agent.txt
 
 # Initialize database schemas and tables
 db-init:
@@ -58,11 +67,23 @@ db-init:
 
 # Create a super-admin user in the database
 superadmin:
-	cd Backend && $(PYTHON) setup_super_admin.py $(USERNAME) $(PASSWORD)
+	cd Backend && $(PYTHON) db/setup_super_admin.py $(USERNAME) $(PASSWORD)
 
-# Run uvicorn server in development mode
+# Run the legacy standalone RAG/admin server in development mode
 run:
-	cd Backend && $(PYTHON) -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+	$(ROOT_PYTHON) -m uvicorn main:app --app-dir Backend --host 0.0.0.0 --port 8001 --reload
+
+# Run the integrated Academic Agent microservice (slim API: /agent/query, /health)
+agent:
+	$(ROOT_PYTHON) -m uvicorn agent_service:app --app-dir Backend --host 0.0.0.0 --port 8001 --reload
+
+# Run the RabbitMQ worker that performs queued registration/petition writes
+worker:
+	$(ROOT_PYTHON) Backend/worker.py
+
+# Seed Odoo with chatbot test data (students, courses, enrollments, petitions, admissions)
+seed:
+	$(ROOT_PYTHON) Backend/seed_chatbot_test_data.py
 
 # Run tests
 test:
