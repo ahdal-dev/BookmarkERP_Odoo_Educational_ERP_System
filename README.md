@@ -27,7 +27,7 @@ The **Educational ERP System** is built on top of Odoo and provides a comprehens
 
 The public admission portal form with personal information, academic details, and program selection.
 
-![Admission Form](Tests/Screenshots/Admission_Form.png)
+![Admission Form](tests/Screenshots/Admission_Form.png)
 
 ---
 
@@ -35,7 +35,7 @@ The public admission portal form with personal information, academic details, an
 
 Uploading a National ID card image triggers the OCR microservice, which extracts fields (name, address, NID) visible in the browser console response.
 
-![OCR Processing](Tests/Screenshots/Admission_OCR.png)
+![OCR Processing](tests/Screenshots/Admission_OCR.png)
 
 ---
 
@@ -43,7 +43,7 @@ Uploading a National ID card image triggers the OCR microservice, which extracts
 
 The uploaded ID card is displayed as a preview on the form, and the extracted OCR data is shown in the DevTools console.
 
-![OCR With ID](Tests/Screenshots/Ocr%20With%20Id.png)
+![OCR With ID](tests/Screenshots/Ocr%20With%20Id.png)
 
 ---
 
@@ -51,7 +51,7 @@ The uploaded ID card is displayed as a preview on the form, and the extracted OC
 
 After submission, the applicant sees a confirmation page with their unique reference number (`ADM00001`) and next-step instructions.
 
-![Thank You Page](Tests/Screenshots/Admmition_Thankyou.png)
+![Thank You Page](tests/Screenshots/Admmition_Thankyou.png)
 
 ---
 
@@ -59,7 +59,7 @@ After submission, the applicant sees a confirmation page with their unique refer
 
 Applicants can look up their application by reference number to see details (name, email, program, date) and current status.
 
-![Application Status](Tests/Screenshots/Application_Status.png)
+![Application Status](tests/Screenshots/Application_Status.png)
 
 ---
 
@@ -67,7 +67,7 @@ Applicants can look up their application by reference number to see details (nam
 
 The Odoo backend list view showing all submitted applications with reference, applicant name, email, program, and status.
 
-![Applications List](Tests/Screenshots/Aplecations.png)
+![Applications List](tests/Screenshots/Aplecations.png)
 
 ---
 
@@ -75,7 +75,7 @@ The Odoo backend list view showing all submitted applications with reference, ap
 
 The detailed backend form view of a single admission record, showing related documents, activity log, and message history.
 
-![Administrator Admission View](Tests/Screenshots/Adminstrator_admition.png)
+![Administrator Admission View](tests/Screenshots/Adminstrator_admition.png)
 
 ---
 
@@ -83,7 +83,7 @@ The detailed backend form view of a single admission record, showing related doc
 
 The Odoo backend list view for academic programs showing program name, code, duration, application count, and active status.
 
-![Programs](Tests/Screenshots/programs.png)
+![Programs](tests/Screenshots/programs.png)
 
 ---
 
@@ -91,7 +91,7 @@ The Odoo backend list view for academic programs showing program name, code, dur
 
 Automated script verifying all services are running: OCR Microservice (healthy), Odoo ERP (port 8081), Admission Portal (accessible), and Docker API Gateway (running).
 
-![Services Test](Tests/Screenshots/Test_servivces.png)
+![Services Test](tests/Screenshots/Test_servivces.png)
 
 ---
 
@@ -99,7 +99,7 @@ Automated script verifying all services are running: OCR Microservice (healthy),
 
 Automated script testing the API Gateway: health check (WORKING), JWT token generation, admission submission, OCR availability (AVAILABLE), and rate limiting.
 
-![Gateway Test](Tests/Screenshots/Test_gatway.png)
+![Gateway Test](tests/Screenshots/Test_gatway.png)
 
 ---
 
@@ -107,7 +107,7 @@ Automated script testing the API Gateway: health check (WORKING), JWT token gene
 
 Service overview showing OCR, Odoo, Admission Portal, and Docker API Gateway statuses along with quick access URLs and start commands.
 
-![API Gateway](Tests/Screenshots/API%20gateway..png)
+![API Gateway](tests/Screenshots/API%20gateway..png)
 
 ---
 

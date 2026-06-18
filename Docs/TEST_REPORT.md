@@ -3,7 +3,7 @@
 **Date:** 2026-06-17  
 **Branch:** `V02.08-Updating-lagacyModules`  
 **Runner:** Python 3.12.10 / pytest 9.0.3 / Windows 11  
-**Scope:** `Tests/unit/`, `Tests/integration/`, `Tests/e2e/`, `Tests/perf/`
+**Scope:** `tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/perf/`
 
 ---
 
@@ -22,11 +22,11 @@
 
 ---
 
-## 1. Unit Tests (`Tests/unit/`)
+## 1. Unit Tests (`tests/unit/`)
 
 **Result:** 107 passed · 0 failed ✅
 
-### 1.1 FastAPI Gateway (`Tests/unit/fastapi_gateway/`)
+### 1.1 FastAPI Gateway (`tests/unit/fastapi_gateway/`)
 
 #### `test_jwt_helpers.py` — 14 passed ✅
 
@@ -65,7 +65,7 @@ All Pydantic model validation tests pass (national ID format, GPA range, graduat
 
 ---
 
-### 1.2 OCR Service (`Tests/unit/ocr_service/`)
+### 1.2 OCR Service (`tests/unit/ocr_service/`)
 
 #### `test_file_validation.py` — 16 passed ✅
 
@@ -109,7 +109,7 @@ All National ID OCR extraction tests pass (empty image, missing image, Arabic di
 
 ---
 
-## 2. Integration Tests (`Tests/integration/`)
+## 2. Integration Tests (`tests/integration/`)
 
 **Result:** 44 passed · 0 failed ✅
 
@@ -204,7 +204,7 @@ All National ID OCR extraction tests pass (empty image, missing image, Arabic di
 
 ---
 
-## 3. E2E Tests (`Tests/e2e/`)
+## 3. E2E Tests (`tests/e2e/`)
 
 **Result:** 7 passed · 0 failed · 10 skipped ✅
 
@@ -224,7 +224,7 @@ The 10 skips are by design — they are live-stack smoke tests meant to run in C
 
 ---
 
-## 4. Performance Tests (`Tests/perf/`)
+## 4. Performance Tests (`tests/perf/`)
 
 **Result:** 0 run · 1 skipped ✅
 
@@ -257,9 +257,9 @@ The previous run had 32 failures across unit and integration suites. All 32 fail
 | **Metrics endpoint format (1 failure)** | `/metrics` now returns Prometheus text format via `make_asgi_app()`, not custom JSON; updated test to check `resp.text` for `# HELP`/`# TYPE` headers |
 | **Perf test live dependency (1 failure)** | Added `_odoo_is_reachable()` TCP probe and `skipif` guard |
 
-**Root cause of cross-suite contamination:** `Tests/conftest.py` (root) did not set required env vars, so when `Tests/` is collected as a single path, pytest processes `e2e/` before `integration/`. `test_security_headers.py` was the first module to import `main.py`, freezing `ODOO_URL`, `OCR_SERVICE_URL`, and `CORS_ORIGINS` at their defaults before the integration conftest could set test-safe mock values.
+**Root cause of cross-suite contamination:** `tests/conftest.py` (root) did not set required env vars, so when `tests/` is collected as a single path, pytest processes `e2e/` before `integration/`. `test_security_headers.py` was the first module to import `main.py`, freezing `ODOO_URL`, `OCR_SERVICE_URL`, and `CORS_ORIGINS` at their defaults before the integration conftest could set test-safe mock values.
 
-**Fix:** Added env var bootstrap + `from main import app` to `Tests/conftest.py` so `main.py` is always imported once with correct test values regardless of collection order.
+**Fix:** Added env var bootstrap + `from main import app` to `tests/conftest.py` so `main.py` is always imported once with correct test values regardless of collection order.
 
 ---
 
@@ -296,7 +296,7 @@ All following features are **fully tested and green**:
 
 The following deprecation warnings appear across tests. They do not cause failures but should be resolved before Python 3.14:
 
-- `datetime.datetime.utcnow()` — replace with `datetime.now(datetime.UTC)` in `Tests/unit/conftest.py` (lines 51, 63, 75), `Tests/integration/conftest.py`, `Tests/integration/test_rate_limiting.py`, and `api_gateway/fastapi_app/main.py` (lines 80, 668).
+- `datetime.datetime.utcnow()` — replace with `datetime.now(datetime.UTC)` in `tests/unit/conftest.py` (lines 51, 63, 75), `tests/integration/conftest.py`, `tests/integration/test_rate_limiting.py`, and `api_gateway/fastapi_app/main.py` (lines 80, 668).
 - `@validator` (Pydantic V1 style) — replace with `@field_validator` in `main.py` line 237 (`AdmissionApplicationRequest.graduation_year`).
 - NumPy version warning from `easyocr` — not project code; resolve by upgrading numpy or easyocr.
 
