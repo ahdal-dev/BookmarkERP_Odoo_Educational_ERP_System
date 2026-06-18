@@ -3,7 +3,7 @@ pytesseract>=0.3.10<0.4
 easyocr>=1.7.0
 ultralytics==8.1.47
 python-multipart==0.0.9
-openai>=1.0.0
+mistralai==0.4.2
 python-dotenv>=1.0.0
 Pillow>=10.0.0
 PyMuPDF>=1.23.0
