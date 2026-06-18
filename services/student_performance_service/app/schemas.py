@@ -46,6 +46,12 @@ class PredictResponse(BaseModel):
     interval_hi: float
     at_risk_probability: float
     at_risk: bool
+    risk_level: str                       # High / Medium / Low (rule-derived label)
     trajectory: str
     graduation_gpa_estimate: float
     reasoning: dict
+    plan_analysis: dict
+    flags: List[str]
+    recommendations: List[str]
+    llm_recommendations: List[str]
+    student_message: dict

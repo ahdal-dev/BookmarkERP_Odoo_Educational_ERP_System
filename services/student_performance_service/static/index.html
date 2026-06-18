@@ -9,34 +9,26 @@
 <body>
   <div class="page">
     <header>
-      <h1>🎓 Student Performance Predictor</h1>
-      <p>Predict next-semester GPA and at-risk probability — conditioned on your study plan</p>
+      <h1>Student Performance Predictor</h1>
+      <p>Predict your next-semester GPA conditioned on your study plan</p>
     </header>
 
     <!-- Student Info -->
     <div class="card">
       <h2>Student Info</h2>
       <div class="grid4">
-        <label>Student ID
-          <input id="student_id" placeholder="e.g. S20210042" />
-        </label>
-        <label>Program
-          <input id="program" value="Computer Science" />
-        </label>
-        <label>School
-          <input id="school" value="Engineering" />
-        </label>
-        <label>Entry Year
-          <input id="entry_year" type="number" min="2015" max="2030" value="2021" />
-        </label>
+        <label>Student ID<input id="student_id" placeholder="e.g. S20210042" /></label>
+        <label>Program<input id="program" value="Computer Science" /></label>
+        <label>School<input id="school" value="Engineering" /></label>
+        <label>Entry Year<input id="entry_year" type="number" min="2015" max="2030" value="2021" /></label>
       </div>
     </div>
 
-    <!-- Transcript History -->
+    <!-- Transcript -->
     <div class="card">
       <div class="section-header">
-        <h2>Transcript History <span class="hint">(completed semesters)</span></h2>
-        <button class="btn-add" onclick="addSemester()">+ Add Semester</button>
+        <h2>Transcript <span class="hint">completed semesters</span></h2>
+        <button class="btn-add" onclick="addSemester()">+ Semester</button>
       </div>
       <div id="semesters"></div>
     </div>
@@ -44,13 +36,24 @@
     <!-- Study Plan -->
     <div class="card">
       <div class="section-header">
-        <h2>Next Semester Study Plan <span class="hint">(courses to register — no grades)</span></h2>
-        <button class="btn-add" onclick="addPlanCourse()">+ Add Course</button>
+        <h2>Next Semester Plan <span class="hint">no grades yet</span></h2>
+        <button class="btn-add" onclick="addPlanCourse()">+ Course</button>
       </div>
       <div class="plan-header-row">
         <span>Course ID</span><span>Credits</span><span>Title (optional)</span><span>Subtype</span><span></span>
       </div>
       <div id="plan-courses"></div>
+    </div>
+
+    <!-- Test Scenarios -->
+    <div class="card">
+      <h2>Test Scenarios <span class="hint">load a pre-built case</span></h2>
+      <div class="scenarios-row">
+        <button class="btn-scenario btn-s-good"   onclick="loadScenario('good')">Strong student, hard plan</button>
+        <button class="btn-scenario btn-s-medium" onclick="loadScenario('medium')">Average student, mixed plan</button>
+        <button class="btn-scenario btn-s-risk"   onclick="loadScenario('risk')">Struggling student, heavy plan</button>
+        <button class="btn-scenario btn-s-retake" onclick="loadScenario('retake')">Retaking failed courses</button>
+      </div>
     </div>
 
     <button class="btn-predict" onclick="runPredict()">Predict Performance</button>

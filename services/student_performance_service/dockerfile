@@ -13,5 +13,6 @@ COPY . .
 EXPOSE 5002
 
 ENV PYTHONPATH=/student_performance_service
+ENV OPENROUTER_API_KEY="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"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002"]
