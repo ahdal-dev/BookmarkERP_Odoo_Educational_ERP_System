@@ -1,14 +1,32 @@
+"""
+Pytest configuration and shared fixtures for all tests.
+"""
+import pytest
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Test Markers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def pytest_configure(config):
+    """Register custom pytest markers."""
+    config.addinivalue_line(
+        "markers", "unit: mark test as a unit test"
+    )
+    config.addinivalue_line(
+        "markers", "integration: mark test as an integration test"
+    )
+    config.addinivalue_line(
+        "markers", "e2e: mark test as an end-to-end test"
+    )
 # -*- coding: utf-8 -*-
 """
-============================================================================
 Root conftest.py — Educational ERP Testing Pyramid
-============================================================================
 Provides path setup so test files can import from the application modules
 (api_gateway.fastapi_app.main, services.ocr.app, etc.) without installing
 them as packages.
 
 This file is auto-discovered by pytest before any test collection begins.
-============================================================================
 """
 
 import sys
