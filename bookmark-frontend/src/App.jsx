@@ -23,6 +23,7 @@ import StudentDashboardPage from './pages/student/StudentDashboardPage';
 import FacultyDashboardPage from './pages/faculty/FacultyDashboardPage';
 import SupportChatQueuePage from './pages/support/SupportChatQueuePage';
 import ApplicationStatusPage from './pages/admissions/ApplicationStatusPage';
+import ChatbotPage from './pages/ChatbotPage/ChatbotPage';
 
 /* ============================================================
    APP — Root Router (role-aware)
@@ -119,6 +120,14 @@ export default function App() {
             element={
               <RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}>
                 <StudentDashboardPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/assistant"
+            element={
+              <RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <ChatbotPage />
               </RoleProtectedRoute>
             }
           />

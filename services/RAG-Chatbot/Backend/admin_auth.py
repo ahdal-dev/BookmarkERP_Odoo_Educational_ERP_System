@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User, Organization, Document, Chat, ChatMessage, Feedback, SuperAdmin
-from schemas import (
+from db.schemas import (
     OrgCreate,
     UserCreate,
     OrganizationResponse,

@@ -222,4 +222,21 @@ export const petitionsAPI = {
   },
 };
 
+/* ============================================================
+   CHATBOT (Academic Agent) ENDPOINTS
+   ============================================================ */
+
+export const chatbotAPI = {
+  /**
+   * Send a question to the Academic Agent via the gateway.
+   * @param {string} question - the user's message
+   * @param {Array<{role:string, content:string}>} history - prior turns
+   * @returns {Promise<{answer:string, tool_used?:string, tool_ok?:boolean, queued?:boolean}>}
+   */
+  query: async (question, history = []) => {
+    const response = await api.post('/api/v1/chatbot/query', { question, history });
+    return response.data;
+  },
+};
+
 export default api;

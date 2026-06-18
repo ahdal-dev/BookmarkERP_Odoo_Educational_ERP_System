@@ -67,7 +67,18 @@ export const petitionsStudentNav = [
   { icon: 'grades', label: 'Grades', path: '/grades' },
   { icon: 'registration', label: 'Enrollment', path: '/enrollment' },
   { icon: 'petition', label: 'Petitions', path: '/petitions/new', active: true },
+  { icon: 'chat', label: 'Assistant', path: '/student/assistant' },
   { icon: 'advising', label: 'Advising', path: '/advising' },
+  { icon: 'handbook', label: 'Handbook', path: '/handbook' },
+];
+
+// Student nav for the AI Assistant (chatbot) view.
+export const chatbotStudentNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/student/dashboard' },
+  { icon: 'grades', label: 'Grades', path: '/grades' },
+  { icon: 'registration', label: 'Enrollment', path: '/enrollment' },
+  { icon: 'petition', label: 'Petitions', path: '/petitions/new' },
+  { icon: 'chat', label: 'Assistant', path: '/student/assistant', active: true },
   { icon: 'handbook', label: 'Handbook', path: '/handbook' },
 ];
 

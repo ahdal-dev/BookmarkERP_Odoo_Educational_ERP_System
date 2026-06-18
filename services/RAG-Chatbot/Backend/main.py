@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import uuid
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
@@ -15,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import get_db, engine
 from models import Organization, User, DocumentChunk, Document, Chat, ChatMessage, SuperAdmin, Feedback
-from schemas import (
+from db.schemas import (
     OrgCreate, UserCreate, UploadResponse, AskRequest, AskResponse,
     OrganizationResponse, UserResponse, FeedbackCreate, FeedbackResponse, FeedbackUpdate
 )

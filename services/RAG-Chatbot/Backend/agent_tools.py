@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from odoo_client import search_read, execute_kw, find_student, OdooError, OdooConnectionError
+from mq import publish_event, mq_enabled, MQUnavailable, QUEUE_REGISTRATION, QUEUE_PETITION
 
 SYSTEM_DOWN_MSG = (
     "I'm having trouble accessing the student records system right now. "
@@ -146,6 +147,40 @@ def course_info(args: dict, student_email: Optional[str]) -> dict:
     return {"ok": True, "data": c, "message": message}
 
 
+def _enroll_core(student: dict, course_code: str) -> dict:
+    """Synchronous enrollment write. Raises OdooError on failure. Shared by the
+    direct (MQ-disabled) path and the RabbitMQ worker."""
+    courses = search_read(
+        "education.course", [["code", "=ilike", course_code]],
+        ["id", "name", "code", "credits"], limit=1,
+    )
+    if not courses:
+        return {"ok": False, "message": f"I couldn't find a course with code {course_code}."}
+    course = courses[0]
+    execute_kw("education.registration", "create", [{
+        "student_id": student["id"],
+        "course_id": course["id"],
+    }])
+    return {
+        "ok": True,
+        "data": course,
+        "message": f"You're registered for {course['name']} ({course['code']}), {course.get('credits', 0)} credits.",
+    }
+
+
+def _drop_core(student: dict, course_code: str) -> dict:
+    """Synchronous drop write. Raises OdooError on failure. Shared with the worker."""
+    regs = search_read(
+        "education.registration",
+        [["student_id", "=", student["id"]], ["course_id.code", "=ilike", course_code], ["state", "=", "enrolled"]],
+        ["id"], limit=1,
+    )
+    if not regs:
+        return {"ok": False, "message": f"You're not currently enrolled in {course_code}."}
+    execute_kw("education.registration", "action_drop", [[regs[0]["id"]]])
+    return {"ok": True, "message": f"You've been dropped from {course_code}."}
+
+
 def register_course(args: dict, student_email: Optional[str]) -> dict:
     action = args.get("action") or "check_status"
     course_code = (args.get("course_code") or "").strip()
@@ -161,46 +196,37 @@ def register_course(args: dict, student_email: Optional[str]) -> dict:
     if not student:
         return {"ok": False, "message": NO_PROFILE_MSG}
 
-    if action == "register":
+    if action in ("register", "drop"):
         if not course_code:
-            return {"ok": False, "message": "Which course code would you like to register for?"}
-        try:
-            courses = search_read(
-                "education.course", [["code", "=ilike", course_code]],
-                ["id", "name", "code", "credits"], limit=1,
-            )
-            if not courses:
-                return {"ok": False, "message": f"I couldn't find a course with code {course_code}."}
-            course = courses[0]
-            execute_kw("education.registration", "create", [{
-                "student_id": student["id"],
-                "course_id": course["id"],
-            }])
-        except OdooError as e:
-            return {"ok": False, "data": {"error_detail": str(e)}, "message": _error_message(e)}
+            verb = "register for" if action == "register" else "drop"
+            return {"ok": False, "message": f"Which course code would you like to {verb}?"}
 
-        return {
-            "ok": True,
-            "data": course,
-            "message": f"You're registered for {course['name']} ({course['code']}), {course.get('credits', 0)} credits.",
-        }
+        # High-concurrency writes are queued to RabbitMQ to avoid DB locking; a
+        # worker performs the actual Odoo write. If the broker is unreachable we
+        # fall back to a synchronous write so the request still succeeds.
+        if mq_enabled():
+            try:
+                publish_event(QUEUE_REGISTRATION, {
+                    "student_email": student_email,
+                    "course_code": course_code,
+                    "action": action,
+                })
+                phrase = "register you for" if action == "register" else "drop you from"
+                return {
+                    "ok": True,
+                    "queued": True,
+                    "message": (
+                        f"Your request to {phrase} {course_code} has been received and is being "
+                        f"processed. You can ask me to check your registration status in a moment."
+                    ),
+                }
+            except MQUnavailable as e:
+                print(f"MQ unavailable, falling back to synchronous {action}: {e}")
 
-    if action == "drop":
-        if not course_code:
-            return {"ok": False, "message": "Which course code would you like to drop?"}
         try:
-            regs = search_read(
-                "education.registration",
-                [["student_id", "=", student["id"]], ["course_id.code", "=ilike", course_code], ["state", "=", "enrolled"]],
-                ["id"], limit=1,
-            )
-            if not regs:
-                return {"ok": False, "message": f"You're not currently enrolled in {course_code}."}
-            execute_kw("education.registration", "action_drop", [[regs[0]["id"]]])
+            return _enroll_core(student, course_code) if action == "register" else _drop_core(student, course_code)
         except OdooError as e:
             return {"ok": False, "message": _error_message(e)}
-
-        return {"ok": True, "message": f"You've been dropped from {course_code}."}
 
     # check_status
     try:
@@ -265,37 +291,68 @@ def create_petition(args: dict, student_email: Optional[str]) -> dict:
         return {"ok": True, "data": petitions, "message": prefix + "; ".join(lines)}
 
     # action == "submit"
+    subject = (args.get("subject") or "").strip()
+    description = (args.get("description") or "").strip()
+
+    if not subject or not description:
+        return {"ok": False, "message": "Could you provide a brief subject and description for your petition?"}
+
+    # Publish the submission to RabbitMQ (202-style accept); a worker writes it to
+    # Odoo. Falls back to a synchronous write if the broker is unreachable.
+    if mq_enabled():
+        try:
+            publish_event(QUEUE_PETITION, {
+                "student_email": student_email,
+                "petition_type": args.get("petition_type") or "other",
+                "subject": subject,
+                "description": description,
+                "course_code": (args.get("course_code") or "").strip(),
+            })
+            return {
+                "ok": True,
+                "queued": True,
+                "message": (
+                    "Your petition has been submitted and is being processed. You'll be able to "
+                    "check its status shortly — just ask me to check your recent petitions."
+                ),
+            }
+        except MQUnavailable as e:
+            print(f"MQ unavailable, falling back to synchronous petition submit: {e}")
+
+    try:
+        return _create_petition_core(student, args)
+    except OdooError as e:
+        return {"ok": False, "message": _error_message(e)}
+
+
+def _create_petition_core(student: dict, args: dict) -> dict:
+    """Synchronous petition create + submit. Raises OdooError on failure. Shared by
+    the direct (MQ-disabled) path and the RabbitMQ worker."""
     petition_type = args.get("petition_type") or "other"
     subject = (args.get("subject") or "").strip()
     description = (args.get("description") or "").strip()
     course_code = (args.get("course_code") or "").strip()
 
-    if not subject or not description:
-        return {"ok": False, "message": "Could you provide a brief subject and description for your petition?"}
+    code = PETITION_TYPE_CODES.get(petition_type, "OTHER")
+    ptypes = search_read("petition.type", [["code", "=", code], ["active", "=", True]], ["id", "name"], limit=1)
+    if not ptypes:
+        ptypes = search_read("petition.type", [["code", "=", "OTHER"], ["active", "=", True]], ["id", "name"], limit=1)
+    if not ptypes:
+        return {"ok": False, "message": "Petition types are not configured yet — please contact the registrar."}
 
-    try:
-        code = PETITION_TYPE_CODES.get(petition_type, "OTHER")
-        ptypes = search_read("petition.type", [["code", "=", code], ["active", "=", True]], ["id", "name"], limit=1)
-        if not ptypes:
-            ptypes = search_read("petition.type", [["code", "=", "OTHER"], ["active", "=", True]], ["id", "name"], limit=1)
-        if not ptypes:
-            return {"ok": False, "message": "Petition types are not configured yet — please contact the registrar."}
+    if course_code:
+        subject = f"[{course_code}] {subject}"
 
-        if course_code:
-            subject = f"[{course_code}] {subject}"
-
-        new_id = execute_kw("student.petition", "create", [{
-            "student_id": student["partner_id"][0],
-            "petition_type_id": ptypes[0]["id"],
-            "subject": subject,
-            "description": description,
-            "requested_date": str(date.today()),
-        }])
-        execute_kw("student.petition", "action_submit", [[new_id]])
-        created = search_read("student.petition", [["id", "=", new_id]], ["name"], limit=1)
-        ref_name = created[0]["name"] if created else str(new_id)
-    except OdooError as e:
-        return {"ok": False, "message": _error_message(e)}
+    new_id = execute_kw("student.petition", "create", [{
+        "student_id": student["partner_id"][0],
+        "petition_type_id": ptypes[0]["id"],
+        "subject": subject,
+        "description": description,
+        "requested_date": str(date.today()),
+    }])
+    execute_kw("student.petition", "action_submit", [[new_id]])
+    created = search_read("student.petition", [["id", "=", new_id]], ["name"], limit=1)
+    ref_name = created[0]["name"] if created else str(new_id)
 
     return {
         "ok": True,
@@ -649,3 +706,36 @@ def admission_application(args: dict, student_email: Optional[str]) -> dict:
         "data": {"id": new_id},
         "message": f"Your application has been started (reference #{new_id}){note}. We'll follow up with next steps and required documents.",
     }
+
+
+# --- RabbitMQ worker entry points --------------------------------------------
+# Called by worker.py when consuming queued events. They resolve the student from
+# the trusted email in the message and reuse the same core write logic as the
+# synchronous path. They may raise OdooError, which the worker handles.
+
+def process_registration_event(payload: dict) -> dict:
+    """Perform a queued registration.attempt (enroll/drop)."""
+    email = payload.get("student_email")
+    course_code = (payload.get("course_code") or "").strip()
+    action = payload.get("action")
+    if not email:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+    student = find_student(email)
+    if not student:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+    if action == "register":
+        return _enroll_core(student, course_code)
+    if action == "drop":
+        return _drop_core(student, course_code)
+    return {"ok": False, "message": f"Unknown registration action: {action}"}
+
+
+def process_petition_event(payload: dict) -> dict:
+    """Perform a queued petition.submitted event."""
+    email = payload.get("student_email")
+    if not email:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+    student = find_student(email)
+    if not student:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+    return _create_petition_core(student, payload)

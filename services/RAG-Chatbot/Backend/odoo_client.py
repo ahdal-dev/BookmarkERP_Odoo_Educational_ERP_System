@@ -60,6 +60,11 @@ def execute_kw(model: str, method: str, args: list, kwargs: Optional[dict] = Non
             ODOO_DB, uid, ODOO_PASSWORD, model, method, args, kwargs or {}
         )
     except xmlrpc.client.Fault as e:
+        # Some Odoo action methods (e.g. action_submit) return None; the server's
+        # XML-RPC response encoder rejects that ("cannot marshal None"). The method
+        # has already run and committed, so treat it as a successful void return.
+        if "cannot marshal None" in (e.faultString or ""):
+            return None
         raise OdooError(_clean_fault(e.faultString))
     except (ConnectionError, OSError) as e:
         raise OdooConnectionError(f"Cannot reach Odoo at {ODOO_URL}: {e}")
