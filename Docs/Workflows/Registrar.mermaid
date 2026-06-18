@@ -1,0 +1,51 @@
+graph TD
+    A([📋 Start: Log In to
+Registrar Control Panel]) --> B[(ERP DB: Load Current Term
+Registration Configuration)]
+    B --> C[View Registration Tiers
+& Current Priority Rules]
+    C --> D{Configure
+Priority Slots?}
+    D -- Yes --> E[Define Tier Priority Order
+e.g. Seniors→Juniors→Sophomores→Freshmen]
+    E --> F[Assign Date & Time Windows
+Per Tier]
+    F --> G[(ERP DB: Save Priority
+Slot Configuration for Term)]
+    G --> H{Notify Students
+of Time Slots?}
+    H -- Yes --> I[(ERP System: Trigger Bulk
+Email Notifications by Tier)]
+    I --> J[Students Receive
+Registration Window Emails]
+    H -- No --> K[Continue Without
+Immediate Notification]
+    J --> L[Monitor Registration
+Go-Live Dashboard]
+    K --> L
+    D -- No --> L
+    L --> M[(ERP DB: Stream Live Data:
+Concurrent Users, Seats, Errors)]
+    M --> N{System
+Anomaly Detected?}
+    N -- No --> O[Monitor Metrics:
+Concurrency, Queue Depth, Seat Fill Rate]
+    O --> P{Registration
+Period Active?}
+    P -- Yes --> M
+    N -- High Concurrency Spike --> Q[Alert Support Technician Team
+Via Ticket System]
+    Q --> R[Coordinate Load Mitigation:
+Queue Management or Rate Limiting]
+    R --> M
+    N -- Data Integrity Issue --> S[(ERP DB: Run Seat
+Reconciliation Process)]
+    S --> T{Reconciliation
+Successful?}
+    T -- Yes --> M
+    T -- No --> U[Escalate to System Admin
+Pause Affected Sections if Needed]
+    U --> M
+    P -- No: Period Ended --> V[(ERP DB: Generate Final
+Enrollment Report)]
+    V --> W([✅ End: Registration Term Closed])

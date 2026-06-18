@@ -1,0 +1,42 @@
+graph TD
+    A([📬 Start: Receive Petition
+Notification via Email/Portal]) --> B[(ERP DB: Fetch Petition Details
+Student, Course, Reason)]
+    B --> C[Review Petition Summary:
+Type, Reason, Student Context]
+    C --> D{Petition
+Type}
+    D -- Prerequisite Override --> E[(ERP DB: Pull Student
+Academic Transcript)]
+    D -- Course Overload --> F[(ERP DB: Pull Student
+Credit Load & GPA)]
+    D -- Other --> G[Review Attached
+Student Explanation]
+    E --> H[Assess Student's
+Preparation & Background]
+    F --> I[Assess Workload Impact
+on Student Performance]
+    G --> J[Evaluate Justification
+Against Department Policy]
+    H --> K{Decision}
+    I --> K
+    J --> K
+    K -- Approve --> L[Add Optional Comments
+for Advisor/Registrar]
+    L --> M[(ERP DB: Log Approval
+& Forward to Academic Advisor)]
+    M --> N[Notify Student:
+Instructor Approved — Pending Advisor]
+    K -- Reject --> O[Provide Rejection Reason
+in Comments Field]
+    O --> P[(ERP DB: Log Rejection
+& Notify Student)]
+    P --> Q[Notify Student:
+Petition Rejected by Instructor]
+    K -- Escalate --> R[(ERP DB: Escalate Petition
+to Department Chair)]
+    R --> S[Notify Student:
+Petition Escalated for Review]
+    N --> T([✅ End: Instructor Action Complete])
+    Q --> T
+    S --> T

@@ -1,0 +1,51 @@
+graph TD
+    A([🔑 Start: Log In to
+Admin Control Panel]) --> B{MFA
+Verified?}
+    B -- No --> C[Display MFA Challenge]
+    C --> A
+    B -- Yes --> D[View Admin Dashboard:
+System Health & Modules]
+    D --> E{Select
+Configuration Task}
+    E -- Configure Academic Rules --> F[Open Rules Engine]
+    F --> G[Set GPA Thresholds
+Credit Limits, Probation Rules]
+    G --> H[(ERP DB: Validate Rule
+Conflicts & Save Policy Config)]
+    H --> I{Conflicts
+Detected?}
+    I -- Yes --> J[Display Conflict Report
+Adjust Parameters]
+    J --> G
+    I -- No --> K[Publish Rules as Active:
+Apply to Current Term]
+    K --> D
+    E -- Manage Admission Pipeline --> L[Open Admission Config Panel]
+    L --> M[Set Document Requirements
+Deadlines, Capacity Limits]
+    M --> N[(ERP DB: Update Admission
+Cycle Configuration)]
+    N --> D
+    E -- Manage RBAC --> O[Open User & Roles Module]
+    O --> P{RBAC
+Action}
+    P -- Create New Role --> Q[Define Role Name
+Permissions & Scope]
+    Q --> R[(ERP DB: Save Role
+Definition)]
+    P -- Assign Role to Staff --> S[Search Staff Member
+by ID or Name]
+    S --> T[Select Role to Assign
+from Dropdown]
+    T --> U[(ERP DB: Bind Role
+to Staff Account)]
+    U --> V[Send Access Confirmation
+Email to Staff]
+    P -- Revoke Access --> W[Search Staff Account]
+    W --> X[(ERP DB: Deactivate
+Permissions for Account)]
+    R --> D
+    V --> D
+    X --> D
+    D --> Y([✅ End: Admin Session Complete])
