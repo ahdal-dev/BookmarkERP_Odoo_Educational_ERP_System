@@ -406,3 +406,45 @@
     font-size: 24px;
   }
 }
+
+/* ── Demo Login Section ────────────────────────────────────── */
+.demoSection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.demoLabel {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.demoBtns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.demoBtn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-lime);
+  background: transparent;
+  color: var(--color-lime-dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.demoBtn:hover {
+  background: var(--color-lime);
+  color: #fff;
+}

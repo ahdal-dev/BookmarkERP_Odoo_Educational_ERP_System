@@ -1,0 +1,387 @@
+.breadcrumb {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.primaryBtn {
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary-black);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.primaryBtn:hover { background: #333; }
+
+/* ── Summary Strip ─────────────────────────────────────────── */
+.summaryStrip {
+  display: flex;
+  gap: 24px;
+  background: var(--color-bg-white);
+  border-radius: 14px;
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 24px;
+  border-right: 1px solid var(--color-border-light);
+}
+.summaryItem:last-child { border-right: none; }
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary-black);
+  line-height: 1;
+}
+
+.summaryLabel {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* ── Two-column Layout ─────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Service Card List ─────────────────────────────────────── */
+.serviceList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.serviceCard {
+  background: var(--color-bg-white);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.serviceCard:hover { border-color: var(--color-border-light); }
+
+.serviceCardActive {
+  border-color: var(--color-lime) !important;
+  box-shadow: 0 4px 16px rgba(76,175,39,0.12);
+}
+
+.serviceCardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.typeIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(76,175,39,0.1);
+  color: var(--color-lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.typeIconWarn {
+  background: rgba(245,200,66,0.15);
+  color: var(--color-yellow);
+}
+
+.serviceInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.serviceName {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-primary-black);
+}
+
+.serviceEndpoint {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.serviceMetrics {
+  display: flex;
+  gap: 12px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.serviceToggleRow {
+  border-top: 1px solid var(--color-border-light);
+  padding-top: 10px;
+}
+
+/* ── Detail Panel ──────────────────────────────────────────── */
+.detailPanel {
+  background: var(--color-bg-white);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detailTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-primary-black);
+}
+
+.sectionLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Config */
+.configSection { display: flex; flex-direction: column; gap: 12px; }
+
+.configGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.configField { display: flex; flex-direction: column; gap: 6px; }
+
+.configLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.configInput {
+  padding: 9px 13px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-family: monospace;
+  color: var(--color-primary-black);
+  background: var(--color-bg-warm);
+  outline: none;
+}
+.configInput:not([readonly]):focus { border-color: var(--color-lime); background: #fff; }
+
+.saveConfigBtn {
+  align-self: flex-end;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary-black);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Stats */
+.statsSection { display: flex; flex-direction: column; }
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.statItem {
+  background: var(--color-bg-warm);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+/* Log */
+.logSection { display: flex; flex-direction: column; }
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  font-size: 0.76rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.logRow:last-child { border-bottom: none; }
+
+.logTime {
+  color: var(--color-text-muted);
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.logCode {
+  font-weight: 700;
+  color: var(--color-coral);
+  white-space: nowrap;
+  background: rgba(232,97,58,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.logDetail {
+  color: var(--color-text-secondary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noErrors {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  padding: 12px 0;
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.modalTitle { font-size: 1.1rem; font-weight: 800; }
+.modalClose { border: none; background: transparent; font-size: 1.1rem; cursor: pointer; color: var(--color-text-muted); }
+
+.modalBody {
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formField { display: flex; flex-direction: column; gap: 6px; }
+.formLabel { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
+
+.formInput {
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border-light);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.formInput:focus { border-color: var(--color-lime); }
+
+.modalFooter {
+  padding: 16px 28px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancelBtn {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 2px solid var(--color-border-light);
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saveBtn {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary-black);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: 1fr; }
+  .configGrid { grid-template-columns: 1fr; }
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+}

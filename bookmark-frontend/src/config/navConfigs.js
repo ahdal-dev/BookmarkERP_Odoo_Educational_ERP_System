@@ -1,11 +1,7 @@
-/* ============================================================
-   NAV CONFIGS — Sidebar navigation arrays for each app context
-   ============================================================ */
+// Sidebar nav configs for each app context
+// Icon keys are resolved to SVG paths inside AppShell
 
 import { ROLES } from './roles';
-
-// Icons are rendered inline as SVG strings in AppShell;
-// here we use icon identifiers that AppShell maps to SVG components.
 
 export const registrationNav = [
   { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
@@ -77,16 +73,21 @@ export const petitionsStudentNav = [
 // Student nav for the AI Assistant (chatbot) view.
 export const chatbotStudentNav = [
   { icon: 'dashboard', label: 'Dashboard', path: '/student/dashboard' },
-  { icon: 'grades', label: 'Grades', path: '/student/grades' },
-  { icon: 'registration', label: 'Enrollment', path: '/registration' },
-  { icon: 'petition', label: 'Petitions', path: '/student/petitions' },
+  { icon: 'grades', label: 'Grades', path: '/grades' },
+  { icon: 'registration', label: 'Enrollment', path: '/enrollment' },
+  { icon: 'petition', label: 'Petitions', path: '/petitions/new' },
   { icon: 'chat', label: 'Assistant', path: '/student/assistant', active: true },
   { icon: 'handbook', label: 'Handbook', path: '/handbook' },
 ];
 
-// ----------------------------------------------------------------------------
-// Per-role nav arrays (active item resolved by current path inside AppShell)
-// ----------------------------------------------------------------------------
+export const petitionsAdminNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+  { icon: 'petition', label: 'Petitions', path: '/admin/petitions', active: true },
+  { icon: 'academic', label: 'Academic', path: '/admin/academic' },
+  { icon: 'appeals', label: 'Appeals', path: '/admin/appeals' },
+  { icon: 'documents', label: 'Documents', path: '/admin/documents' },
+  { icon: 'settings', label: 'Settings', path: '/admin/settings' },
+];
 
 export const studentNav = [
   { icon: 'dashboard', label: 'Dashboard', path: '/student/dashboard' },
@@ -146,22 +147,6 @@ export const adminNav = [
   { icon: 'settings', label: 'Settings', path: '/admin/settings' },
 ];
 
-export const petitionsAdminNav = [
-  { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-  { icon: 'petition', label: 'Petitions', path: '/admin/petitions', active: true },
-  { icon: 'academic', label: 'Academic', path: '/admin/academic' },
-  { icon: 'appeals', label: 'Appeals', path: '/admin/appeals' },
-  { icon: 'documents', label: 'Documents', path: '/admin/documents' },
-  { icon: 'settings', label: 'Settings', path: '/admin/settings' },
-];
-
-// ----------------------------------------------------------------------------
-// Role → primary sidebar nav resolver.
-// Used by cross-role pages (Notifications, Settings) so the sidebar always
-// matches the signed-in user, and to guarantee Notifications + Settings are
-// reachable from every role's sidebar.
-// ----------------------------------------------------------------------------
-
 const ROLE_NAV = {
   [ROLES.STUDENT]: studentNav,
   [ROLES.INSTRUCTOR]: facultyNav,
@@ -173,7 +158,6 @@ const ROLE_NAV = {
   [ROLES.SUPER_ADMIN]: adminNav,
 };
 
-// Shared entries appended to every role's sidebar (deduped by path).
 const SHARED_NAV = [
   { icon: 'notifications', label: 'Notifications', path: '/notifications' },
   { icon: 'settings', label: 'Account Settings', path: '/settings' },
@@ -186,3 +170,17 @@ export function navForRole(role) {
   const extras = SHARED_NAV.filter((i) => !paths.has(i.path) && !labels.has(i.label));
   return [...base, ...extras];
 }
+
+// Admin dashboard nav
+export const adminDashboardNav = [
+  { icon: 'dashboard', label: 'Command Center', path: '/admin' },
+  { icon: 'students', label: 'User Management', path: '/admin/users' },
+  { icon: 'admin', label: 'Roles & Permissions', path: '/admin/roles' },
+  { icon: 'ai', label: 'AI Services', path: '/admin/ai' },
+  { icon: 'documents', label: 'Knowledge Base', path: '/admin/knowledge-base' },
+  { icon: 'reports', label: 'Analytics', path: '/admin/analytics' },
+  { icon: 'security', label: 'Security Center', path: '/admin/security' },
+  { icon: 'management', label: 'Content & Config', path: '/admin/content' },
+  { icon: 'chat', label: 'Support', path: '/admin/support' },
+  { icon: 'settings', label: 'System', path: '/admin/system' },
+];

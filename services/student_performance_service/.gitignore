@@ -1,0 +1,6 @@
+# Trained model artifacts (regenerate with: python train.py)
+models/*.pt
+models/*.joblib
+
+__pycache__/
+*.pyc

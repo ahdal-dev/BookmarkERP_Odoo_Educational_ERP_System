@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from './TopBar.module.css';
 
@@ -8,9 +7,8 @@ import styles from './TopBar.module.css';
    Used on User Management and Admissions pages.
    ============================================================ */
 
-export default function TopBar({ searchPlaceholder = 'Search users, roles, or departments...' }) {
+export default function TopBar({ searchPlaceholder = 'Search users, roles, or departments...', notificationCount = 0 }) {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -49,12 +47,14 @@ export default function TopBar({ searchPlaceholder = 'Search users, roles, or de
       {/* Right Actions */}
       <div className={styles.right}>
         {/* Notification Bell */}
-        <button className={styles.iconBtn} aria-label="Notifications" onClick={() => navigate('/notifications')}>
+        <button className={styles.iconBtn} aria-label="Notifications">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
-          <span className={styles.badge}>1</span>
+          {notificationCount > 0 && (
+            <span className={styles.badge}>{notificationCount > 99 ? '99+' : notificationCount}</span>
+          )}
         </button>
 
         {/* Chat */}

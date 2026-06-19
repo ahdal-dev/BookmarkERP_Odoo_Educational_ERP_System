@@ -1,123 +1,121 @@
-# Implementation and Testing
+# Bookmark Academic ERP Suite
 
-## Project Overview
-
-The **Educational ERP System** is built on top of Odoo and provides a comprehensive platform for managing academic admissions. The system integrates several components:
-
-- **Odoo ERP** (port 8081) — Core backend handling student data, programs, and admission workflows.
-- **Admission Portal** — A public-facing website where prospective students can fill out and submit admission applications, upload documents, and track application status via a reference number.
-- **OCR Microservice** (port 5000) — A standalone service that processes uploaded National ID images, extracts personal information (name, address, NID number), and auto-fills form fields.
-- **API Gateway** — A Docker-based gateway (FastAPI + Nginx) that provides a unified entry point, JWT authentication, rate limiting, and routing to backend services.
-
-### Key Features
-
-- Online admission form with personal, academic, and document sections.
-- OCR-powered auto-fill from National ID card images.
-- Auto-generated application reference numbers (e.g. `ADM00001`).
-- Application status tracking page for applicants.
-- Full admission workflow: Draft → Submitted → Under Review → Accepted / Rejected.
-- Role-based access control (Public, Portal, Internal, Manager).
-- Backend admin views for managing applications and programs.
+A modern, highly scalable, and decoupled microservices architecture designed to modernize traditional educational management systems. By transitioning away from native Odoo XML dashboards to a headless model, the platform delivers a fast, responsive Single-Page Application (SPA) experience powered by React, orchestrated by a FastAPI Gateway, and backed by the robust core of Odoo 19.0.
 
 ---
 
-## Test Evidence
+## 🌟 Core Architecture & Technology Stack
 
-### 1. Admission Form
+The Bookmark Academic ERP Suite is logically divided into distinct, loosely coupled layers to ensure modularity, scalability, and security.
 
-The public admission portal form with personal information, academic details, and program selection.
+### 1. Presentation Layer (Frontend)
+- **Tech Stack:** React, Vite, React Router, Tailwind CSS, CSS Modules.
+- **Role:** Completely replaces the native Odoo XML/UI. It independently handles state, JWT storage, and asynchronous data fetching. 
 
-![Admission Form](Tests/Screenshots/Admission_Form.png)
+### 2. API Gateway Layer (Orchestration & Security)
+- **Tech Stack:** FastAPI (Python), NGINX.
+- **Role:** The single entry point for all client requests. NGINX handles rate limiting and SSL termination. FastAPI provides Role-Based Access Control (RBAC), validates JWTs, orchestrates calls across microservices, and tracks active concurrent users using Redis.
 
----
+### 3. Core ERP Layer (Backend)
+- **Tech Stack:** Headless Odoo 19.0 (Python).
+- **Role:** Handles core business logic (Admissions, Petitions, Enrollments, Grades, Waitlists). It exposes custom REST controllers instead of traditional XML views.
 
-### 2. OCR Document Processing
-
-Uploading a National ID card image triggers the OCR microservice, which extracts fields (name, address, NID) visible in the browser console response.
-
-![OCR Processing](Tests/Screenshots/Admission_OCR.png)
-
----
-
-### 3. OCR with ID Card Preview
-
-The uploaded ID card is displayed as a preview on the form, and the extracted OCR data is shown in the DevTools console.
-
-![OCR With ID](Tests/Screenshots/Ocr%20With%20Id.png)
+### 4. Asynchronous & AI Services Layer
+- **Tech Stack:** RabbitMQ, Python Workers, OCR Microservice (Flask).
+- **Role:** Handles heavy background tasks without blocking the main event loop. Tasks like processing document OCR, sending bulk notifications, and orchestrating RAG-Chatbot queries are managed securely in the background.
 
 ---
 
-### 4. Application Submitted Successfully
+## 🎨 System Wireframes & UI
 
-After submission, the applicant sees a confirmation page with their unique reference number (`ADM00001`) and next-step instructions.
+The platform prioritizes a modern, responsive user experience. Below are the primary wireframes representing the current decoupled frontend views:
 
-![Thank You Page](Tests/Screenshots/Admmition_Thankyou.png)
+### Authentication & Login
+A secure, JWT-backed authentication flow tailored for various academic roles (Student, Faculty, Advisor, Registrar, Admin).
 
----
+![Login Screen](docs/Wire_frame/V02/Bookmark_Academic_ERP_Login.jpeg)
 
-### 5. Check Application Status
+### Registrar & Administrative Dashboard
+Provides real-time aggregates of concurrent active sessions, enrollment metrics, and waitlist tracking.
 
-Applicants can look up their application by reference number to see details (name, email, program, date) and current status.
+![Registrar Dashboard](docs/Wire_frame/V02/Bookmark_Academic_ERP_Dashboard.jpeg)
 
-![Application Status](Tests/Screenshots/Application_Status.png)
+### Program & Course Catalog
+Students and faculty can browse real-time course offerings, prerequisites, and track capacity utilization dynamically.
 
----
+![Course Catalog](docs/Wire_frame/V02/Bookmark_ERP_Program_Catalog6.jpeg)
 
-### 6. Backend — Admission Applications List
+### Student Petition Submission
+Students can easily submit multi-tiered academic petitions, uploading necessary documents securely to the backend.
 
-The Odoo backend list view showing all submitted applications with reference, applicant name, email, program, and status.
+![Student Petition Form](docs/Wire_frame/V02/Bookmark_ERP_Student_Petition_Form.jpeg)
 
-![Applications List](Tests/Screenshots/Aplecations.png)
+### Petition Review & Tracking Queue
+Faculty, Chairs, and Registrars manage their specific queues for approving or rejecting academic petitions.
 
----
+![Petition Tracking](docs/Wire_frame/V02/Bookmark_ERP_Petition_Tracking.jpeg)
 
-### 7. Backend — Application Detail (Administrator View)
+### User Management & Institutional Ruleset
+Super Administrators can define canonical RBAC roles, edit institutional registration windows, and enforce prerequisites globally.
 
-The detailed backend form view of a single admission record, showing related documents, activity log, and message history.
-
-![Administrator Admission View](Tests/Screenshots/Adminstrator_admition.png)
-
----
-
-### 8. Backend — Programs List
-
-The Odoo backend list view for academic programs showing program name, code, duration, application count, and active status.
-
-![Programs](Tests/Screenshots/programs.png)
+![User Management](docs/Wire_frame/V02/Bookmark_ERP_User_Management.jpeg)
 
 ---
 
-### 9. Services Health Test (`test_services.ps1`)
+## 🚀 Key System Features
 
-Automated script verifying all services are running: OCR Microservice (healthy), Odoo ERP (port 8081), Admission Portal (accessible), and Docker API Gateway (running).
-
-![Services Test](Tests/Screenshots/Test_servivces.png)
-
----
-
-### 10. API Gateway Test (`test_gateway.ps1`)
-
-Automated script testing the API Gateway: health check (WORKING), JWT token generation, admission submission, OCR availability (AVAILABLE), and rate limiting.
-
-![Gateway Test](Tests/Screenshots/Test_gatway.png)
+- **Headless Odoo:** Complete removal of standard Odoo XML views in favor of high-performance JSON-RPC endpoints.
+- **RabbitMQ Integration:** Background processing for waitlist promotions, registration attempts, and notification dispatching.
+- **Dynamic Registration Windows:** Automated enrollment periods based on student seniority (academic tiers) calculated directly from real GPA.
+- **Concurrent User Tracking:** Redis tracks active sessions (`uid` and `jti`) for real-time traffic monitoring by the Registrar.
+- **Advanced OCR Document Processing:** Automatic extraction of metadata from student ID and transcript uploads via a dedicated microservice.
+- **AI-Powered Assistance:** Integration of an Academic Agent (RAG-Chatbot) to support student inquiries natively within the ERP.
 
 ---
 
-### 11. API Gateway Docker Status
+## 🛠 Deployment & Setup
 
-Service overview showing OCR, Odoo, Admission Portal, and Docker API Gateway statuses along with quick access URLs and start commands.
+The entire architecture is containerized using Docker and Docker Compose. 
 
-![API Gateway](Tests/Screenshots/API%20gateway..png)
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.10+ (for local Odoo development)
+- Node.js 18+ (for frontend development)
+
+### Quick Start (Full Stack)
+
+1. **Clone the repository.**
+2. **Start the API Gateway & Infrastructure:**
+   ```bash
+   cd api_gateway
+   docker-compose up -d --build
+   ```
+   *(This starts FastAPI, NGINX, RabbitMQ, Redis, Prometheus, Grafana, and the OCR Microservice).*
+
+3. **Start the Headless Odoo Backend (Windows Host):**
+   ```bash
+   venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf
+   ```
+
+4. **Start the React Frontend:**
+   ```bash
+   cd bookmark-frontend
+   npm install
+   npm run dev
+   ```
+
+### Access Points
+- **React Frontend:** `http://localhost:5173`
+- **FastAPI Gateway:** `http://localhost:8000` (Swagger UI: `http://localhost:8000/docs`)
+- **Prometheus Metrics:** `http://localhost:9090`
+- **Grafana Dashboards:** `http://localhost:3000`
 
 ---
 
-## Automated Test Suite
+## 🧪 Testing
 
-The `admission_portal` module includes **~75 automated test cases** across four files:
+The repository includes extensive automated test coverage, particularly for the API Gateway and core Odoo models:
 
-| Category | File | Tests | Scope |
-|---|---|---|---|
-| Integration Tests | `test_controller.py` | 28 | HTTP controller routes, form submission, validation, file upload, status check |
-| Model Validation (Admission) | `test_admission_model.py` | 24 | Record creation, email/GPA constraints, state workflow, copy behavior |
-| Model Validation (Program) | `test_program_model.py` | 14 | Program CRUD, computed `admission_count`, archiving, One2many relations, ordering |
-| Security Tests | `test_security.py` | 32 | CRUD permissions for Public, Portal, Internal, and Manager users on both models |
+- `make run` — Runs the full stack.
+- `cd api_gateway && ./test_gateway.ps1` — Runs health checks and rate limit testing on the Gateway.
+- The `bookmark-frontend` uses Vite's built-in testing suite for unit-testing custom hooks (like `useAsync`).
