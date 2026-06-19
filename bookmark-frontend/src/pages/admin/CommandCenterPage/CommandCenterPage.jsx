@@ -9,12 +9,7 @@ import useAsync from '../../../hooks/useAsync';
 import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import {
-  mockCommandKPIs,
-  mockAIServiceSummary,
   mockRecentSecurityEvents,
-  mockAdmissionSummary,
-  mockUserGrowth,
-  mockUserGrowth90d,
   openTicketCount,
 } from '../../../mocks/adminMocks';
 import styles from './CommandCenterPage.module.css';
@@ -62,34 +57,33 @@ export default function CommandCenterPage() {
   const { data: healthData } = useAsync(adminAPI.getHealth);
 
   const kpis = {
-    totalUsers: statsData?.totalUsers ?? mockCommandKPIs.totalUsers,
-    totalUsersDelta: mockCommandKPIs.totalUsersDelta,
-    activeToday: statsData?.activeUsers ?? mockCommandKPIs.activeToday,
-    activeTodayPct: mockCommandKPIs.activeTodayPct,
-    aiRequests: mockCommandKPIs.aiRequests,
-    aiRequestsDelta: mockCommandKPIs.aiRequestsDelta,
-    openTickets: statsData?.pendingPetitions ?? mockCommandKPIs.openTickets,
-    criticalTickets: mockCommandKPIs.criticalTickets,
-    systemUptime: statsData?.systemUptime ?? parseFloat(mockCommandKPIs.systemUptime),
+    totalUsers: statsData?.totalUsers || 0,
+    totalUsersDelta: statsData?.totalUsersDelta || '+0%',
+    activeToday: statsData?.activeUsers || 0,
+    activeTodayPct: statsData?.activeTodayPct || '0%',
+    aiRequests: statsData?.aiRequests || 0,
+    aiRequestsDelta: statsData?.aiRequestsDelta || '+0%',
+    openTickets: statsData?.pendingPetitions || 0,
+    criticalTickets: statsData?.criticalTickets || 0,
+    systemUptime: statsData?.systemUptime || 0,
   };
 
-  const liveServices = healthData?.services?.map((s) => ({
+  const aiSummary = healthData?.services?.map((s) => ({
     slug: s.name.toLowerCase().replace(/\s+/g, '-'),
     name: s.name,
     status: s.status === 'Healthy' ? 'Online' : s.status,
-    requests: s.latency ?? 0,
-  }));
-  const aiSummary = liveServices ?? mockAIServiceSummary;
+    requests: s.latency || 0,
+  })) || [];
   const degraded = aiSummary.filter((s) => s.status === 'Degraded' || s.status === 'Offline');
 
   const liveAdmission = {
-    newApplications: statsData?.totalApplications ?? mockAdmissionSummary.newApplications,
-    inReview: statsData?.inReviewApplications ?? mockAdmissionSummary.inReview,
-    missingDocs: statsData?.missingDocs ?? mockAdmissionSummary.missingDocs,
-    approvedToday: statsData?.admittedApplications ?? mockAdmissionSummary.approvedToday,
+    newApplications: statsData?.totalApplications || 0,
+    inReview: statsData?.inReviewApplications || 0,
+    missingDocs: statsData?.missingDocs || 0,
+    approvedToday: statsData?.admittedApplications || 0,
   };
 
-  const chartData = chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d;
+  const chartData = [];
 
   return (
     <AppShell
