@@ -11,7 +11,6 @@ import CreateUserModal from '../../components/CreateUserModal/CreateUserModal';
 import useAsync from '../../hooks/useAsync';
 import { adminAPI } from '../../api/apiGateway';
 import { adminDashboardNav } from '../../config/navConfigs';
-import { mockUsers, mockUserStats } from '../../mocks/usersMocks';
 import styles from './UserManagementPage.module.css';
 
 /* ============================================================
@@ -19,6 +18,8 @@ import styles from './UserManagementPage.module.css';
    ============================================================ */
 
 const STATUS_DOT = { Active: 'green', Inactive: 'yellow', Suspended: 'coral' };
+const mockUsers = [];
+const mockUserStats = { totalAccounts: 0, activeNow: 0, delta: '+0%', permissionConsistency: 100 };
 
 const columns = [
   { key: 'name', header: 'Name', sortable: true },
@@ -70,6 +71,32 @@ export default function UserManagementPage() {
   const users = liveUsers ?? mockUsers;
   const totalAccounts = usersData?.total_accounts ?? mockUserStats.totalAccounts;
   const activeNow = usersData?.active_now ?? mockUserStats.activeNow;
+
+  const deactivate = async (u) => {
+    if (!window.confirm(`Deactivate ${u.name}?`)) return;
+    try {
+      await adminAPI.deleteUser(u.id);
+      window.location.reload();
+    } catch (e) {
+      console.error('Failed to deactivate user:', e);
+    }
+  };
+
+  const reload = () => window.location.reload();
+
+  const tableColumns = [
+    ...columns,
+    {
+      key: 'actions', header: 'Actions',
+      render: (_, r) => (
+        <span className={styles.actionIcons}>
+          <button className={styles.iconBtn} aria-label="Deactivate" title="Deactivate" onClick={() => deactivate(r)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </span>
+      ),
+    },
+  ];
 
   return (
     <AppShell
@@ -132,7 +159,7 @@ export default function UserManagementPage() {
       {/* Data Table */}
       <div className={styles.tableCard}>
         <DataTable
-          columns={columns}
+          columns={tableColumns}
           data={users}
           selectable
           onRowClick={(row) => navigate(`/admin/users/${row.id}`)}

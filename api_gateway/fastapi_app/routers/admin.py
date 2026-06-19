@@ -31,10 +31,11 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .deps import TokenData, call_kw, odoo_session, require_roles, resolve_roles_bulk
+from mq import QUEUE_ADMISSION_EMAIL, QUEUE_NOTIFICATION, try_publish
 
 OCR_URL     = os.getenv("OCR_SERVICE_URL", "http://ocr-service:8001")
 CHATBOT_URL = os.getenv("CHATBOT_SERVICE_URL", "http://chatbot-service:8002")
@@ -117,6 +118,16 @@ async def update_admission_stage(
             await call_kw(client, "school.admission", method, [[adm_id]])
         else:
             await call_kw(client, "school.admission", "write", [[adm_id], {"state": body.stage}])
+    await try_publish(QUEUE_NOTIFICATION, {
+        "user_id": token.user_id,
+        "event": "admission.stage_changed",
+        "admission_id": adm_id,
+        "new_stage": body.stage,
+    })
+    await try_publish(QUEUE_ADMISSION_EMAIL, {
+        "admission_id": adm_id,
+        "new_stage": body.stage,
+    })
     return {"ok": True}
 
 
@@ -171,6 +182,15 @@ async def create_user(
     async with odoo_session() as client:
         user_id = await call_kw(client, "res.users", "create", [vals])
     return {"ok": True, "user_id": user_id}
+
+
+@router.delete("/admin/users/{user_id}", summary="Deactivate a user")
+async def deactivate_user(user_id: int, token: TokenData = Depends(require_roles("super_admin"))):
+    if user_id == token.user_id:
+        raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
+    async with odoo_session() as client:
+        await call_kw(client, "res.users", "write", [[user_id], {"active": False}])
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

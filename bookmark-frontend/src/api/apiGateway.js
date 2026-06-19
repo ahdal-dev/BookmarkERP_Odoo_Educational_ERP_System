@@ -290,6 +290,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  /** Delete/deactivate a user */
+  deleteUser: async (uid) => {
+    const response = await api.delete(`/api/v1/admin/users/${uid}`);
+    return response.data;
+  },
+
   /** Read registration rules */
   getRules: async () => {
     const response = await api.get('/api/v1/admin/settings/registration-rules');
