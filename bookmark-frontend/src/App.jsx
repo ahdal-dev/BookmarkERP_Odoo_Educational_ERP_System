@@ -11,7 +11,6 @@ import UnauthorizedPage from './pages/UnauthorizedPage/UnauthorizedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import SettingsPage from './pages/settings/SettingsPage';
 
-// App Launcher (existing component, now mounted at /apps)
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import RegistrationPage from './pages/RegistrationPage/RegistrationPage';
 import InstitutionalRulesetPage from './pages/InstitutionalRulesetPage/InstitutionalRulesetPage';
@@ -20,7 +19,6 @@ import DocumentVerificationPage from './pages/DocumentVerificationPage/DocumentV
 import AdmissionPipelinePage from './pages/AdmissionPipelinePage/AdmissionPipelinePage';
 import PetitionFormPage from './pages/PetitionFormPage/PetitionFormPage';
 import PetitionTrackingPage from './pages/PetitionTrackingPage/PetitionTrackingPage';
-<<<<<<< HEAD
 
 // Admin Dashboard
 import CommandCenterPage from './pages/admin/CommandCenterPage/CommandCenterPage';
@@ -34,17 +32,7 @@ import ContentPage from './pages/admin/ContentPage/ContentPage';
 import SupportPage from './pages/admin/SupportPage/SupportPage';
 import UserDetailPage from './pages/admin/UserDetailPage/UserDetailPage';
 
-// Role landing pages (scaffolded — see docs/User_stories/Missing_Views_ToDo.md)
-import StudentDashboardPage from './pages/student/StudentDashboardPage';
-import FacultyDashboardPage from './pages/faculty/FacultyDashboardPage';
-import SupportChatQueuePage from './pages/support/SupportChatQueuePage';
-import ApplicationStatusPage from './pages/admissions/ApplicationStatusPage';
-import ChatbotPage from './pages/ChatbotPage/ChatbotPage';
-import RoleProtectedRoute from './components/RoleProtectedRoute/RoleProtectedRoute';
-import { ROLES } from './config/roles';
-=======
-
-// Role landing pages (scaffolded — see docs/User_stories/Missing_Views_ToDo.md)
+// Role landing pages
 import StudentDashboardPage from './pages/student/StudentDashboardPage';
 import FacultyDashboardPage from './pages/faculty/FacultyDashboardPage';
 import SupportChatQueuePage from './pages/support/SupportChatQueuePage';
@@ -71,21 +59,14 @@ import EnrollmentMonitorPage from './pages/registrar/EnrollmentMonitorPage';
 // Support
 import ChatSessionPage from './pages/support/ChatSessionPage';
 import TicketListPage from './pages/support/TicketListPage';
-// Admissions (public + officer)
+// Admissions
 import AdmissionsPortalPage from './pages/admissions/AdmissionsPortalPage';
 import ApplicationReviewPage from './pages/admissions/ApplicationReviewPage';
-// Admin
+// Admin legacy
 import AuditLogPage from './pages/admin/AuditLogPage';
 import SystemSettingsPage from './pages/admin/SystemSettingsPage';
 
 const FACULTY_ROLES = [ROLES.INSTRUCTOR, ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMENT_CHAIR];
-
-/* ============================================================
-   APP — Root Router (role-aware)
-   "/" dispatches each authenticated user to their landing view
-   via RoleRouter; RoleProtectedRoute guards every role space.
-   ============================================================ */
->>>>>>> origin/main
 
 export default function App() {
   return (
@@ -102,218 +83,57 @@ export default function App() {
           {/* Post-login dispatcher */}
           <Route path="/" element={<RoleRouter />} />
 
-          {/* Cross-role pages — available to every authenticated user */}
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <NotificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Cross-role pages */}
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
-<<<<<<< HEAD
-          {/* Admin Dashboard */}
-          <Route
-            path="/admin"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <CommandCenterPage />
-=======
-          {/* App Launcher — Super Admin / Registrar / Admission Officer */}
+          {/* App Launcher */}
           <Route
             path="/apps"
             element={
-              <RoleProtectedRoute
-                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR, ROLES.ADMISSION_OFFICER]}
-              >
+              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR, ROLES.ADMISSION_OFFICER]}>
                 <DashboardPage />
->>>>>>> origin/main
               </RoleProtectedRoute>
-            }
-          />
-          <Route
-<<<<<<< HEAD
-            path="/admin/roles"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <RolesPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/ai"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <AIServicesPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/knowledge-base"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <KnowledgeBasePage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/analytics"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <AnalyticsPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/security"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <SecurityPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/system"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <SystemPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/content"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <ContentPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/support"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <SupportPage />
-              </RoleProtectedRoute>
-=======
-            path="/registration"
-            element={
-              <ProtectedRoute>
-                <RegistrationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/petitions/new"
-            element={
-              <ProtectedRoute>
-                <PetitionFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/apply/documents"
-            element={
-              <ProtectedRoute>
-                <DocumentVerificationPage />
-              </ProtectedRoute>
->>>>>>> origin/main
             }
           />
 
-          {/* Protected Routes — Admin */}
-          <Route
-            path="/admin/settings/registration-rules"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <InstitutionalRulesetPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-<<<<<<< HEAD
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <UserManagementPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users/:id"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
-                <UserDetailPage />
-              </RoleProtectedRoute>
-=======
-              <ProtectedRoute roles={['admin']}>
-                <UserManagementPage />
-              </ProtectedRoute>
->>>>>>> origin/main
-            }
-          />
-          <Route
-            path="/admin/admissions"
-            element={
-<<<<<<< HEAD
-              <ProtectedRoute roles={['admin', 'officer', 'super_admin']}>
-=======
-              <ProtectedRoute roles={['admin', 'officer']}>
->>>>>>> origin/main
-                <AdmissionPipelinePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/petitions"
-            element={
-              <ProtectedRoute roles={['admin', 'officer']}>
-                <PetitionTrackingPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Shared protected */}
+          <Route path="/registration" element={<ProtectedRoute><RegistrationPage /></ProtectedRoute>} />
+          <Route path="/petitions/new" element={<ProtectedRoute><PetitionFormPage /></ProtectedRoute>} />
+          <Route path="/apply/documents" element={<ProtectedRoute><DocumentVerificationPage /></ProtectedRoute>} />
 
-          {/* Student space */}
-          <Route
-            path="/student/dashboard"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}>
-                <StudentDashboardPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/assistant"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}>
-                <ChatbotPage />
-              </RoleProtectedRoute>
-            }
-          />
-<<<<<<< HEAD
+          {/* Admin Dashboard */}
+          <Route path="/admin" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><CommandCenterPage /></RoleProtectedRoute>} />
+          <Route path="/admin/roles" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><RolesPage /></RoleProtectedRoute>} />
+          <Route path="/admin/ai" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><AIServicesPage /></RoleProtectedRoute>} />
+          <Route path="/admin/knowledge-base" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><KnowledgeBasePage /></RoleProtectedRoute>} />
+          <Route path="/admin/analytics" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><AnalyticsPage /></RoleProtectedRoute>} />
+          <Route path="/admin/security" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><SecurityPage /></RoleProtectedRoute>} />
+          <Route path="/admin/system" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><SystemPage /></RoleProtectedRoute>} />
+          <Route path="/admin/content" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><ContentPage /></RoleProtectedRoute>} />
+          <Route path="/admin/support" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><SupportPage /></RoleProtectedRoute>} />
+          <Route path="/admin/users" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UserManagementPage /></RoleProtectedRoute>} />
+          <Route path="/admin/users/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UserDetailPage /></RoleProtectedRoute>} />
+          <Route path="/admin/admissions" element={<ProtectedRoute roles={['admin', 'officer', 'super_admin']}><AdmissionPipelinePage /></ProtectedRoute>} />
+          <Route path="/admin/petitions" element={<ProtectedRoute roles={['admin', 'officer']}><PetitionTrackingPage /></ProtectedRoute>} />
+          <Route path="/admin/settings/registration-rules" element={<ProtectedRoute roles={['admin']}><InstitutionalRulesetPage /></ProtectedRoute>} />
+          <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
 
-          {/* Faculty space */}
-=======
+          {/* Student */}
+          <Route path="/student/dashboard" element={<RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentDashboardPage /></RoleProtectedRoute>} />
+          <Route path="/student/assistant" element={<RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}><ChatbotPage /></RoleProtectedRoute>} />
           <Route path="/student/grades" element={<RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}><GradesPage /></RoleProtectedRoute>} />
           <Route path="/student/petitions" element={<RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}><PetitionListPage /></RoleProtectedRoute>} />
 
-          {/* Faculty (Instructor / Advisor / Chair) */}
+          {/* Faculty */}
+          <Route path="/faculty/dashboard" element={<RoleProtectedRoute allowedRoles={FACULTY_ROLES}><FacultyDashboardPage /></RoleProtectedRoute>} />
           <Route path="/faculty/courses" element={<RoleProtectedRoute allowedRoles={FACULTY_ROLES}><ClassRosterPage /></RoleProtectedRoute>} />
           <Route path="/faculty/courses/:courseId" element={<RoleProtectedRoute allowedRoles={FACULTY_ROLES}><ClassRosterPage /></RoleProtectedRoute>} />
           <Route path="/faculty/petitions" element={<RoleProtectedRoute allowedRoles={FACULTY_ROLES}><FacultyPetitionQueuePage /></RoleProtectedRoute>} />
           <Route path="/faculty/petitions/:id" element={<RoleProtectedRoute allowedRoles={FACULTY_ROLES}><PetitionReviewPage /></RoleProtectedRoute>} />
-          {/* Advisor */}
           <Route path="/faculty/advisees" element={<RoleProtectedRoute allowedRoles={[ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMENT_CHAIR]}><AdviseeListPage /></RoleProtectedRoute>} />
           <Route path="/faculty/advisees/:studentId" element={<RoleProtectedRoute allowedRoles={[ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMENT_CHAIR]}><AdviseeProfilePage /></RoleProtectedRoute>} />
-          {/* Chair */}
           <Route path="/faculty/chair/petitions" element={<RoleProtectedRoute allowedRoles={[ROLES.DEPARTMENT_CHAIR]}><ChairPetitionQueuePage /></RoleProtectedRoute>} />
           <Route path="/faculty/chair/petitions/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.DEPARTMENT_CHAIR]}><PetitionOverridePage /></RoleProtectedRoute>} />
           <Route path="/faculty/chair/students" element={<RoleProtectedRoute allowedRoles={[ROLES.DEPARTMENT_CHAIR]}><DepartmentStudentRecordsPage /></RoleProtectedRoute>} />
@@ -325,6 +145,7 @@ export default function App() {
           <Route path="/registrar/enrollment" element={<RoleProtectedRoute allowedRoles={[ROLES.REGISTRAR]}><EnrollmentMonitorPage /></RoleProtectedRoute>} />
 
           {/* Support */}
+          <Route path="/support/chat-queue" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPPORT_TECHNICIAN]}><SupportChatQueuePage /></RoleProtectedRoute>} />
           <Route path="/support/chat/:sessionId" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPPORT_TECHNICIAN]}><ChatSessionPage /></RoleProtectedRoute>} />
           <Route path="/support/tickets" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPPORT_TECHNICIAN]}><TicketListPage /></RoleProtectedRoute>} />
 
@@ -332,38 +153,7 @@ export default function App() {
           <Route path="/admissions/officer" element={<RoleProtectedRoute allowedRoles={[ROLES.ADMISSION_OFFICER, ROLES.SUPER_ADMIN]}><AdmissionPipelinePage /></RoleProtectedRoute>} />
           <Route path="/admissions/officer/application/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.ADMISSION_OFFICER, ROLES.SUPER_ADMIN]}><ApplicationReviewPage /></RoleProtectedRoute>} />
 
-          {/* Admin */}
-          <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
-
-          {/* Faculty space — Instructor / Advisor / Chair share the shell */}
->>>>>>> origin/main
-          <Route
-            path="/faculty/dashboard"
-            element={
-              <RoleProtectedRoute
-                allowedRoles={[ROLES.INSTRUCTOR, ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMENT_CHAIR]}
-              >
-                <FacultyDashboardPage />
-              </RoleProtectedRoute>
-            }
-          />
-
-          {/* Support */}
-          <Route
-            path="/support/chat-queue"
-            element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPPORT_TECHNICIAN]}>
-                <SupportChatQueuePage />
-              </RoleProtectedRoute>
-            }
-          />
-
-<<<<<<< HEAD
           {/* Catch-all */}
-=======
-          {/* Catch-all -> dispatcher (sends to login or the user's landing) */}
->>>>>>> origin/main
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
