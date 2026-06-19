@@ -134,10 +134,8 @@ export const supportNav = [
 ];
 
 export const admissionsOfficerNav = [
-  { icon: 'dashboard', label: 'Dashboard', path: '/apps' },
-  { icon: 'admission', label: 'Pipeline', path: '/admissions/officer' },
+  { icon: 'dashboard', label: 'Dashboard', path: '/admissions/officer' },
   { icon: 'documents', label: 'Documents', path: '/apply/documents' },
-  { icon: 'reports', label: 'Reports', path: '/admin/reports' },
 ];
 
 export const adminNav = [

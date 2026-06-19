@@ -4,7 +4,7 @@ import AppShell from '../../components/AppShell/AppShell';
 import FileDropzone from '../../components/FileDropzone/FileDropzone';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { SplatterDot } from '../../styles/brand';
-import { petitionsStudentNav } from '../../config/navConfigs';
+import { studentNav } from '../../config/navConfigs';
 import { petitionsAPI } from '../../api/apiGateway';
 import useAsync from '../../hooks/useAsync';
 import styles from './PetitionFormPage.module.css';
@@ -52,7 +52,7 @@ export default function PetitionFormPage() {
   };
 
   return (
-    <AppShell navItems={petitionsStudentNav} logoVariant="stacked">
+    <AppShell navItems={studentNav} logoVariant="stacked">
       <div className={styles.layout}>
         <div className={styles.main}>
           <div className={styles.breadcrumb}>ACADEMIC / PETITIONS / NEW SUBMISSION</div>
