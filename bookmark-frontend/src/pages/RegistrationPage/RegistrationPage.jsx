@@ -4,7 +4,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import CourseCard from '../../components/CourseCard/CourseCard';
 import Pagination from '../../components/Pagination/Pagination';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
-import { registrationNav } from '../../config/navConfigs';
+import { studentNav } from '../../config/navConfigs';
 import { registrationAPI } from '../../api/apiGateway';
 import useAsync from '../../hooks/useAsync';
 import styles from './RegistrationPage.module.css';
@@ -66,7 +66,7 @@ export default function RegistrationPage() {
   const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   return (
-    <AppShell navItems={registrationNav} logoVariant="icon-text">
+    <AppShell navItems={studentNav} logoVariant="icon-text">
       <PageHeader
         title="Course Registration"
         badge="FALL 2026"

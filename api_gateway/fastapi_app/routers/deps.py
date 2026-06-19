@@ -70,6 +70,29 @@ def get_current_token(
         )
 
 
+def get_current_token_from_string(token: str) -> TokenData:
+    """Decode and validate a raw JWT string. Used by SSE endpoint where EventSource
+    cannot send custom headers, so the token is passed as a query parameter."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        td = TokenData(payload)
+        if td.exp < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return td
+    except HTTPException:
+        raise
+    except InvalidTokenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {e}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 def require_roles(*allowed: str):
     """Factory that returns a FastAPI dependency enforcing role membership."""
     def checker(token: TokenData = Depends(get_current_token)) -> TokenData:

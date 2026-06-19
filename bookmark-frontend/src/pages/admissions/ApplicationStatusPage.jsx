@@ -2,25 +2,49 @@ import { useState } from 'react';
 import PublicShell from '../../components/PublicShell/PublicShell';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import Stepper from '../../components/Stepper/Stepper';
+import { admissionsAPI } from '../../api/apiGateway';
 import w from '../_shared/workflow.module.css';
 
-/* Public reference-number application status tracker. */
+/* Public reference-number application status tracker (live). */
 
-const STEPS = [
-  { label: 'Submitted', status: 'completed' },
-  { label: 'OCR Verified', status: 'completed' },
-  { label: 'Under Review', status: 'active' },
-  { label: 'Decision', status: 'future' },
-];
+const STAGE_ORDER = ['submitted', 'under_review', 'accepted', 'rejected'];
+function stepsFor(state) {
+  const idx = STAGE_ORDER.indexOf(state);
+  const base = [
+    { label: 'Submitted', key: 'submitted' },
+    { label: 'Under Review', key: 'under_review' },
+    { label: 'Decision', key: 'accepted' },
+  ];
+  return base.map((s, i) => ({
+    label: s.label,
+    status: i < idx ? 'completed' : i === idx ? 'active' : (state === 'accepted' || state === 'rejected') && i === 2 ? 'completed' : 'future',
+  }));
+}
 
 export default function ApplicationStatusPage() {
   const [ref, setRef] = useState('');
   const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const track = () => {
+  const track = async () => {
     if (!ref.trim()) return;
-    setResult({ ref: ref.trim().toUpperCase(), name: 'Julianne Abernathy', program: 'M.S. Architecture', status: 'Under Review', updated: 'Oct 16, 2026 · 14:20' });
+    setLoading(true);
+    setError('');
+    setResult(null);
+    try {
+      const data = await admissionsAPI.getStatus(ref.trim());
+      const rec = Array.isArray(data) ? data[0] : (data?.applications ? data.applications[0] : data);
+      if (!rec) { setError('No application found for that reference.'); return; }
+      setResult(rec);
+    } catch {
+      setError('No application found for that reference.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const state = result?.state || result?.status;
 
   return (
     <PublicShell active="Track Application">
@@ -31,22 +55,22 @@ export default function ApplicationStatusPage() {
         <div className={w.card} style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', gap: 10 }}>
             <input className={w.search} placeholder="e.g. ADM-2024-0012" value={ref} onChange={(e) => setRef(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && track()} />
-            <button className={`${w.btn} ${w.btnPrimary}`} onClick={track}>Track</button>
+            <button className={`${w.btn} ${w.btnPrimary}`} onClick={track} disabled={loading}>{loading ? 'Tracking…' : 'Track'}</button>
           </div>
+          {error && <p style={{ color: 'var(--color-coral)', fontSize: '0.85rem', marginTop: 10 }}>{error}</p>}
         </div>
 
         {result && (
           <div className={`${w.card} ${w.cardAccent}`}>
             <div className={w.metaRow}>
-              <StatusPill status={result.ref} variant="black" />
-              <span><strong>{result.name}</strong></span>
-              <StatusPill status={result.program} variant="green" />
+              <StatusPill status={result.reference || result.ref || ref.toUpperCase()} variant="black" />
+              <span><strong>{result.name || result.full_name || 'Applicant'}</strong></span>
+              {result.program_id && <StatusPill status={Array.isArray(result.program_id) ? result.program_id[1] : result.program_id} variant="green" />}
             </div>
             <div style={{ textAlign: 'center', margin: '16px 0' }}>
-              <StatusPill status={result.status} variant="yellow" />
+              <StatusPill status={state} variant={state === 'accepted' ? 'green' : state === 'rejected' ? 'coral' : 'yellow'} />
             </div>
-            <Stepper steps={STEPS} />
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 16 }}>Last updated: {result.updated}</p>
+            <Stepper steps={stepsFor(state)} />
           </div>
         )}
       </div>

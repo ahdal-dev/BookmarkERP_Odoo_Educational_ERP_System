@@ -1,204 +1,152 @@
-# API Gateway
+# Bookmark Academic ERP - API Gateway
 
-## Architecture Overview
+## 1. Overview
+This API Gateway is the central routing, authentication, and orchestration layer for the Bookmark Academic ERP microservices architecture. It safely proxies requests from the React frontend to the headless Odoo backend and other internal services (such as OCR and AI models). 
 
-This API Gateway implements a modern microservices architecture for an Educational ERP system, combining **NGINX** as a reverse proxy with **FastAPI** as an internal gateway and orchestration layer.
+The gateway is built using **FastAPI** (Python) for high-performance asynchronous request handling and uses **NGINX** as a reverse proxy for SSL termination, load balancing, and rate limiting.
 
+---
+
+## 2. Architecture & Tech Stack
+
+- **FastAPI:** High-performance ASGI framework used for routing and business logic orchestration.
+- **NGINX:** Reverse proxy handling rate limiting (leaky bucket), SSL/TLS, and load balancing.
+- **PostgreSQL:** Primary database (via Odoo JSON-RPC proxying).
+- **Redis:** Used for caching (e.g., Odoo role resolutions, active session tracking) and token blocklisting.
+- **RabbitMQ:** Message broker for asynchronous tasks (e.g., email dispatch, waitlist promotion, notifications).
+- **Prometheus & Grafana:** Provides system observability and custom metric tracking.
+
+---
+
+## 3. Core Features
+
+### 🔐 Security & RBAC
+- **Token Validation:** Secure JWT validation using `HS256`. Checks for expiration and blocklisting (stored in Redis).
+- **Role-Based Access Control (RBAC):** Automatically resolves Odoo user groups into 9 canonical API roles (`prospective_student`, `admission_officer`, `student`, `instructor`, `academic_advisor`, `department_chair`, `registrar`, `support_technician`, `super_admin`).
+- **Circuit Breakers:** Built-in circuit breakers prevent cascading failures when the Odoo backend or OCR microservice are down.
+
+### 🚦 Rate Limiting (SlowAPI)
+Rate limiting is strictly enforced per IP address:
+- **General APIs:** 10 req/s
+- **OCR Extractor:** 5 req/min
+- **Authentication/Login:** 5 req/min
+- Responses return a `429 Too Many Requests` when limits are exceeded.
+
+### 📊 Observability & Auditing
+- **Prometheus Metrics:** Tracks `http_requests_total`, `http_request_duration_seconds`, Odoo proxy errors, and auth login attempts.
+- **Structured JSON Logging:** Consistent log format including `X-Request-ID` tracing across middlewares.
+- **Audit Logger:** Tracks sensitive security events (`/api/v1/auth/`, `/api/v1/admin/`, and all `401/403` errors).
+
+---
+
+## 4. API Modules & Routing
+
+The gateway heavily uses FastAPI routers to organize features logically:
+
+| Router | Purpose |
+| :--- | :--- |
+| `auth.py` | Login, JWT generation, session tracking, token blocklisting. |
+| `account.py` | Self-service account features (e.g., change password). |
+| `admin.py` | User management, admissions pipeline, system settings. |
+| `advising.py` | Academic advising, advisee profiles, department students. |
+| `audit.py` | System-wide audit log retrieval and tracking. |
+| `chatbot.py` | Proxies queries to the Academic Agent (RAG-Chatbot). |
+| `faculty.py` | Faculty dashboard, course rosters. |
+| `notifications.py`| Centralized in-app notifications hub. |
+| `petitions.py` | Multi-tier petition workflow routing. |
+| `registrar.py` | Registrar dashboard aggregates (capacity, concurrent users). |
+| `registration.py` | Course catalog, student enrollment. |
+| `registration_tiers.py` | Advanced academic standing and registration tier logic. |
+| `support.py` | Support ticket CRUD and messaging. |
+
+---
+
+## 5. Configuration (Environment Variables)
+
+Ensure your `.env` file in the `api_gateway/` folder is configured properly. Critical variables include:
+
+```dotenv
+# Odoo Connection
+ODOO_URL=http://host.docker.internal:8081
+ODOO_DB=edu_demo_new
+ODOO_USERNAME=admin
+ODOO_PASSWORD=your_secure_password
+
+# JWT Security
+JWT_SECRET_KEY=your_secure_secret_key
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=1
+JWT_REFRESH_EXPIRATION_DAYS=7
+
+# Infrastructure
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+OCR_SERVICE_URL=http://ocr_microservice:5000
+ENABLE_MQ=true
+AMQP_URL=amqp://guest:guest@rabbitmq:5672/
+
+# CORS Settings
+CORS_ORIGINS=http://localhost:5173
 ```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  NGINX (Reverse Proxy & Load Balancer)              │
-│  • Rate Limiting (Leaky Bucket)                     │
-│  • JWT Token Validation                             │
-│  • SSL/TLS Termination                              │
-│  • Load Balancing (Round-Robin)                     │
-└──────┬──────────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  FastAPI Gateway (Orchestration Layer)              │
-│  • Role-Based Access Control (RBAC)                 │
-│  • Request Routing                                  │
-│  • Service Orchestration                            │
-│  • API Documentation                                │
-└──────┬──────────────────────┬──────────────┬────────┘
-       │                      │              │
-       ▼                      ▼              ▼
-┌──────────────┐    ┌──────────────┐  ┌──────────────┐
-│ OCR Service  │    │    Odoo ERP  │  │    Redis     │
-│ (Flask)      │    │ (PostgreSQL) │  │   (Cache)    │
-└──────────────┘    └──────────────┘  └──────────────┘
-```
 
-## 🚀 Features
+*(Note: The Gateway will crash on startup if `JWT_SECRET_KEY` or `ODOO_PASSWORD` are missing).*
 
-### NGINX Layer
-- ✅ **Load Balancing**: Round-robin algorithm for distributing traffic
-- ✅ **Rate Limiting**: Leaky bucket strategy (configurable per endpoint)
-- ✅ **JWT Validation**: Basic token format checking
-- ✅ **SSL/TLS**: HTTPS support with configurable certificates
-- ✅ **Health Checks**: Service availability monitoring
-- ✅ **Security Headers**: XSS, CORS, CSP protection
+---
 
-### FastAPI Gateway
-- ✅ **RBAC**: Role-based access control (Prospective Student, Admission Staff, Admin)
-- ✅ **Async Operations**: High-performance async/await patterns
-- ✅ **Service Orchestration**: Combines multiple microservices in single workflow
-- ✅ **OpenAPI Documentation**: Auto-generated API docs (`/docs`, `/redoc`)
-- ✅ **Error Handling**: Comprehensive exception handling
-- ✅ **Logging**: Structured logging for debugging and monitoring
+## 6. Running the API Gateway
 
-### API Endpoints
-
-#### 1. Document Extraction (OCR)
-```http
-POST /api/v1/extract-document
-Content-Type: multipart/form-data
-Authorization: Bearer <JWT_TOKEN>
-
-# Upload National ID, certificate, or other document
-# Returns extracted structured data
-```
-
-#### 2. Admission Application
-```http
-POST /api/v1/admissions/apply
-Content-Type: application/json
-Authorization: Bearer <JWT_TOKEN>
-
-{
-  "full_name": "Ahmed Mohamed",
-  "national_id": "12345678901234",
-  "email": "ahmed@example.com",
-  "phone": "+201234567890",
-  "date_of_birth": "2000-01-01",
-  "address": "Cairo, Egypt",
-  "city": "Cairo",
-  "previous_qualification": "High School",
-  "graduation_year": 2018,
-  "gpa": 3.5,
-  "desired_program": "Computer Science"
-}
-```
-
-#### 3. Orchestrated Workflow (OCR + Application)
-```http
-POST /api/v1/admissions/submit-with-document
-Content-Type: multipart/form-data
-Authorization: Bearer <JWT_TOKEN>
-
-# Upload document + metadata
-# Automatically extracts data and submits application
-```
-### User Roles
-
-| Role | Access Level | Permissions |
-|------|-------------|-------------|
-| `prospective_student` | User | Submit applications, upload documents |
-| `admission_staff` | Staff | Review applications, process documents |
-| `admin` | Administrator | Full system access |
-| `system` | System | Internal service communication |
-
-### Using JWT Token
+### Using Docker Compose (Recommended)
+The standard way to run the API Gateway along with its dependencies (Redis, NGINX, RabbitMQ, Prometheus, Grafana) is via Docker Compose:
 
 ```bash
-# Get token
-TOKEN=$(curl -X POST "http://localhost/api/v1/auth/token" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "student1", "role": "prospective_student"}' \
-  | jq -r '.access_token')
+# Navigate to the API Gateway directory
+cd api_gateway
 
-# Use token in requests
-curl -X POST "https://localhost/api/v1/extract-document" \
-  -H "Authorization: Bearer $TOKEN" \
-  -F "file=@national_id.jpg"
+# Build and start all services in detached mode
+docker-compose up -d --build
+
+# View logs for the FastAPI application
+docker-compose logs -f fastapi
 ```
 
-## Rate Limiting
+### Local Development (Python Virtual Environment)
+If you need to debug the gateway locally without Docker:
+```bash
+cd api_gateway/fastapi_app
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-NGINX implements leaky bucket rate limiting to prevent server overload:
+---
 
-| Endpoint | Rate Limit | Burst |
-|----------|-----------|-------|
-| `/api/v1/extract-document` | 2 req/s | 5 |
-| `/api/v1/admissions/apply` | 5 req/s | 10 |
-| `/api/v1/admissions/submit-with-document` | 2 req/s | 3 |
-| `/api/*` (general) | 10 req/s | 20 |
+## 7. Testing & API Documentation
 
-### Rate Limit Response
+FastAPI automatically generates interactive API documentation. Once the server is running, navigate to:
+
+- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### Testing the Health Check
+You can verify the gateway is up and running via the `/health` endpoint:
+```bash
+curl http://localhost:8000/health
+```
+
+**Expected Response:**
 ```json
-HTTP/1.1 429 Too Many Requests
 {
-  "error": "Rate limit exceeded. Please try again later.",
-  "retry_after": "2"
+  "status": "healthy",
+  "service": "api_gateway",
+  "timestamp": "2026-06-19T00:00:00.000Z",
+  "version": "1.0.0"
 }
 ```
 
-## Testing
+---
 
-### Health Check
-```bash
-curl http://localhost/health
-```
-
-### OCR Endpoint
-```bash
-curl -X POST "https://localhost/api/v1/extract-document" \
-  -H "Authorization: Bearer $TOKEN" \
-  -F "file=@test_document.jpg"
-```
-
-### Admission Application
-```bash
-curl -X POST "https://localhost/api/v1/admissions/apply" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d @application_data.json
-```
-
-## Monitoring (Under dev..)
-
-### Prometheus Metrics
-Access metrics at: http://localhost:9090
-
-Custom metrics available:
-- Request count by endpoint
-- Response time percentiles
-- Error rates
-- Service health status
-
-### Grafana Dashboards
-Access dashboards at: http://localhost:3000
-
-Default credentials:
-- Username: `admin`
-- Password: Set in `.env` (GRAFANA_PASSWORD)
-
-
-### SSL Certificate Setup (Production)
-
-Using Let's Encrypt:
-
-```bash
-# Install certbot
-apt-get install certbot
-
-# Generate certificates
-certbot certonly --standalone -d api.yourdomain.com
-
-# Certificates will be in:
-# /etc/letsencrypt/live/api.yourdomain.com/fullchain.pem
-# /etc/letsencrypt/live/api.yourdomain.com/privkey.pem
-
-# Update docker-compose.yml volume mount
-```
-
-##  API Documentation under dev..
-
-Interactive API documentation available at:
-- **Swagger UI**: https://localhost/docs
-- **ReDoc**: https://localhost/redoc
+## 8. Asynchronous Workflows & RabbitMQ
+The Gateway initiates background processing to decouple heavy logic from HTTP requests:
+1. When endpoints trigger heavy actions (e.g., `petition.submitted`), the Gateway uses `mq.try_publish()` to push an event to RabbitMQ.
+2. Background workers (like the Academic Agent or Odoo Listeners) consume the queue, performing data persistence or email generation.
+3. If RabbitMQ is unavailable (`ENABLE_MQ=false`), the gateway gracefully falls back to synchronous Odoo XML-RPC calls.

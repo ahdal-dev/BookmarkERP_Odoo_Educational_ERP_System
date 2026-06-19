@@ -10,6 +10,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage/UnauthorizedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import SettingsPage from './pages/settings/SettingsPage';
+import HelpPage from './pages/HelpPage/HelpPage';
 
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import RegistrationPage from './pages/RegistrationPage/RegistrationPage';
@@ -86,12 +87,35 @@ export default function App() {
           {/* Cross-role pages */}
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          {/* Cross-role pages — available to every authenticated user */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/handbook" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/support" element={<Navigate to="/support/tickets" replace />} />
+          <Route path="/apply/academic" element={<Navigate to="/admissions/status" replace />} />
 
           {/* App Launcher */}
           <Route
             path="/apps"
             element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR, ROLES.ADMISSION_OFFICER]}>
+              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
                 <DashboardPage />
               </RoleProtectedRoute>
             }
@@ -116,7 +140,7 @@ export default function App() {
           <Route path="/admin/users/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UserDetailPage /></RoleProtectedRoute>} />
           <Route path="/admin/admissions" element={<ProtectedRoute roles={['admin', 'officer', 'super_admin']}><AdmissionPipelinePage /></ProtectedRoute>} />
           <Route path="/admin/petitions" element={<ProtectedRoute roles={['admin', 'officer']}><PetitionTrackingPage /></ProtectedRoute>} />
-          <Route path="/admin/settings/registration-rules" element={<ProtectedRoute roles={['admin']}><InstitutionalRulesetPage /></ProtectedRoute>} />
+          <Route path="/admin/settings/registration-rules" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR]}><InstitutionalRulesetPage /></RoleProtectedRoute>} />
           <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
 

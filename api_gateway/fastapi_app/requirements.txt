@@ -32,3 +32,6 @@ redis[asyncio]==5.0.8
 
 # Metrics
 prometheus-client==0.21.1
+
+# Messaging (RabbitMQ async producer + consumer; see fastapi_app/mq.py)
+aio-pika==9.4.3

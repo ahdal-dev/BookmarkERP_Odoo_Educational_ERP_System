@@ -79,3 +79,29 @@ Install/update the custom modules once (first install uses `-i`, later updates `
 
 ### Remaining (optional, not a functional gap)
 - **GPA source alternative**: GPA is computed from grades on the active custom stack; integrating OpenEduCat exam results (`op.result.line` / `op.marksheet.line`) remains an optional alternative, not required.
+
+## Project Status — Full App Wired (finish pass)
+Every React page now fetches **live data** from the gateway (no mock files except `rulesetMocks.js`, kept only as structural defaults). All buttons are functional or route correctly; the 6 dead routes (`/profile`, `/help`, `/handbook`, `/dashboard`, `/support`, `/apply/academic`) are resolved.
+
+New Odoo modules: `edu_mang_support` (`support.ticket` + mail.thread) and `edu_mang_audit` (`audit.log`, written best-effort by the gateway on login). New gateway routers: `advising.py` (advisees / advisee profile / department students), `support.py` (tickets CRUD + messages), `audit.py` (`/admin/audit-log` + `record_audit_event`); plus additions to `registrar.py` (enrollment monitor, tier PUT), `registration.py` (student petitions, petition types), `admin.py` (admission detail, system-settings, maintenance, user delete). Active-concurrent-users now tracked via Redis `active_session:*` keys (login/refresh/logout) and shown on the Registrar dashboard.
+
+Newly wired pages incl.: advisor (AdviseeList/Profile), chair (DepartmentStudents/ChairPetitionQueue/PetitionOverride), faculty (PetitionQueue/Review — decisions persist), support (Queue/Tickets/ChatSession), student (PetitionList/PetitionForm/Grades), admissions (Pipeline/Review/Status, DocumentVerification → real OCR), registrar (EnrollmentMonitor/TimeSlotConfigurator/CourseCatalog), admin (UserManagement/AuditLog/SystemSettings/InstitutionalRuleset). CSV exports + transcript print are real.
+
+### Seed demo data
+The DB ships sample users/tiers/admissions but not courses/enrollments/grades. Run the idempotent seeder after installing modules:
+`venv\Scripts\python.exe odoo\odoo-bin shell -c odoo.conf\odoo.conf -d edu_demo_new --no-http < addons\edu_mangment\_scripts\seed_demo_data.py`
+It seeds departments+chair, courses (instructors, windows, prerequisites), enrollments + graded past terms (drives GPA/standing), advisor links, petitions, support tickets, and audit rows.
+
+### Full install line (all custom modules)
+`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -i edu_mang_notification,edu_mang_academic,edu_mang_waitlist,edu_mang_support,edu_mang_audit -d edu_demo_new --stop-after-init`
+
+## Next Phase — RabbitMQ (async messaging)
+RabbitMQ already runs in `api_gateway/docker-compose.yml` (`rabbitmq:3-management`, ports 5672/15672, `rabbitmq_data` volume) and the **academic-agent worker** already consumes `registration.attempt` / `petition.submitted` (see `services/RAG-Chatbot/Backend/mq.py` + `worker.py`). The gateway/Odoo side is still synchronous.
+
+**Scaffold in place:** `api_gateway/fastapi_app/mq.py` — durable queues, persistent messages, `try_publish()` with graceful fallback (no-op unless `ENABLE_MQ=true`). `pika==1.3.2` added to `requirements.txt`. Planned queues: `notification.created`, `admission.email`, `admission.mailbox`, `waitlist.promotion`, `grade.posted`.
+
+**Migration checklist for the phase:**
+1. Move blocking work to producers via `mq.try_publish(...)`: admission email + mailbox provisioning (`edu_mang_admission/models/admission.py`), notification fan-out (`edu_mang_notification/models/hooks.py`), waitlist promotion (`edu_mang_waitlist`), grade-posting alerts.
+2. Add a gateway/worker consumer service in `docker-compose.yml` (mirror `academic-agent-worker`) that performs the Odoo writes/sends.
+3. Keep the synchronous fallback when `ENABLE_MQ` is off or the broker is down.
+4. Add Prometheus metrics for queue depth / consumer lag; set `ENABLE_MQ=true` + `AMQP_URL` in `.env`.

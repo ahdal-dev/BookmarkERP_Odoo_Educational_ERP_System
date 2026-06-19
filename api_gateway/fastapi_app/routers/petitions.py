@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from .deps import TokenData, call_kw, get_current_token, odoo_session, require_roles
+from mq import QUEUE_NOTIFICATION, try_publish
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +202,13 @@ async def petition_tier_action(
         )
         r = record[0] if record else {}
 
+    await try_publish(QUEUE_NOTIFICATION, {
+        "user_id": token.user_id,
+        "event": "petition.action_taken",
+        "petition_id": petition_id,
+        "action": body.action,
+        "new_state": r.get("state"),
+    })
     return {
         "success": True,
         "petition_id": petition_id,
@@ -240,6 +248,13 @@ async def petition_chair_override(
         )
         r = record[0] if record else {}
 
+    await try_publish(QUEUE_NOTIFICATION, {
+        "user_id": token.user_id,
+        "event": "petition.chair_override",
+        "petition_id": petition_id,
+        "decision": body.decision,
+        "final_state": r.get("state"),
+    })
     return {
         "success": True,
         "petition_id": petition_id,

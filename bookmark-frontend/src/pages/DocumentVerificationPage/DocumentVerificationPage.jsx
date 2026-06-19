@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Stepper from '../../components/Stepper/Stepper';
 import FileDropzone from '../../components/FileDropzone/FileDropzone';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { SplatterDot } from '../../styles/brand';
-import { mockOcrResult } from '../../mocks/documentMocks';
+import { applicationAPI } from '../../api/apiGateway';
 import styles from './DocumentVerificationPage.module.css';
 import logoUrl from '../../assets/logos/bookark_logo.svg';
 
@@ -20,18 +21,34 @@ const STEPS = [
 ];
 
 export default function DocumentVerificationPage() {
+  const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [ocrData, setOcrData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [ocrError, setOcrError] = useState('');
 
-  const handleFileSelect = (newFiles) => {
+  const handleFileSelect = async (newFiles) => {
     setFiles(newFiles);
+    if (!newFiles?.length) return;
     setIsProcessing(true);
-    // Simulate OCR processing
-    setTimeout(() => {
-      setOcrData(mockOcrResult);
+    setOcrError('');
+    try {
+      const form = new FormData();
+      form.append('file', newFiles[0].file || newFiles[0]);
+      const result = await applicationAPI.uploadDocument(form);
+      // Normalize known fields with snake_case / camelCase fallbacks.
+      setOcrData({
+        fullName: result.full_name || result.fullName || result.name || '—',
+        cumulativeGpa: result.gpa || result.cumulative_gpa || result.cumulativeGpa || '—',
+        institution: result.institution || result.previous_school || '—',
+        degreeProgram: result.degree || result.degree_program || result.degreeProgram || '—',
+        raw: result,
+      });
+    } catch (err) {
+      setOcrError(err?.response?.data?.detail || 'Could not extract document data. Please try another file.');
+    } finally {
       setIsProcessing(false);
-    }, 2500);
+    }
   };
 
   return (
@@ -104,6 +121,8 @@ export default function DocumentVerificationPage() {
             {ocrData && <StatusPill status="OCR Verified" variant="green" />}
           </div>
 
+          {ocrError && <div style={{ background: '#fdecea', color: '#842029', border: '1px solid #f5c6cb', borderRadius: 10, padding: 12, marginBottom: 12, fontSize: '0.85rem' }}>{ocrError}</div>}
+
           {ocrData ? (
             <div className={styles.fieldGrid}>
               <div className={styles.fieldCard}>
@@ -138,10 +157,10 @@ export default function DocumentVerificationPage() {
             </div>
           )}
 
-          <button className={styles.proceedBtn} disabled={!ocrData}>
+          <button className={styles.proceedBtn} disabled={!ocrData} onClick={() => navigate('/admissions/status')}>
             Confirm & Proceed →
           </button>
-          <a href="/apply/academic" className={styles.backLink}>← Back to Academic History</a>
+          <a href="/admissions" className={styles.backLink}>← Back to Admissions</a>
         </div>
       </div>
 

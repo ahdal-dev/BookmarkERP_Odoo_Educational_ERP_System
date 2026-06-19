@@ -3,75 +3,85 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell/AppShell';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { supportNav } from '../../config/navConfigs';
+import { supportAPI } from '../../api/apiGateway';
+import useAsync from '../../hooks/useAsync';
 import w from '../_shared/workflow.module.css';
 
-/* Support Technician — single live-chat conversation view. */
+/* Support Technician — single ticket / live-chat conversation view (live). */
 
 const QUICK_REPLIES = ['Resend portal link', 'Check registration hold', 'Escalate to Registrar'];
 
 export default function ChatSessionPage() {
   const { sessionId } = useParams();
+  const tid = Number(sessionId);
   const navigate = useNavigate();
-  const [messages, setMessages] = useState([
-    { from: 'student', text: "Hi, I can't register — it says I have a hold on my account?" },
-    { from: 'agent', text: 'Hello! Let me pull up your record and check that for you.' },
-  ]);
+  const { data, loading, error, reload } = useAsync(() => supportAPI.getTicket(tid), [tid]);
+  const ticket = data?.ticket;
+  const messages = data?.messages || [];
   const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const send = (text) => {
+  const send = async (text) => {
     const t = (text ?? input).trim();
     if (!t) return;
-    setMessages((m) => [...m, { from: 'agent', text: t }]);
-    setInput('');
+    setBusy(true);
+    try {
+      await supportAPI.postMessage(tid, t);
+      setInput('');
+      await reload();
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const escalate = async () => { await supportAPI.updateTicket(tid, { priority: 'high' }); reload(); };
+  const close = async () => { await supportAPI.updateTicket(tid, { state: 'closed' }); navigate('/support/chat-queue'); };
 
   return (
     <AppShell navItems={supportNav} logoVariant="stacked" sidebarLabel="SUPPORT">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div><strong style={{ fontSize: '1.1rem' }}>Aya Hassan</strong> · Session #{sessionId} <StatusPill status="Live" variant="green" /></div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`}>Escalate Ticket</button>
-          <button className={`${w.btn} ${w.btnDanger} ${w.btnSm}`} onClick={() => navigate('/support/chat-queue')}>Close & Resolve</button>
-        </div>
-      </div>
-
-      <div className={w.split} style={{ gridTemplateColumns: '300px 1fr' }}>
-        {/* Mini agent info sidebar */}
-        <div className={w.cardDark}>
-          <div className={w.sectionTitle} style={{ color: 'rgba(255,255,255,0.6)' }}>Student</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Aya Hassan</div>
-          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>STU-2024-011 · Sophomore · B.Sc. CS</div>
-          <div style={{ margintop: 8 }}><StatusPill status="Registration Hold" variant="coral" /></div>
-          <a className={w.cardLink} style={{ color: 'var(--color-lime)', display: 'block', marginTop: 12 }}>Open Full Profile →</a>
-
-          <div className={w.sectionTitle} style={{ color: 'rgba(255,255,255,0.6)', marginTop: 20 }}>Ticket History</div>
-          {[{ t: 'Login Issue', d: 'Sep 12', s: 'Resolved' }, { t: 'Portal Bug', d: 'Aug 30', s: 'Closed' }].map((t, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <span>{t.t}</span><span style={{ color: 'rgba(255,255,255,0.5)' }}>{t.d} · {t.s}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Chat area */}
-        <div className={w.card} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 220px)', minHeight: 420, padding: 0 }}>
-          <div className={w.chatScroll}>
-            {messages.map((m, i) => (
-              <div key={i} className={`${w.bubbleRow} ${m.from === 'student' ? w.bubbleLeft : w.bubbleRight}`}>
-                <div className={`${w.bubble} ${m.from === 'student' ? w.bubbleStudent : w.bubbleAgent}`}>{m.text}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: '1px solid var(--color-border-light)', padding: 14 }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-              {QUICK_REPLIES.map((r) => <button key={r} className={`${w.filterTab}`} onClick={() => send(r)}>{r}</button>)}
-            </div>
+      {loading ? <div className={w.card}><div className={w.empty}>Loading conversation…</div></div>
+      : error || !ticket ? <div className={w.card}><div className={w.empty}><div className={w.emptyTitle}>Couldn't load ticket</div><p>{error || 'Not found.'}</p><button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} onClick={() => navigate('/support/chat-queue')}>Back to queue</button></div></div>
+      : (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div><strong style={{ fontSize: '1.1rem' }}>{ticket.requester?.name || 'User'}</strong> · {ticket.ref} <StatusPill status={ticket.state} variant={ticket.state === 'closed' ? 'black' : 'green'} /></div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <input className={w.search} placeholder="Type a message..." value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} />
-              <button className={`${w.btn} ${w.btnPrimary}`} onClick={() => send()}>Send</button>
+              <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} onClick={escalate} disabled={busy}>Escalate</button>
+              <button className={`${w.btn} ${w.btnDanger} ${w.btnSm}`} onClick={close} disabled={busy}>Close &amp; Resolve</button>
             </div>
           </div>
-        </div>
-      </div>
+
+          <div className={w.split} style={{ gridTemplateColumns: '300px 1fr' }}>
+            <div className={w.cardDark}>
+              <div className={w.sectionTitle} style={{ color: 'rgba(255,255,255,0.6)' }}>Ticket</div>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{ticket.subject}</div>
+              <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>{ticket.category} · {ticket.priority} priority</div>
+              <div style={{ marginTop: 10 }}><StatusPill status={ticket.priority} variant={ticket.priority === 'high' ? 'coral' : 'green'} /></div>
+              {ticket.description && <><div className={w.sectionTitle} style={{ color: 'rgba(255,255,255,0.6)', marginTop: 20 }}>Description</div><p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.8)' }}>{ticket.description}</p></>}
+            </div>
+
+            <div className={w.card} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 220px)', minHeight: 420, padding: 0 }}>
+              <div className={w.chatScroll}>
+                {messages.length === 0 ? <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', margin: 'auto' }}>No messages yet — say hello.</div>
+                  : messages.map((m, i) => (
+                    <div key={i} className={`${w.bubbleRow} ${w.bubbleRight}`}>
+                      <div className={`${w.bubble} ${w.bubbleAgent}`}><div style={{ fontSize: '0.66rem', opacity: 0.7, marginBottom: 2 }}>{m.author}</div>{m.body}</div>
+                    </div>
+                  ))}
+              </div>
+              <div style={{ borderTop: '1px solid var(--color-border-light)', padding: 14 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  {QUICK_REPLIES.map((r) => <button key={r} className={w.filterTab} onClick={() => send(r)} disabled={busy}>{r}</button>)}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input className={w.search} placeholder="Type a message..." value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} disabled={ticket.state === 'closed'} />
+                  <button className={`${w.btn} ${w.btnPrimary}`} onClick={() => send()} disabled={busy || ticket.state === 'closed'}>Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </AppShell>
   );
 }
