@@ -3,6 +3,8 @@ import AppShell from '../../../components/AppShell/AppShell';
 import TopBar from '../../../components/TopBar/TopBar';
 import PageHeader from '../../../components/PageHeader/PageHeader';
 import StatusPill from '../../../components/StatusPill/StatusPill';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import {
   mockAnalyticsByPeriod,
@@ -61,7 +63,18 @@ export default function AnalyticsPage() {
   const [section, setSection] = useState('Overview');
   const [period, setPeriod] = useState('30d');
 
-  const kpis = mockAnalyticsByPeriod[period];
+  const { data: statsData } = useAsync(adminAPI.getStats);
+  const { data: analyticsData } = useAsync(() => adminAPI.getAnalytics('monthly'), []);
+
+  const mockKpis = mockAnalyticsByPeriod[period];
+  const kpis = {
+    ...mockKpis,
+    totalUsers: { value: (statsData?.totalUsers ?? mockKpis.totalUsers.value).toLocaleString(), delta: mockKpis.totalUsers.delta, trend: 'up' },
+    activeUsers: { value: (statsData?.activeUsers ?? mockKpis.activeUsers.value).toLocaleString(), delta: mockKpis.activeUsers.delta, trend: 'up' },
+    applicationsSubmitted: { value: (statsData?.totalApplications ?? mockKpis.applicationsSubmitted?.value ?? 0).toLocaleString(), delta: mockKpis.applicationsSubmitted?.delta, trend: 'up' },
+  };
+
+  const liveGrowthData = analyticsData?.data ?? [];
 
   return (
     <AppShell

@@ -224,9 +224,63 @@ export const registrarAPI = {
    ============================================================ */
 
 export const adminAPI = {
+  /** Dashboard KPIs */
+  getStats: async () => {
+    const response = await api.get('/api/v1/admin/stats');
+    return response.data;
+  },
+
+  /** User growth + admission analytics */
+  getAnalytics: async (period = 'monthly') => {
+    const response = await api.get('/api/v1/admin/analytics', { params: { period } });
+    return response.data;
+  },
+
+  /** Roles with user counts */
+  getRolesSummary: async () => {
+    const response = await api.get('/api/v1/admin/roles-summary');
+    return response.data;
+  },
+
+  /** System / service health */
+  getHealth: async () => {
+    const response = await api.get('/api/v1/admin/health');
+    return response.data;
+  },
+
+  /** AI services status */
+  getAIServices: async () => {
+    const response = await api.get('/api/v1/admin/ai/services');
+    return response.data;
+  },
+
+  /** Feature flags */
+  getFeatureFlags: async () => {
+    const response = await api.get('/api/v1/admin/system/feature-flags');
+    return response.data;
+  },
+
+  /** Toggle a feature flag */
+  patchFeatureFlag: async (key, enabled) => {
+    const response = await api.patch(`/api/v1/admin/system/feature-flags/${key}`, { enabled });
+    return response.data;
+  },
+
+  /** Knowledge-base documents */
+  getKBDocuments: async () => {
+    const response = await api.get('/api/v1/admin/knowledge-base/documents');
+    return response.data;
+  },
+
   /** User directory */
   getUsers: async (params = {}) => {
     const response = await api.get('/api/v1/admin/users', { params });
+    return response.data;
+  },
+
+  /** Single user */
+  getUser: async (uid) => {
+    const response = await api.get(`/api/v1/admin/users/${uid}`);
     return response.data;
   },
 
@@ -245,6 +299,15 @@ export const adminAPI = {
   /** Update registration rules */
   updateRules: async (rules) => {
     const response = await api.put('/api/v1/admin/settings/registration-rules', rules);
+    return response.data;
+  },
+
+  /** Change admin password */
+  changePassword: async (currentPassword, newPassword) => {
+    const response = await api.post('/api/v1/admin/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
     return response.data;
   },
 };

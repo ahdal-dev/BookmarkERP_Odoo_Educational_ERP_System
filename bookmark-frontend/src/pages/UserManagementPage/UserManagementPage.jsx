@@ -8,6 +8,8 @@ import DataTable from '../../components/DataTable/DataTable';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import Pagination from '../../components/Pagination/Pagination';
 import CreateUserModal from '../../components/CreateUserModal/CreateUserModal';
+import useAsync from '../../hooks/useAsync';
+import { adminAPI } from '../../api/apiGateway';
 import { adminDashboardNav } from '../../config/navConfigs';
 import { mockUsers, mockUserStats } from '../../mocks/usersMocks';
 import styles from './UserManagementPage.module.css';

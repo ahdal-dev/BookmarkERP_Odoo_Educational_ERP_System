@@ -4,6 +4,8 @@ import TopBar from '../../../components/TopBar/TopBar';
 import PageHeader from '../../../components/PageHeader/PageHeader';
 import StatusPill from '../../../components/StatusPill/StatusPill';
 import ToggleSwitch from '../../../components/ToggleSwitch/ToggleSwitch';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import { mockAIServices, mockAIErrorLogs, openTicketCount } from '../../../mocks/adminMocks';
 import styles from './AIServicesPage.module.css';
@@ -32,16 +34,31 @@ const TYPE_ICON = {
 };
 
 export default function AIServicesPage() {
-  const [services, setServices] = useState(mockAIServices);
-  const [selected, setSelected] = useState(mockAIServices[0]);
+  const { data: liveAI } = useAsync(adminAPI.getAIServices);
+
+  const liveServices = liveAI?.services?.map((s, i) => {
+    const mock = mockAIServices[i] || mockAIServices[0];
+    return {
+      ...mock,
+      id: i + 1,
+      name: s.name,
+      status: s.status === 'Healthy' ? 'Online' : s.status,
+      avgLatency: (s.latency / 1000).toFixed(2),
+    };
+  });
+
+  const [services, setServices] = useState(null);
+  const [selected, setSelected] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
 
+  const effectiveServices = services ?? liveServices ?? mockAIServices;
+  const effectiveSelected = selected ?? effectiveServices[0];
+
   const toggleService = (id) => {
-    setServices((prev) =>
-      prev.map((s) => s.id === id ? { ...s, isEnabled: !s.isEnabled } : s)
-    );
-    if (selected?.id === id) {
-      setSelected((prev) => ({ ...prev, isEnabled: !prev.isEnabled }));
+    const base = effectiveServices;
+    setServices(base.map((s) => s.id === id ? { ...s, isEnabled: !s.isEnabled } : s));
+    if (effectiveSelected?.id === id) {
+      setSelected((prev) => ({ ...(prev ?? effectiveSelected), isEnabled: !effectiveSelected.isEnabled }));
     }
   };
 
@@ -67,10 +84,10 @@ export default function AIServicesPage() {
       {/* Summary Strip */}
       <div className={styles.summaryStrip}>
         {[
-          { label: 'Total Services', value: services.length },
-          { label: 'Online', value: services.filter((s) => s.status === 'Online').length, color: 'var(--color-lime)' },
-          { label: 'Degraded', value: services.filter((s) => s.status === 'Degraded').length, color: 'var(--color-yellow)' },
-          { label: 'Requests Today', value: services.reduce((a, s) => a + s.requestsToday, 0).toLocaleString() },
+          { label: 'Total Services', value: effectiveServices.length },
+          { label: 'Online', value: effectiveServices.filter((s) => s.status === 'Online').length, color: 'var(--color-lime)' },
+          { label: 'Degraded', value: effectiveServices.filter((s) => s.status === 'Degraded').length, color: 'var(--color-yellow)' },
+          { label: 'Requests Today', value: effectiveServices.reduce((a, s) => a + (s.requestsToday || 0), 0).toLocaleString() },
         ].map((item) => (
           <div key={item.label} className={styles.summaryItem}>
             <span className={styles.summaryValue} style={item.color ? { color: item.color } : {}}>
@@ -84,10 +101,10 @@ export default function AIServicesPage() {
       <div className={styles.layout}>
         {/* Service Card List */}
         <div className={styles.serviceList}>
-          {services.map((svc) => (
+          {effectiveServices.map((svc) => (
             <div
               key={svc.id}
-              className={`${styles.serviceCard} ${selected?.id === svc.id ? styles.serviceCardActive : ''}`}
+              className={`${styles.serviceCard} ${effectiveSelected?.id === svc.id ? styles.serviceCardActive : ''}`}
               onClick={() => setSelected(svc)}
             >
               <div className={styles.serviceCardTop}>
@@ -120,11 +137,11 @@ export default function AIServicesPage() {
         </div>
 
         {/* Detail Panel */}
-        {selected && (
+        {effectiveSelected && (
           <div className={styles.detailPanel}>
             <div className={styles.detailHeader}>
-              <h2 className={styles.detailTitle}>{selected.name}</h2>
-              <StatusPill status={selected.status} variant={STATUS_VARIANT[selected.status] || 'black'} />
+              <h2 className={styles.detailTitle}>{effectiveSelected.name}</h2>
+              <StatusPill status={effectiveSelected.status} variant={STATUS_VARIANT[effectiveSelected.status] || 'black'} />
             </div>
 
             {/* Config */}
@@ -133,11 +150,11 @@ export default function AIServicesPage() {
               <div className={styles.configGrid}>
                 <div className={styles.configField}>
                   <label className={styles.configLabel}>Endpoint URL</label>
-                  <input className={styles.configInput} defaultValue={selected.endpoint} readOnly />
+                  <input className={styles.configInput} defaultValue={effectiveSelected.endpoint} readOnly />
                 </div>
                 <div className={styles.configField}>
                   <label className={styles.configLabel}>Model Version</label>
-                  <input className={styles.configInput} defaultValue={selected.modelVersion} />
+                  <input className={styles.configInput} defaultValue={effectiveSelected.modelVersion} />
                 </div>
               </div>
               <button className={styles.saveConfigBtn}>Save Configuration</button>
@@ -148,12 +165,12 @@ export default function AIServicesPage() {
               <span className={styles.sectionLabel}>PERFORMANCE — LAST 24H</span>
               <div className={styles.statsGrid}>
                 {[
-                  { label: 'Uptime', value: `${selected.uptime}%`, good: selected.uptime > 99 },
-                  { label: 'Avg Latency', value: `${selected.avgLatency}s`, good: selected.avgLatency < 2 },
-                  { label: 'P99 Latency', value: `${selected.p99Latency}s`, good: selected.p99Latency < 5 },
-                  { label: 'Requests', value: selected.requestsToday.toLocaleString(), good: true },
-                  { label: 'Success Rate', value: `${selected.successRate}%`, good: selected.successRate > 95 },
-                  { label: 'Error Rate', value: `${selected.errorRate}%`, good: selected.errorRate < 2 },
+                  { label: 'Uptime', value: `${effectiveSelected.uptime}%`, good: effectiveSelected.uptime > 99 },
+                  { label: 'Avg Latency', value: `${effectiveSelected.avgLatency}s`, good: effectiveSelected.avgLatency < 2 },
+                  { label: 'P99 Latency', value: `${effectiveSelected.p99Latency}s`, good: effectiveSelected.p99Latency < 5 },
+                  { label: 'Requests', value: (effectiveSelected.requestsToday || 0).toLocaleString(), good: true },
+                  { label: 'Success Rate', value: `${effectiveSelected.successRate}%`, good: effectiveSelected.successRate > 95 },
+                  { label: 'Error Rate', value: `${effectiveSelected.errorRate}%`, good: effectiveSelected.errorRate < 2 },
                 ].map((stat) => (
                   <div key={stat.label} className={styles.statItem}>
                     <span
@@ -171,12 +188,12 @@ export default function AIServicesPage() {
             {/* Error Log */}
             <div className={styles.logSection}>
               <span className={styles.sectionLabel}>RECENT ERRORS</span>
-              {mockAIErrorLogs.filter((l) => l.service === selected.name || selected.name.includes(l.service)).length === 0 ? (
+              {mockAIErrorLogs.filter((l) => l.service === effectiveSelected.name || effectiveSelected.name.includes(l.service)).length === 0 ? (
                 <p className={styles.noErrors}>No recent errors for this service.</p>
               ) : (
                 <div className={styles.logList}>
                   {mockAIErrorLogs
-                    .filter((l) => selected.name.toLowerCase().includes(l.service.toLowerCase()) || l.service.toLowerCase().includes(selected.name.toLowerCase().split(' ')[0]))
+                    .filter((l) => effectiveSelected.name.toLowerCase().includes(l.service.toLowerCase()) || l.service.toLowerCase().includes(effectiveSelected.name.toLowerCase().split(' ')[0]))
                     .map((log, i) => (
                       <div key={i} className={styles.logRow}>
                         <span className={styles.logTime}>{log.time}</span>

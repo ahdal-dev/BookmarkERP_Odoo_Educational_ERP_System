@@ -4,6 +4,8 @@ import TopBar from '../../../components/TopBar/TopBar';
 import PageHeader from '../../../components/PageHeader/PageHeader';
 import ToggleSwitch from '../../../components/ToggleSwitch/ToggleSwitch';
 import StatusPill from '../../../components/StatusPill/StatusPill';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import { mockFeatureFlags, mockBackups, mockSystemSettings, openTicketCount } from '../../../mocks/adminMocks';
 import styles from './SystemPage.module.css';
@@ -44,16 +46,36 @@ function downloadBackup(backup) {
 
 export default function SystemPage() {
   const [activeTab, setActiveTab] = useState('General');
-  const [flags, setFlags] = useState(mockFeatureFlags);
   const [settings, setSettings] = useState(mockSystemSettings);
   const [showSaved, setShowSaved] = useState(false);
   const [backupRunning, setBackupRunning] = useState(false);
   const [showNewFlag, setShowNewFlag] = useState(false);
   const [newFlagName, setNewFlagName] = useState('');
   const [configIntg, setConfigIntg] = useState(null);
+  const [localFlags, setLocalFlags] = useState(null);
 
-  const toggleFlag = (id) =>
-    setFlags((prev) => prev.map((f) => f.id === id ? { ...f, status: !f.status } : f));
+  const { data: flagsData } = useAsync(adminAPI.getFeatureFlags);
+
+  const liveFlags = flagsData?.flags?.map((f, i) => ({
+    id: f.key,
+    name: f.label,
+    description: `Feature flag: ${f.key}`,
+    status: f.enabled,
+    rollout: f.enabled ? 100 : 0,
+  }));
+
+  const flags = localFlags ?? liveFlags ?? mockFeatureFlags;
+
+  const toggleFlag = async (id) => {
+    const current = flags.find((f) => f.id === id);
+    const newEnabled = !current?.status;
+    setLocalFlags((prev) => (prev ?? flags).map((f) => f.id === id ? { ...f, status: newEnabled, rollout: newEnabled ? 100 : 0 } : f));
+    try {
+      await adminAPI.patchFeatureFlag(id, newEnabled);
+    } catch (_) {
+      setLocalFlags((prev) => (prev ?? flags).map((f) => f.id === id ? { ...f, status: !newEnabled, rollout: newEnabled ? 0 : 100 } : f));
+    }
+  };
 
   const toggleSetting = (key) =>
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -70,9 +92,9 @@ export default function SystemPage() {
 
   const addFlag = () => {
     if (!newFlagName.trim()) return;
-    setFlags((prev) => [
-      ...prev,
-      { id: Date.now(), name: newFlagName, description: 'Custom feature flag', status: false, rollout: 0 },
+    setLocalFlags((prev) => [
+      ...(prev ?? flags),
+      { id: newFlagName.toLowerCase().replace(/\s+/g, '_'), name: newFlagName, description: 'Custom feature flag', status: false, rollout: 0 },
     ]);
     setNewFlagName('');
     setShowNewFlag(false);

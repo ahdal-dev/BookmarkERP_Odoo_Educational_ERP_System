@@ -4,6 +4,8 @@ import AppShell from '../../../components/AppShell/AppShell';
 import TopBar from '../../../components/TopBar/TopBar';
 import StatusPill from '../../../components/StatusPill/StatusPill';
 import ToggleSwitch from '../../../components/ToggleSwitch/ToggleSwitch';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import { mockUsers } from '../../../mocks/usersMocks';
 import { openTicketCount } from '../../../mocks/adminMocks';
@@ -29,27 +31,31 @@ export default function UserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const found = mockUsers.find((u) => String(u.id) === id);
-  const [user, setUser] = useState(
-    found || {
-      id: Number(id),
-      name: 'Demo User',
-      email: `user${id}@bookmark.edu`,
-      role: 'Student',
-      status: 'Active',
-      department: 'General',
-      lastLogin: '2025-03-10 09:00',
-      createdAt: '2024-01-01',
-      phone: 'N/A',
-    }
-  );
+  const { data: liveUser, loading } = useAsync(() => adminAPI.getUser(Number(id)), [id]);
+
+  const mockFallback = mockUsers.find((u) => String(u.id) === id) || {
+    id: Number(id), name: 'Demo User', email: `user${id}@bookmark.edu`,
+    role: 'Student', status: 'Active', department: 'General',
+    lastLogin: '2025-03-10 09:00', createdAt: '2024-01-01', phone: 'N/A',
+  };
+
+  const [userOverride, setUserOverride] = useState(null);
+  const user = userOverride ?? (liveUser ? {
+    id: liveUser.id, name: liveUser.name, email: liveUser.email,
+    role: liveUser.role, status: liveUser.status,
+    department: '—', lastLogin: liveUser.lastLogin || '—',
+    createdAt: liveUser.createdAt || '—', phone: '—',
+  } : mockFallback);
+  const setUser = setUserOverride;
 
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ name: user.name, email: user.email, role: user.role, phone: user.phone, department: user.department });
+  const [draft, setDraft] = useState(null);
+  const effectiveDraft = draft ?? { name: user.name, email: user.email, role: user.role, phone: user.phone, department: user.department };
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    setUser((prev) => ({ ...prev, ...draft }));
+    setUser((prev) => ({ ...(prev ?? user), ...effectiveDraft }));
+    setDraft(null);
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -146,24 +152,24 @@ export default function UserDetailPage() {
                     <label className={styles.fieldLabel}>Full Name</label>
                     <input
                       className={styles.fieldInput}
-                      value={draft.name}
-                      onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                      value={effectiveDraft.name}
+                      onChange={(e) => setDraft((d) => ({ ...(d ?? effectiveDraft), name: e.target.value }))}
                     />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.fieldLabel}>Email</label>
                     <input
                       className={styles.fieldInput}
-                      value={draft.email}
-                      onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                      value={effectiveDraft.email}
+                      onChange={(e) => setDraft((d) => ({ ...(d ?? effectiveDraft), email: e.target.value }))}
                     />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.fieldLabel}>Role</label>
                     <select
                       className={styles.fieldInput}
-                      value={draft.role}
-                      onChange={(e) => setDraft((d) => ({ ...d, role: e.target.value }))}
+                      value={effectiveDraft.role}
+                      onChange={(e) => setDraft((d) => ({ ...(d ?? effectiveDraft), role: e.target.value }))}
                     >
                       {ROLES_AVAILABLE.map((r) => <option key={r}>{r}</option>)}
                     </select>
@@ -172,21 +178,21 @@ export default function UserDetailPage() {
                     <label className={styles.fieldLabel}>Department</label>
                     <input
                       className={styles.fieldInput}
-                      value={draft.department}
-                      onChange={(e) => setDraft((d) => ({ ...d, department: e.target.value }))}
+                      value={effectiveDraft.department}
+                      onChange={(e) => setDraft((d) => ({ ...(d ?? effectiveDraft), department: e.target.value }))}
                     />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.fieldLabel}>Phone</label>
                     <input
                       className={styles.fieldInput}
-                      value={draft.phone}
-                      onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
+                      value={effectiveDraft.phone}
+                      onChange={(e) => setDraft((d) => ({ ...(d ?? effectiveDraft), phone: e.target.value }))}
                     />
                   </div>
                 </div>
                 <div className={styles.saveRow}>
-                  <button className={styles.cancelBtn} onClick={() => { setEditing(false); setDraft({ name: user.name, email: user.email, role: user.role, phone: user.phone, department: user.department }); }}>
+                  <button className={styles.cancelBtn} onClick={() => { setEditing(false); setDraft(null); }}>
                     Discard
                   </button>
                   <button className={styles.saveBtn} onClick={handleSave}>Save Changes</button>

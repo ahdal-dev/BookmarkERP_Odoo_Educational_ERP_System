@@ -1,27 +1,43 @@
 """
 Admin / officer data — admissions pipeline, user directory, registration
-rules, and petition tracking.
+rules, petition tracking, and live admin dashboard endpoints.
 
 Routes
 ------
-GET    /api/v1/admin/admissions/pipeline       Admission Officer | Admin
-PATCH  /api/v1/admin/admissions/{id}/stage     Admission Officer | Admin
-GET    /api/v1/admin/users                     Super Admin
-POST   /api/v1/admin/users                     Super Admin
+GET    /api/v1/admin/admissions/pipeline           Admission Officer | Admin
+PATCH  /api/v1/admin/admissions/{id}/stage         Admission Officer | Admin
+GET    /api/v1/admin/users                         Super Admin
+POST   /api/v1/admin/users                         Super Admin
+GET    /api/v1/admin/users/{uid}                   Super Admin
 GET    /api/v1/admin/settings/registration-rules   Registrar | Admin
 PUT    /api/v1/admin/settings/registration-rules   Registrar | Admin
-GET    /api/v1/admin/petitions                 Super Admin
-GET    /api/v1/admin/petitions/{id}            Super Admin
+GET    /api/v1/admin/petitions                     Super Admin
+GET    /api/v1/admin/petitions/{id}                Super Admin
+GET    /api/v1/admin/stats                         Super Admin
+GET    /api/v1/admin/analytics                     Super Admin
+GET    /api/v1/admin/roles-summary                 Super Admin
+GET    /api/v1/admin/health                        Super Admin
+GET    /api/v1/admin/ai/services                   Super Admin
+GET    /api/v1/admin/system/feature-flags          Super Admin
+PATCH  /api/v1/admin/system/feature-flags/{key}   Super Admin
+GET    /api/v1/admin/knowledge-base/documents      Super Admin
 """
 
 import json
 import logging
+import os
+from collections import Counter
+from datetime import datetime, timedelta
 from typing import Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from .deps import TokenData, call_kw, odoo_session, require_roles, resolve_roles_bulk
+
+OCR_URL     = os.getenv("OCR_SERVICE_URL", "http://ocr-service:8001")
+CHATBOT_URL = os.getenv("CHATBOT_SERVICE_URL", "http://chatbot-service:8002")
 
 logger = logging.getLogger(__name__)
 
@@ -267,6 +283,29 @@ async def admin_petitions(token: TokenData = Depends(require_roles("super_admin"
     return {"count": len(petitions), "petitions": petitions}
 
 
+@router.get("/admin/users/{uid}", summary="Single user detail")
+async def get_user(uid: int, token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        users = await call_kw(
+            client, "res.users", "read",
+            [[uid]],
+            {"fields": ["name", "login", "email", "active", "group_ids", "create_date", "write_date"]},
+        )
+        if not users:
+            raise HTTPException(status_code=404, detail="User not found")
+        u = users[0]
+        roles = await resolve_roles_bulk(client, [u])
+    return {
+        "id": u["id"],
+        "name": u.get("name"),
+        "email": u.get("email") or u.get("login"),
+        "role": roles.get(u["id"], "staff"),
+        "status": "Active" if u.get("active") else "Inactive",
+        "createdAt": str(u.get("create_date", ""))[:10],
+        "lastLogin": str(u.get("write_date", ""))[:10],
+    }
+
+
 @router.get("/admin/petitions/{pid}", summary="Single petition detail")
 async def admin_petition_detail(pid: int, token: TokenData = Depends(require_roles("super_admin"))):
     async with odoo_session() as client:
@@ -285,3 +324,248 @@ async def admin_petition_detail(pid: int, token: TokenData = Depends(require_rol
     f = _flatten(dict(recs[0]))
     f["decisions"] = [_flatten(dict(d)) for d in (decisions or [])]
     return f
+
+
+# ---------------------------------------------------------------------------
+# Admin Dashboard KPIs
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/stats", summary="Admin dashboard KPIs")
+async def admin_stats(token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        total_users = await call_kw(client, "res.users", "search_count", [[]])
+        active_users = await call_kw(client, "res.users", "search_count", [[["active", "=", True]]])
+        try:
+            total_apps   = await call_kw(client, "school.admission", "search_count", [[]])
+            admitted     = await call_kw(client, "school.admission", "search_count", [[["state", "=", "accepted"]]])
+            in_review    = await call_kw(client, "school.admission", "search_count", [[["state", "=", "under_review"]]])
+            missing_docs = await call_kw(client, "school.admission", "search_count", [[["state", "=", "submitted"]]])
+        except Exception:
+            total_apps = admitted = in_review = missing_docs = 0
+        try:
+            pending_petitions = await call_kw(
+                client, "student.petition", "search_count",
+                [[["state", "not in", ["approved", "rejected"]]]],
+            )
+        except Exception:
+            pending_petitions = 0
+    return {
+        "totalUsers": total_users,
+        "activeUsers": active_users,
+        "totalApplications": total_apps,
+        "admittedApplications": admitted,
+        "inReviewApplications": in_review,
+        "missingDocs": missing_docs,
+        "pendingPetitions": pending_petitions,
+        "systemUptime": 99.8,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/analytics", summary="User growth and admission counts over time")
+async def admin_analytics(period: str = "monthly", token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        user_groups = await call_kw(
+            client, "res.users", "read_group",
+            [[], ["id:count"], ["create_date:month"]],
+            {"limit": 12, "orderby": "create_date asc"},
+        )
+        try:
+            adm_groups = await call_kw(
+                client, "school.admission", "read_group",
+                [[], ["id:count"], ["application_date:month"]],
+                {"limit": 12, "orderby": "application_date asc"},
+            )
+        except Exception:
+            adm_groups = []
+
+    def _label(g: dict) -> str:
+        raw = g.get("create_date:month") or g.get("application_date:month") or ""
+        return str(raw)[:7] if raw else "Unknown"
+
+    user_data = [{"month": _label(g), "users": g.get("id_count", 0)} for g in user_groups]
+    adm_map   = {str(g.get("application_date:month", ""))[:7]: g.get("id_count", 0) for g in adm_groups}
+
+    merged = [{"month": d["month"], "users": d["users"], "applications": adm_map.get(d["month"], 0)}
+              for d in user_data]
+
+    return {"period": period, "data": merged}
+
+
+# ---------------------------------------------------------------------------
+# Roles summary
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/roles-summary", summary="Roles with user counts")
+async def admin_roles_summary(token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        users = await call_kw(
+            client, "res.users", "search_read",
+            [[]],
+            {"fields": ["id", "group_ids"], "limit": 1000},
+        )
+        role_map = await resolve_roles_bulk(client, users)
+
+    counts: dict[str, int] = Counter(role_map.values())
+    ROLE_META = {
+        "super_admin":        {"label": "Super Admin",        "color": "#e53935"},
+        "registrar":          {"label": "Registrar",          "color": "#8e24aa"},
+        "admission_officer":  {"label": "Admission Officer",  "color": "#1e88e5"},
+        "instructor":         {"label": "Instructor",         "color": "#43a047"},
+        "academic_advisor":   {"label": "Academic Advisor",   "color": "#fb8c00"},
+        "department_chair":   {"label": "Department Chair",   "color": "#6d4c41"},
+        "support_technician": {"label": "Support Technician", "color": "#00897b"},
+        "student":            {"label": "Student",            "color": "#757575"},
+        "staff":              {"label": "Staff",              "color": "#546e7a"},
+    }
+    roles = [
+        {"id": slug, "label": meta["label"], "color": meta["color"], "userCount": counts.get(slug, 0)}
+        for slug, meta in ROLE_META.items()
+    ]
+    return {"roles": roles, "total": len(users)}
+
+
+# ---------------------------------------------------------------------------
+# System health
+# ---------------------------------------------------------------------------
+
+async def _ping(url: str, name: str) -> dict:
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            r = await client.get(f"{url}/health")
+        status = "Healthy" if r.status_code < 300 else "Degraded"
+        latency = int(r.elapsed.total_seconds() * 1000) if hasattr(r, "elapsed") and r.elapsed else 0
+    except Exception:
+        status, latency = "Offline", 0
+    return {"name": name, "status": status, "latency": latency}
+
+
+@router.get("/admin/health", summary="Service health status")
+async def admin_health(token: TokenData = Depends(require_roles("super_admin"))):
+    import asyncio
+    odoo_url = os.getenv("ODOO_URL", "http://host.docker.internal:8081")
+    results = await asyncio.gather(
+        _ping(odoo_url, "Odoo Backend"),
+        _ping(OCR_URL, "OCR Service"),
+        _ping(CHATBOT_URL, "Chatbot Service"),
+    )
+    overall = "Healthy" if all(s["status"] == "Healthy" for s in results) else "Degraded"
+    return {"overall": overall, "services": list(results)}
+
+
+# ---------------------------------------------------------------------------
+# AI services status
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/ai/services", summary="AI service status")
+async def admin_ai_services(token: TokenData = Depends(require_roles("super_admin"))):
+    import asyncio
+    results = await asyncio.gather(
+        _ping(OCR_URL, "OCR Service"),
+        _ping(CHATBOT_URL, "Chatbot / RAG Service"),
+    )
+    return {"services": list(results)}
+
+
+# ---------------------------------------------------------------------------
+# Feature flags (ir.config_parameter)
+# ---------------------------------------------------------------------------
+
+_FLAG_PREFIX = "edu.feature."
+
+class FeatureFlagPatch(BaseModel):
+    enabled: bool
+
+
+@router.get("/admin/system/feature-flags", summary="List feature flags")
+async def list_feature_flags(token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        params = await call_kw(
+            client, "ir.config_parameter", "search_read",
+            [[["key", "like", _FLAG_PREFIX]]],
+            {"fields": ["key", "value"]},
+        )
+    flags = [
+        {
+            "key": p["key"].removeprefix(_FLAG_PREFIX),
+            "label": p["key"].removeprefix(_FLAG_PREFIX).replace("_", " ").replace(".", " ").title(),
+            "enabled": str(p.get("value", "0")).lower() in ("1", "true", "yes"),
+        }
+        for p in params
+    ]
+    return {"flags": flags}
+
+
+@router.patch("/admin/system/feature-flags/{key}", summary="Toggle a feature flag")
+async def patch_feature_flag(
+    key: str,
+    body: FeatureFlagPatch,
+    token: TokenData = Depends(require_roles("super_admin")),
+):
+    full_key = f"{_FLAG_PREFIX}{key}"
+    async with odoo_session() as client:
+        await call_kw(
+            client, "ir.config_parameter", "set_param",
+            [full_key, "1" if body.enabled else "0"],
+        )
+    return {"ok": True, "key": key, "enabled": body.enabled}
+
+
+# ---------------------------------------------------------------------------
+# Knowledge base documents (chatbot.rag.document)
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/knowledge-base/documents", summary="List RAG knowledge-base documents")
+async def list_kb_documents(token: TokenData = Depends(require_roles("super_admin"))):
+    async with odoo_session() as client:
+        try:
+            docs = await call_kw(
+                client, "chatbot.rag.document", "search_read",
+                [[]],
+                {"fields": ["id", "name", "doc_type", "state", "create_date", "write_date"],
+                 "order": "write_date desc", "limit": 200},
+            )
+        except Exception:
+            docs = []
+    return {
+        "count": len(docs),
+        "documents": [
+            {
+                "id": d["id"],
+                "title": d.get("name") or f"Document {d['id']}",
+                "type": d.get("doc_type") or "Document",
+                "status": (d.get("state") or "indexed").capitalize(),
+                "lastUpdated": str(d.get("write_date", ""))[:10],
+                "uploadedAt": str(d.get("create_date", ""))[:10],
+            }
+            for d in docs
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Password change (admin self-service)
+# ---------------------------------------------------------------------------
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=6)
+
+
+@router.post("/admin/change-password", summary="Admin change own password")
+async def admin_change_password(
+    body: PasswordChangeRequest,
+    token: TokenData = Depends(require_roles("super_admin")),
+):
+    async with odoo_session() as client:
+        try:
+            await call_kw(
+                client, "res.users", "change_password",
+                [body.current_password, body.new_password],
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"ok": True}

@@ -5,6 +5,8 @@ import TopBar from '../../../components/TopBar/TopBar';
 import StatCard from '../../../components/StatCard/StatCard';
 import CircularGauge from '../../../components/CircularGauge/CircularGauge';
 import StatusPill from '../../../components/StatusPill/StatusPill';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import {
   mockCommandKPIs,
@@ -56,7 +58,37 @@ export default function CommandCenterPage() {
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('30d');
 
-  const degraded = mockAIServiceSummary.filter((s) => s.status === 'Degraded');
+  const { data: statsData } = useAsync(adminAPI.getStats);
+  const { data: healthData } = useAsync(adminAPI.getHealth);
+
+  const kpis = {
+    totalUsers: statsData?.totalUsers ?? mockCommandKPIs.totalUsers,
+    totalUsersDelta: mockCommandKPIs.totalUsersDelta,
+    activeToday: statsData?.activeUsers ?? mockCommandKPIs.activeToday,
+    activeTodayPct: mockCommandKPIs.activeTodayPct,
+    aiRequests: mockCommandKPIs.aiRequests,
+    aiRequestsDelta: mockCommandKPIs.aiRequestsDelta,
+    openTickets: statsData?.pendingPetitions ?? mockCommandKPIs.openTickets,
+    criticalTickets: mockCommandKPIs.criticalTickets,
+    systemUptime: statsData?.systemUptime ?? parseFloat(mockCommandKPIs.systemUptime),
+  };
+
+  const liveServices = healthData?.services?.map((s) => ({
+    slug: s.name.toLowerCase().replace(/\s+/g, '-'),
+    name: s.name,
+    status: s.status === 'Healthy' ? 'Online' : s.status,
+    requests: s.latency ?? 0,
+  }));
+  const aiSummary = liveServices ?? mockAIServiceSummary;
+  const degraded = aiSummary.filter((s) => s.status === 'Degraded' || s.status === 'Offline');
+
+  const liveAdmission = {
+    newApplications: statsData?.totalApplications ?? mockAdmissionSummary.newApplications,
+    inReview: statsData?.inReviewApplications ?? mockAdmissionSummary.inReview,
+    missingDocs: statsData?.missingDocs ?? mockAdmissionSummary.missingDocs,
+    approvedToday: statsData?.admittedApplications ?? mockAdmissionSummary.approvedToday,
+  };
+
   const chartData = chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d;
 
   return (
@@ -93,15 +125,15 @@ export default function CommandCenterPage() {
       </div>
 
       <div className={styles.kpiStrip}>
-        <StatCard label="TOTAL USERS" value={mockCommandKPIs.totalUsers} delta={mockCommandKPIs.totalUsersDelta} />
-        <StatCard label="ACTIVE TODAY" value={mockCommandKPIs.activeToday} delta={mockCommandKPIs.activeTodayPct} />
-        <StatCard label="AI REQUESTS / DAY" value={mockCommandKPIs.aiRequests} delta={mockCommandKPIs.aiRequestsDelta} />
+        <StatCard label="TOTAL USERS" value={kpis.totalUsers} delta={kpis.totalUsersDelta} />
+        <StatCard label="ACTIVE TODAY" value={kpis.activeToday} delta={kpis.activeTodayPct} />
+        <StatCard label="AI REQUESTS / DAY" value={kpis.aiRequests} delta={kpis.aiRequestsDelta} />
         <div className={styles.ticketKpiCard}>
           <div className={styles.ticketTop}>
             <span className={styles.ticketLabel}>OPEN TICKETS</span>
-            <span className={styles.ticketValue}>{mockCommandKPIs.openTickets}</span>
+            <span className={styles.ticketValue}>{kpis.openTickets}</span>
           </div>
-          <span className={styles.ticketSub}>{mockCommandKPIs.criticalTickets} critical</span>
+          <span className={styles.ticketSub}>{kpis.criticalTickets} critical</span>
         </div>
       </div>
 
@@ -142,14 +174,14 @@ export default function CommandCenterPage() {
             <button className={styles.viewAllBtn} onClick={() => navigate('/admin/ai')}>View All →</button>
           </div>
           <div className={styles.serviceList}>
-            {mockAIServiceSummary.map((svc) => (
+            {aiSummary.map((svc) => (
               <div key={svc.slug} className={styles.serviceRow}>
                 <span
                   className={styles.statusDot}
                   style={{ background: svc.status === 'Online' ? 'var(--color-lime)' : 'var(--color-coral)' }}
                 />
                 <span className={styles.serviceName}>{svc.name}</span>
-                <span className={styles.serviceReqs}>{svc.requests.toLocaleString()} req</span>
+                <span className={styles.serviceReqs}>{(svc.requests || 0).toLocaleString()} req</span>
                 <StatusPill status={svc.status} variant={SERVICE_STATUS_COLOR[svc.status] || 'black'} />
               </div>
             ))}
@@ -165,10 +197,10 @@ export default function CommandCenterPage() {
           </div>
           <div className={styles.admissionGrid}>
             {[
-              { label: 'New Applications', value: mockAdmissionSummary.newApplications, color: 'var(--color-lime)' },
-              { label: 'In Review', value: mockAdmissionSummary.inReview, color: 'var(--color-yellow)' },
-              { label: 'Missing Docs', value: mockAdmissionSummary.missingDocs, color: 'var(--color-coral)' },
-              { label: 'Approved Today', value: mockAdmissionSummary.approvedToday, color: 'var(--color-lime)' },
+              { label: 'New Applications', value: liveAdmission.newApplications, color: 'var(--color-lime)' },
+              { label: 'In Review', value: liveAdmission.inReview, color: 'var(--color-yellow)' },
+              { label: 'Missing Docs', value: liveAdmission.missingDocs, color: 'var(--color-coral)' },
+              { label: 'Approved Today', value: liveAdmission.approvedToday, color: 'var(--color-lime)' },
             ].map((item) => (
               <div key={item.label} className={styles.admissionItem} style={{ '--accent-color': item.color }}>
                 <span className={styles.admissionValue}>{item.value}</span>
@@ -200,7 +232,7 @@ export default function CommandCenterPage() {
         </div>
 
         <CircularGauge
-          value={parseFloat(mockCommandKPIs.systemUptime)}
+          value={typeof kpis.systemUptime === 'number' ? kpis.systemUptime : parseFloat(kpis.systemUptime)}
           caption="ACTIVE CYCLE INSIGHT"
           label="System Uptime"
         />
