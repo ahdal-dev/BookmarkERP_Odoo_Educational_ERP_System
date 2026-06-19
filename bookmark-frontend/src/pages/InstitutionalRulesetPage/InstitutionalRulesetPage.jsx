@@ -247,9 +247,7 @@ export default function InstitutionalRulesetPage() {
           <span className={styles.statusText}>RULESET ENGINE ONLINE</span>
         </div>
         <div className={styles.footerRight}>
-          <span className={styles.footerLink}>LAST MODIFIED…</span>
-          <span className={styles.footerLink}>EXPORT PDF</span>
-          <span className={styles.footerLink}>CHANGE LOG</span>
+          <span className={styles.footerLink} style={{ cursor: 'pointer' }} onClick={() => window.print()}>EXPORT PDF</span>
         </div>
       </div>
     </AppShell>

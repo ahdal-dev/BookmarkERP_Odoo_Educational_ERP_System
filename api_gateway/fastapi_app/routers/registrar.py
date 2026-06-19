@@ -116,6 +116,56 @@ async def registrar_dashboard(
     }
 
 
+@router.get("/registrar/enrollment", summary="Per-course enrollment monitor")
+async def enrollment_monitor(token: TokenData = Depends(require_roles("registrar", "super_admin"))):
+    async with odoo_session() as client:
+        courses = await call_kw(
+            client, "education.course", "search_read",
+            [[]],
+            {"fields": ["code", "name", "total_seats", "available_seats", "registration_open"],
+             "order": "code"},
+        )
+        waitlists = await call_kw(
+            client, "education.registration", "read_group",
+            [[["state", "=", "waitlist"]], ["course_id"], ["course_id"]],
+        )
+    wl = {g["course_id"][0]: g["course_id_count"] for g in (waitlists or []) if g.get("course_id")}
+    rows = []
+    for c in courses:
+        total = c.get("total_seats") or 0
+        avail = c.get("available_seats") or 0
+        enrolled = max(0, total - avail)
+        rows.append({
+            "id": c["id"], "code": c.get("code"), "name": c.get("name"),
+            "enrolled": enrolled, "capacity": total, "available": avail,
+            "waitlisted": wl.get(c["id"], 0),
+            "fill_pct": round((enrolled / total) * 100) if total else 0,
+            "open": bool(c.get("registration_open")),
+        })
+    return {"count": len(rows), "courses": rows}
+
+
+class TierUpdate(BaseModel):
+    registration_start: str | None = None
+    registration_end: str | None = None
+    min_credits: int | None = None
+    max_credits: int | None = None
+    notify_students: bool | None = None
+
+
+@router.put("/registrar/registration-tiers/{tier_id}", summary="Update a registration tier/window")
+async def update_tier(
+    tier_id: int,
+    body: TierUpdate,
+    token: TokenData = Depends(require_roles("registrar", "super_admin")),
+):
+    vals = {k: v for k, v in body.dict().items() if v is not None}
+    if vals:
+        async with odoo_session() as client:
+            await call_kw(client, "education.registration.tier", "write", [[tier_id], vals])
+    return {"ok": True, "updated": list(vals.keys())}
+
+
 class PrerequisiteUpdate(BaseModel):
     prerequisite_ids: list[int]
 

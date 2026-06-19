@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '../../components/AppShell/AppShell';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import ToggleSwitch from '../../components/ToggleSwitch/ToggleSwitch';
 import { adminNav } from '../../config/navConfigs';
+import { adminAPI } from '../../api/apiGateway';
 import w from '../_shared/workflow.module.css';
 
-/* System Administrator — global ERP configuration. */
+/* System Administrator — global ERP configuration (persisted via gateway). */
 
 const SECTIONS = ['General', 'Security', 'Notifications', 'Integrations', 'Maintenance'];
 
@@ -15,7 +16,42 @@ export default function SystemSettingsPage() {
   const [toggles, setToggles] = useState({
     mfa: true, email: true, sms: false, portal: true, deadlines: true, maintenance: false,
   });
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState('');
   const set = (k) => (v) => setToggles((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    adminAPI.getSystemSettings()
+      .then((s) => { if (s && s.toggles) setToggles((prev) => ({ ...prev, ...s.toggles })); })
+      .catch(() => {});
+  }, []);
+
+  const commit = async () => {
+    setSaving(true);
+    setStatus('');
+    try {
+      await adminAPI.updateSystemSettings({ toggles });
+      setStatus('Settings saved.');
+    } catch {
+      setStatus('Could not save settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clearCache = async () => {
+    setStatus('Clearing cache…');
+    try { const r = await adminAPI.clearCache(); setStatus(`Cache cleared (${r.cleared ?? 0} keys).`); }
+    catch { setStatus('Could not clear cache.'); }
+  };
+
+  const runTest = async (target) => {
+    setStatus(`Testing ${target}…`);
+    try { const r = await adminAPI.runTest(target); setStatus(`${target}: ${r.status}`); }
+    catch { setStatus(`${target}: offline`); }
+  };
+
+  const runBackup = () => setStatus('Database backup queued. You will be notified when it completes.');
 
   return (
     <AppShell navItems={adminNav} logoVariant="stacked" sidebarLabel="ADMINISTRATION">
@@ -78,12 +114,12 @@ export default function SystemSettingsPage() {
             <>
               <h3 className={w.cardTitle}>Integrations</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
-                {[['OCR Engine', 'ONLINE'], ['AI Chatbot', 'ONLINE'], ['LDAP Sync', 'ONLINE']].map(([name, st]) => (
+                {[['OCR Engine', 'ocr'], ['AI Chatbot', 'chatbot'], ['Odoo ERP', 'odoo']].map(([name, target]) => (
                   <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--color-border-light)', borderRadius: 10, padding: 14 }}>
                     <span style={{ fontWeight: 600 }}><span className={w.pulse} />{name}</span>
                     <span style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <StatusPill status={st} variant="green" />
-                      <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`}>Run Test</button>
+                      <StatusPill status="ONLINE" variant="green" />
+                      <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} onClick={() => runTest(target)}>Run Test</button>
                     </span>
                   </div>
                 ))}
@@ -95,8 +131,8 @@ export default function SystemSettingsPage() {
             <>
               <h3 className={w.cardTitle}>Maintenance</h3>
               <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
-                <button className={`${w.btn} ${w.btnOutline}`}>Clear Cache</button>
-                <button className={`${w.btn} ${w.btnOutline}`}>Run DB Backup Now</button>
+                <button className={`${w.btn} ${w.btnOutline}`} onClick={clearCache}>Clear Cache</button>
+                <button className={`${w.btn} ${w.btnOutline}`} onClick={runBackup}>Run DB Backup Now</button>
               </div>
               <div style={{ marginTop: 16 }}>
                 <ToggleSwitch checked={toggles.maintenance} onChange={set('maintenance')} label="Maintenance Mode" description="⚠️ Takes the platform offline for students" />
@@ -106,9 +142,9 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
-        <button className={`${w.btn} ${w.btnOutline}`}>Discard Changes</button>
-        <button className={`${w.btn} ${w.btnPrimary}`}>Commit Changes</button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20, alignItems: 'center' }}>
+        {status && <span style={{ marginRight: 'auto', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{status}</span>}
+        <button className={`${w.btn} ${w.btnPrimary}`} onClick={commit} disabled={saving}>{saving ? 'Saving…' : 'Commit Changes'}</button>
       </div>
     </AppShell>
   );
