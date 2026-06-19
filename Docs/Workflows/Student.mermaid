@@ -1,0 +1,51 @@
+graph TD
+    A([🎒 Start: Log In to Student Portal]) --> B[(ERP DB: Load Student Profile
+GPA, Credits, Holds)]
+    B --> C{Active Holds
+or Blocks?}
+    C -- Yes --> D[Display Hold Alert
+Direct to Relevant Office]
+    D --> Z1([⚠️ End: Registration Blocked])
+    C -- No --> E[Browse Course Catalog
+Filter by Dept, Level, Schedule]
+    E --> F[(ERP DB: Fetch Real-Time
+Course Seats & Schedule)]
+    F --> G[View Course Details:
+Credits, Instructor, Prereqs, Seats]
+    G --> H{Add to
+Wishlist/Cart?}
+    H -- No --> E
+    H -- Yes --> I[(ERP DB: Check Seat
+Availability in Real-Time)]
+    I --> J{Seat
+Available?}
+    J -- No --> K[Display: Course Full
+Show Waitlist Option]
+    K --> L{Join
+Waitlist?}
+    L -- No --> E
+    L -- Yes --> M[(ERP DB: Add Student
+to Waitlist Queue)]
+    M --> E
+    J -- Yes --> N[(ERP DB: Validate Prereqs
+& Restrictions)]
+    N --> O{Prereqs &
+Rules Met?}
+    O -- No --> P[Display Restriction Reason
+e.g. Missing Prereq, Credit Limit]
+    P --> Q{Submit
+Petition?}
+    Q -- No --> E
+    Q -- Yes --> R[(ERP DB: Create Petition
+& Route to Instructor/Advisor)]
+    R --> E
+    O -- Yes --> S[Confirm Course
+Registration]
+    S --> T[(ERP DB: Enroll Student
+Decrement Seat Count)]
+    T --> U[Display Updated
+Registered Schedule]
+    U --> V{Register
+Another Course?}
+    V -- Yes --> E
+    V -- No --> W([✅ End: Registration Complete])

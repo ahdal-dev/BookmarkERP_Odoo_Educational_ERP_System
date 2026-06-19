@@ -1,0 +1,57 @@
+graph TD
+    A([💬 Start: Log In to
+Support Dashboard]) --> B[(ERP DB: Load Live Queue:
+Tickets & Chat Requests)]
+    B --> C[View Prioritized Queue:
+Peak Load Sorted by Wait Time]
+    C --> D{Incoming
+Request Type}
+    D -- Live Chat --> E[Accept Chat Session
+Greet Student]
+    D -- Support Ticket --> F[Open Ticket
+Review Student Issue Description]
+    D -- Phone Escalation --> G[Accept Call & Log
+New Ticket in ERP]
+    E --> H[Diagnose Issue
+via Chat Triage]
+    F --> I[Diagnose Issue
+from Ticket Description]
+    G --> I
+    H --> J{Issue
+Category}
+    I --> J
+    J -- Portal Login / Access --> K[(ERP DB: Verify Account
+Status & Reset if Needed)]
+    K --> L[Guide Student Through
+Access Recovery Steps]
+    J -- Registration Error --> M[(ERP DB: Pull Student
+Registration Record & Errors)]
+    M --> N{Error
+Resolvable by Tech?}
+    N -- Yes --> O[Apply Fix: Remove
+Hold, Fix Enrollment, Correct Data]
+    O --> P[(ERP DB: Log Action
+& Update Record)]
+    N -- No: Requires Higher Auth --> Q[Escalate Ticket to
+Registrar or Admin]
+    Q --> R[(ERP DB: Update Ticket
+Status to Escalated)]
+    J -- Technical / System Bug --> S[Document Bug Report
+with Screenshots & Steps]
+    S --> T[(ERP DB: Create Bug Ticket
+Route to Dev / IT Team)]
+    L --> U[Confirm Resolution
+with Student]
+    P --> U
+    R --> V[Notify Student:
+Ticket Escalated — Expected SLA]
+    T --> W[Notify Student:
+Bug Logged — Workaround if Available]
+    U --> X{Student
+Satisfied?}
+    X -- Yes --> Y[(ERP DB: Close Ticket
+Log Resolution Notes)]
+    X -- No --> H
+    V --> Z([✅ End: Ticket Escalated])
+    W --> Z
+    Y --> AA([✅ End: Issue Resolved & Closed])
