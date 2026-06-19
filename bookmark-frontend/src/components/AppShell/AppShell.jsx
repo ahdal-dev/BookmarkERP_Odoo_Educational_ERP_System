@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SplatterDot } from '../../styles/brand';
+import { useAuth } from '../../context/AuthContext';
 import BookmarkLogo from '../BookmarkLogo/BookmarkLogo';
 import styles from './AppShell.module.css';
 import logoUrl from '../../assets/logos/bookark_logo.svg';
+
+const COLLAPSE_KEY = 'bookmark_sidebar_collapsed';
 
 /* ============================================================
    APP SHELL — Dark sidebar + light content area
@@ -90,6 +93,10 @@ export default function AppShell({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(COLLAPSE_KEY) === 'true'
+  );
   const [expandedItems, setExpandedItems] = useState(() => {
     // Auto-expand items whose children include the current path
     const expanded = {};
@@ -106,9 +113,22 @@ export default function AppShell({
     setExpandedItems((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(COLLAPSE_KEY, String(next));
+      return next;
+    });
+  };
+
   const handleNav = (path) => {
     navigate(path);
     setMobileOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const isActive = (item) => {
@@ -116,7 +136,7 @@ export default function AppShell({
   };
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
       {/* Mobile hamburger */}
       <button
         className={styles.hamburger}
@@ -134,7 +154,21 @@ export default function AppShell({
       )}
 
       {/* ===== SIDEBAR ===== */}
-      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
+      <aside
+        className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''} ${collapsed ? styles.sidebarCollapsed : ''}`}
+      >
+        {/* Collapse / expand toggle (desktop) */}
+        <button
+          className={styles.collapseBtn}
+          onClick={toggleCollapse}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {collapsed ? <path d="M9 18l6-6-6-6" /> : <path d="M15 18l-6-6 6-6" />}
+          </svg>
+        </button>
+
         {/* Logo Area */}
         <div className={styles.logoArea}>
           {logoVariant === 'stacked' ? (
@@ -170,8 +204,9 @@ export default function AppShell({
             <div key={item.label} className={styles.navGroup}>
               <button
                 className={`${styles.navItem} ${isActive(item) ? styles.navItemActive : ''}`}
+                title={collapsed ? item.label : undefined}
                 onClick={() => {
-                  if (item.children) {
+                  if (item.children && !collapsed) {
                     toggleExpand(item.label);
                   } else {
                     handleNav(item.path);
@@ -182,7 +217,7 @@ export default function AppShell({
                   {ICONS[item.icon] || ICONS.dashboard}
                 </span>
                 <span className={styles.navLabel}>{item.label}</span>
-                {item.children && (
+                {item.children && !collapsed && (
                   <span className={`${styles.navChevron} ${expandedItems[item.label] ? styles.navChevronOpen : ''}`}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                   </span>
@@ -193,7 +228,7 @@ export default function AppShell({
               </button>
 
               {/* Children (sub-items) */}
-              {item.children && expandedItems[item.label] && (
+              {item.children && !collapsed && expandedItems[item.label] && (
                 <div className={styles.subItems}>
                   {item.children.map((child) => (
                     <button
@@ -211,11 +246,24 @@ export default function AppShell({
         </nav>
 
         {/* Sidebar Footer */}
-        {sidebarFooter && (
-          <div className={styles.sidebarFooter}>
-            {sidebarFooter}
-          </div>
-        )}
+        <div className={styles.sidebarFooter}>
+          {!collapsed && sidebarFooter}
+          <button
+            className={styles.logoutBtn}
+            onClick={handleLogout}
+            title={collapsed ? 'Logout' : undefined}
+            aria-label="Logout"
+          >
+            <span className={styles.navIcon}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+            </span>
+            <span className={styles.navLabel}>Logout</span>
+          </button>
+        </div>
 
         {/* Bottom splatters */}
         <SplatterDot color="#e8613a" size={20} bottom="30px" left="10px" delay="0.7s" $animate />

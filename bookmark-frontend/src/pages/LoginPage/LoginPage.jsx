@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BookmarkLogo from '../../components/BookmarkLogo/BookmarkLogo';
 import { SplatterDot } from '../../styles/brand';
@@ -118,7 +118,7 @@ export default function LoginPage() {
                     <label htmlFor="login-password" className={styles.fieldLabel}>
                       PASSWORD
                     </label>
-                    <a href="#" className={styles.forgotLink}>Forgot Password?</a>
+                    <Link to="/change-password" className={styles.forgotLink}>Change Password?</Link>
                   </div>
                   <div className={styles.inputWrap}>
                     <span className={styles.inputPrefix}>
@@ -172,11 +172,20 @@ export default function LoginPage() {
                 </button>
               </form>
 
+              {/* Apply for Admission CTA */}
+              <button
+                type="button"
+                className={styles.applyBtn}
+                onClick={() => navigate('/admissions')}
+              >
+                Apply for Admission →
+              </button>
+
               {/* Footer */}
               <div className={styles.cardFooter}>
                 <p className={styles.applyText}>
                   Not yet a student?{' '}
-                  <a href="#" className={styles.applyLink}>Apply Now</a>
+                  <Link to="/admissions" className={styles.applyLink}>Apply Now</Link>
                 </p>
 
                 <div className={styles.secureBadge}>

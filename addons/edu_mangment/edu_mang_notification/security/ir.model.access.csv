@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_edu_notification_user,edu.notification.user,model_edu_notification,base.group_user,1,1,1,1
+access_edu_notification_portal,edu.notification.portal,model_edu_notification,base.group_portal,1,1,0,0

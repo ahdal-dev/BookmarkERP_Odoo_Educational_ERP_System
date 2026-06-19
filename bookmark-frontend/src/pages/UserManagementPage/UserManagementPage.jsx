@@ -8,7 +8,8 @@ import StatusPill from '../../components/StatusPill/StatusPill';
 import Pagination from '../../components/Pagination/Pagination';
 import CreateUserModal from '../../components/CreateUserModal/CreateUserModal';
 import { adminUsersNav } from '../../config/navConfigs';
-import { mockUsers, mockUserStats } from '../../mocks/usersMocks';
+import { adminAPI } from '../../api/apiGateway';
+import useAsync from '../../hooks/useAsync';
 import styles from './UserManagementPage.module.css';
 
 /* ============================================================
@@ -45,9 +46,16 @@ const columns = [
   },
 ];
 
+const PER_PAGE = 10;
+
 export default function UserManagementPage() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const { data, loading, error, reload } = useAsync(() => adminAPI.getUsers(), []);
+
+  const users = data?.users || [];
+  const totalPages = Math.max(1, Math.ceil(users.length / PER_PAGE));
+  const paged = users.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
     <AppShell
@@ -82,12 +90,11 @@ export default function UserManagementPage() {
       <div className={styles.statsRow}>
         <StatCard
           label="TOTAL ACCOUNTS"
-          value={mockUserStats.totalAccounts}
-          delta={mockUserStats.delta}
+          value={data?.total_accounts ?? users.length}
         />
         <StatCard
           label="ACTIVE NOW"
-          value={mockUserStats.activeNow}
+          value={data?.active_now ?? 0}
         >
           {/* Avatar stack */}
           <div className={styles.avatarStack}>
@@ -99,26 +106,36 @@ export default function UserManagementPage() {
         </StatCard>
         <div className={styles.permCard}>
           <div className={styles.permTop}>
-            <span className={styles.permLabel}>Permission Consistency: {mockUserStats.permissionConsistency}%</span>
-            <span className={styles.permDesc}>All registrar roles synchronized with LDAP</span>
+            <span className={styles.permLabel}>Directory synced</span>
+            <span className={styles.permDesc}>Live from Odoo res.users</span>
           </div>
-          <button className={styles.auditBtn}>Run Integrity Audit</button>
+          <button className={styles.auditBtn} onClick={reload}>Refresh Directory</button>
         </div>
       </div>
 
       {/* Data Table */}
       <div className={styles.tableCard}>
-        <DataTable
-          columns={columns}
-          data={mockUsers}
-          selectable
-        />
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading users…</div>
+        ) : error ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>
+            {error} <button className={styles.auditBtn} onClick={reload} style={{ marginLeft: 8 }}>Retry</button>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={paged}
+            selectable
+          />
+        )}
       </div>
 
       {/* Footer */}
       <div className={styles.tableFooter}>
-        <span className={styles.showing}>Showing 1–{mockUsers.length} of 12,482 users</span>
-        <Pagination currentPage={page} totalPages={8} onPageChange={setPage} />
+        <span className={styles.showing}>
+          Showing {users.length === 0 ? 0 : (page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, users.length)} of {data?.total_accounts ?? users.length} users
+        </span>
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Create User Modal */}

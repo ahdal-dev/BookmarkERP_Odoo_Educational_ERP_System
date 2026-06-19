@@ -75,6 +75,15 @@ export const authAPI = {
     localStorage.removeItem('bookmark_user');
     return response.data;
   },
+
+  /** Change the authenticated user's password */
+  changePassword: async (currentPassword, newPassword) => {
+    const response = await api.post('/api/v1/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
 };
 
 /* ============================================================
@@ -129,9 +138,57 @@ export const odooAPI = {
    ============================================================ */
 
 export const registrationAPI = {
-  // TODO(backend): implement GET /api/v1/registration/courses
+  /** Course catalog (optionally only open-for-registration courses) */
   getCourses: async (params = {}) => {
     const response = await api.get('/api/v1/registration/courses', { params });
+    return response.data;
+  },
+};
+
+/* ============================================================
+   STUDENT ENDPOINTS
+   ============================================================ */
+
+export const studentAPI = {
+  /** Authenticated student's dashboard summary */
+  getDashboard: async () => {
+    const response = await api.get('/api/v1/student/dashboard');
+    return response.data;
+  },
+};
+
+/* ============================================================
+   FACULTY ENDPOINTS
+   ============================================================ */
+
+export const facultyAPI = {
+  /** Faculty dashboard aggregates (courses + pending petitions) */
+  getDashboard: async () => {
+    const response = await api.get('/api/v1/faculty/dashboard');
+    return response.data;
+  },
+
+  /** Role-filtered petition queue */
+  getPetitionQueue: async (params = {}) => {
+    const response = await api.get('/api/v1/faculty/petitions', { params });
+    return response.data;
+  },
+
+  /** Enrolled students for a given course */
+  getCourseRoster: async (courseId) => {
+    const response = await api.get(`/api/v1/faculty/courses/${courseId}/roster`);
+    return response.data;
+  },
+};
+
+/* ============================================================
+   REGISTRAR ENDPOINTS
+   ============================================================ */
+
+export const registrarAPI = {
+  /** Live registrar dashboard aggregates */
+  getDashboard: async () => {
+    const response = await api.get('/api/v1/registrar/dashboard');
     return response.data;
   },
 };
@@ -141,25 +198,25 @@ export const registrationAPI = {
    ============================================================ */
 
 export const adminAPI = {
-  // TODO(backend): implement GET /api/v1/admin/users
+  /** User directory */
   getUsers: async (params = {}) => {
     const response = await api.get('/api/v1/admin/users', { params });
     return response.data;
   },
 
-  // TODO(backend): implement POST /api/v1/admin/users
+  /** Create a user */
   createUser: async (userData) => {
     const response = await api.post('/api/v1/admin/users', userData);
     return response.data;
   },
 
-  // TODO(backend): implement GET /api/v1/admin/settings/registration-rules
+  /** Read registration rules */
   getRules: async () => {
     const response = await api.get('/api/v1/admin/settings/registration-rules');
     return response.data;
   },
 
-  // TODO(backend): implement PUT /api/v1/admin/settings/registration-rules
+  /** Update registration rules */
   updateRules: async (rules) => {
     const response = await api.put('/api/v1/admin/settings/registration-rules', rules);
     return response.data;
@@ -171,13 +228,13 @@ export const adminAPI = {
    ============================================================ */
 
 export const admissionsAPI = {
-  // TODO(backend): implement GET /api/v1/admin/admissions/pipeline
+  /** Admissions pipeline grouped by stage (Kanban) */
   getPipeline: async () => {
     const response = await api.get('/api/v1/admin/admissions/pipeline');
     return response.data;
   },
 
-  // TODO(backend): implement PATCH /api/v1/admin/admissions/:id/stage
+  /** Move an application to a new stage */
   updateStage: async (id, stage) => {
     const response = await api.patch(`/api/v1/admin/admissions/${id}/stage`, { stage });
     return response.data;
@@ -203,13 +260,13 @@ export const applicationAPI = {
    ============================================================ */
 
 export const petitionsAPI = {
-  // TODO(backend): implement GET /api/v1/admin/petitions
+  /** All petitions (admin tracking board) */
   listPetitions: async (params = {}) => {
     const response = await api.get('/api/v1/admin/petitions', { params });
     return response.data;
   },
 
-  // TODO(backend): implement GET /api/v1/admin/petitions/:id
+  /** Single petition detail (with decision trail) */
   getPetition: async (id) => {
     const response = await api.get(`/api/v1/admin/petitions/${id}`);
     return response.data;

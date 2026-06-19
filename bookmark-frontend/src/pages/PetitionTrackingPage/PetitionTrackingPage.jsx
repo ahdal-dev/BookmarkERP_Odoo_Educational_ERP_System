@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '../../components/AppShell/AppShell';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import DataTable from '../../components/DataTable/DataTable';
@@ -6,7 +6,8 @@ import StatusPill from '../../components/StatusPill/StatusPill';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
 import { useAuth } from '../../context/AuthContext';
 import { petitionsAdminNav } from '../../config/navConfigs';
-import { mockPetitionsAdmin } from '../../mocks/petitionsMocks';
+import { petitionsAPI } from '../../api/apiGateway';
+import useAsync from '../../hooks/useAsync';
 import styles from './PetitionTrackingPage.module.css';
 
 /* ============================================================
@@ -45,10 +46,16 @@ const columns = [
 export default function PetitionTrackingPage() {
   const { logout } = useAuth();
   const [viewMode, setViewMode] = useState('List View');
-  const [selectedPetition, setSelectedPetition] = useState(mockPetitionsAdmin[0]);
+  const { data, loading, error, reload } = useAsync(() => petitionsAPI.listPetitions(), []);
+  const petitions = data?.petitions || [];
+  const [selectedPetition, setSelectedPetition] = useState(null);
+
+  useEffect(() => {
+    if (petitions.length && !selectedPetition) setSelectedPetition(petitions[0]);
+  }, [petitions, selectedPetition]);
 
   const handleRowClick = (row) => {
-    const petition = mockPetitionsAdmin.find((p) => p.id === row.id);
+    const petition = petitions.find((p) => p.id === row.id);
     if (petition) setSelectedPetition(petition);
   };
 
@@ -69,7 +76,7 @@ export default function PetitionTrackingPage() {
     >
       <PageHeader
         title="Petition Tracking Board"
-        subtitle={`Reviewing ${mockPetitionsAdmin.length} pending institutional requests`}
+        subtitle={`Reviewing ${petitions.length} institutional requests`}
         useBrandFont
         actions={
           <SegmentedControl
@@ -84,12 +91,20 @@ export default function PetitionTrackingPage() {
         {/* Table */}
         <div className={styles.tableSection}>
           <div className={styles.tableCard}>
-            <DataTable
-              columns={columns}
-              data={mockPetitionsAdmin}
-              onRowClick={handleRowClick}
-              rowAccentColor={(row) => row.accentColor}
-            />
+            {loading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading petitions…</div>
+            ) : error ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                {error} <button onClick={reload} style={{ marginLeft: 8 }}>Retry</button>
+              </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={petitions}
+                onRowClick={handleRowClick}
+                rowAccentColor={(row) => row.accentColor}
+              />
+            )}
           </div>
         </div>
 

@@ -278,6 +278,28 @@
   cursor: not-allowed;
 }
 
+.applyBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 24px;
+  background: transparent;
+  color: #0d0d0d;
+  border: 1.5px solid #4caf27;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.applyBtn:hover {
+  background: #4caf27;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(76, 175, 39, 0.25);
+}
+
 .btnArrow {
   font-size: 18px;
   transition: transform 0.3s;
