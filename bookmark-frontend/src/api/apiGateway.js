@@ -209,6 +209,14 @@ export const registrarAPI = {
     const response = await api.get('/api/v1/registrar/dashboard');
     return response.data;
   },
+
+  /** Set a course's prerequisite course ids */
+  setCoursePrerequisites: async (courseId, prerequisiteIds) => {
+    const response = await api.patch(`/api/v1/registrar/courses/${courseId}/prerequisites`, {
+      prerequisite_ids: prerequisiteIds,
+    });
+    return response.data;
+  },
 };
 
 /* ============================================================

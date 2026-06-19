@@ -51,7 +51,11 @@ export default function RegistrarDashboardPage() {
           <div className={`${w.statRow} ${w.cols4}`}>
             <StatCard value={(stats?.total_enrolled ?? 0).toLocaleString()} label="Total Enrolled" accentColor="var(--color-lime)" />
             <StatCard value={(stats?.open_seats ?? 0).toLocaleString()} label="Open Seats Remaining" accentColor="var(--color-yellow)" />
-            <StatCard value={(stats?.open_courses ?? 0).toLocaleString()} label="Open Courses" accentColor="var(--color-lime)" />
+            {stats?.active_concurrent_users != null ? (
+              <StatCard value={(stats.active_concurrent_users).toLocaleString()} label="Active Concurrent Users" accentColor="var(--color-lime)"><span className={w.pulse} /></StatCard>
+            ) : (
+              <StatCard value={(stats?.open_courses ?? 0).toLocaleString()} label="Open Courses" accentColor="var(--color-lime)" />
+            )}
             <StatCard value={(stats?.waitlisted ?? 0).toLocaleString()} label="Waitlisted Students" accentColor="var(--color-coral)" />
           </div>
 

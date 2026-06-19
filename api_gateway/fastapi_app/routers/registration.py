@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/v1", tags=["registration"])
 _COURSE_FIELDS = [
     "name", "code", "available_seats", "total_seats", "schedule",
     "timing_start", "timing_end", "credits", "instructor", "registration_open",
+    "prerequisite_course_ids",
 ]
 
 
@@ -35,6 +36,19 @@ async def list_courses(
             [domain],
             {"fields": _COURSE_FIELDS, "order": "code"},
         )
+        # Resolve prerequisite ids → {id, code} in one extra read.
+        prereq_ids = sorted({pid for c in courses for pid in (c.get("prerequisite_course_ids") or [])})
+        names = {}
+        if prereq_ids:
+            rows = await call_kw(
+                client, "education.course", "read", [prereq_ids, ["code", "name"]],
+            )
+            names = {r["id"]: (r.get("code") or r.get("name")) for r in rows}
+        for c in courses:
+            c["prerequisites"] = [
+                {"id": pid, "code": names.get(pid, str(pid))}
+                for pid in (c.get("prerequisite_course_ids") or [])
+            ]
     return {"count": len(courses), "courses": courses}
 
 

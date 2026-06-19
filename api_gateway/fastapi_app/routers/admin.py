@@ -14,6 +14,7 @@ GET    /api/v1/admin/petitions                 Super Admin
 GET    /api/v1/admin/petitions/{id}            Super Admin
 """
 
+import json
 import logging
 from typing import Optional
 
@@ -166,6 +167,7 @@ _RULE_KEYS = {
     "waitlistManagement": ("edu.reg.waitlist_management", "bool"),
     "minGpa": ("edu.reg.min_gpa", "str"),
     "applicationStatus": ("edu.reg.application_status", "str"),
+    "prerequisites": ("edu.reg.prerequisites", "json"),
 }
 
 
@@ -175,6 +177,7 @@ class RegistrationRules(BaseModel):
     waitlistManagement: Optional[bool] = None
     minGpa: Optional[str] = None
     applicationStatus: Optional[str] = None
+    prerequisites: Optional[list] = None
 
 
 @router.get("/admin/settings/registration-rules", summary="Read registration rules")
@@ -185,6 +188,11 @@ async def get_registration_rules(token: TokenData = Depends(require_roles(*RULES
             raw = await call_kw(client, "ir.config_parameter", "get_param", [key, False])
             if kind == "bool":
                 out[field] = str(raw).lower() in ("1", "true", "yes")
+            elif kind == "json":
+                try:
+                    out[field] = json.loads(raw) if raw else []
+                except (ValueError, TypeError):
+                    out[field] = []
             else:
                 out[field] = raw or ""
     return out
@@ -201,7 +209,12 @@ async def put_registration_rules(
             if field not in _RULE_KEYS:
                 continue
             key, kind = _RULE_KEYS[field]
-            stored = ("1" if value else "0") if kind == "bool" else str(value)
+            if kind == "bool":
+                stored = "1" if value else "0"
+            elif kind == "json":
+                stored = json.dumps(value)
+            else:
+                stored = str(value)
             await call_kw(client, "ir.config_parameter", "set_param", [key, stored])
     return {"ok": True, "updated": list(payload.keys())}
 

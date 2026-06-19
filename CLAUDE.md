@@ -67,13 +67,15 @@ New Odoo module `addons/edu_mangment/edu_mang_academic/` adds a `grade` (+ `grad
 - **Real GPA + grades** → `GET /api/v1/student/grades` (per-term transcript + cumulative GPA/credits/standing); `GET /student/dashboard` now returns a real `gpa`. `GradesPage.jsx` is live.
 - **Registration tiers/windows** → `GET /api/v1/registration/tiers`, `GET /api/v1/student/registration-window`. `InstitutionalRulesetPage` windows table reads live tiers.
 
+### Waitlist, concurrent users & prerequisites (final gap closure)
+- **Waitlist auto-promotion** → new module `addons/edu_mangment/edu_mang_waitlist/`: `education.registration.action_drop` is overridden to call `education.course._promote_waitlist()` (FIFO by `registration_date`, skips on-hold students, notifies via `edu.notification`); a 30-min `ir.cron` (`cron_promote_waitlist`) is the safety-net.
+- **Active concurrent users** → gateway tracks `active_session:{uid}:{jti}` in Redis on login/refresh (`_track_active_session`) and clears it on logout; `GET /api/v1/registrar/dashboard` counts distinct uids (`scan_iter`) → `stats.active_concurrent_users`; `RegistrarDashboardPage` shows the live card.
+- **Ruleset prerequisites (both)** → (1) the policy checklist persists as a JSON `ir.config_parameter` (`edu.reg.prerequisites`, handled in `routers/admin.py`; `InstitutionalRulesetPage` sends/loads it); (2) real per-course prerequisites: `education.course.prerequisite_course_ids` (M2M) in `edu_mang_academic`, **enforced** in `education.registration.create` when `edu.reg.prerequisite_check` is on (officer override bypasses). Gateway exposes prereqs in `/registration/courses` + `PATCH /api/v1/registrar/courses/{id}/prerequisites`; `CourseCatalogManagerPage` edits them, `RegistrationPage` course cards show them.
+
 ### Deploy note
 Install/update the custom modules once (first install uses `-i`, later updates `-u`):
-`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -i edu_mang_notification,edu_mang_academic -d edu_demo_new --stop-after-init`
-then rebuild the gateway: `cd api_gateway && docker-compose up -d --build`.
+`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -i edu_mang_notification,edu_mang_academic,edu_mang_waitlist -d edu_demo_new --stop-after-init`
+(use `-u edu_mang_academic` when only updating the course-prerequisite fields). Then rebuild the gateway: `cd api_gateway && docker-compose up -d --build`.
 
-### Remaining gaps (deferred — no Odoo model yet)
-- **Waitlist auto-promotion**: `education.registration` has a `waitlist` state but no auto-promote logic (drop frees a seat via `action_drop`; a cron + promotion hook on `education.registration` would close this).
-- **Active concurrent users** (Registrar dashboard): needs a session/activity-tracking model; currently omitted.
-- **GPA source alternative**: GPA is computed from grades on the active custom stack; OpenEduCat exam results (`op.result.line` / `op.marksheet.line`) are not integrated.
-- **Ruleset prerequisite list** (`InstitutionalRulesetPage`): scalar rules persist via `ir.config_parameter` and the windows table is now live (tiers), but the prerequisite checklist remains UI-local (no model).
+### Remaining (optional, not a functional gap)
+- **GPA source alternative**: GPA is computed from grades on the active custom stack; integrating OpenEduCat exam results (`op.result.line` / `op.marksheet.line`) remains an optional alternative, not required.

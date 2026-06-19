@@ -32,6 +32,7 @@ function mapCourse(c) {
     schedule,
     seats: `${c.available_seats ?? 0}/${c.total_seats ?? 0}`,
     status,
+    prerequisites: c.prerequisites || [],
   };
 }
 

@@ -25,6 +25,9 @@ function mergeRules(base, rules) {
     waitlistManagement: rules.waitlistManagement ?? base.waitlistManagement,
     gpa: rules.minGpa || base.gpa,
     applicationStatus: rules.applicationStatus || base.applicationStatus,
+    prerequisites: (Array.isArray(rules.prerequisites) && rules.prerequisites.length)
+      ? rules.prerequisites
+      : base.prerequisites,
   };
 }
 
@@ -80,6 +83,7 @@ export default function InstitutionalRulesetPage() {
         waitlistManagement: form.waitlistManagement,
         minGpa: String(form.gpa ?? ''),
         applicationStatus: form.applicationStatus,
+        prerequisites: form.prerequisites,
       });
       setDirty(false);
     } catch {
