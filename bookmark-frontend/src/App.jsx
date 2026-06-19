@@ -115,7 +115,7 @@ export default function App() {
           <Route
             path="/apps"
             element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR, ROLES.ADMISSION_OFFICER]}>
+              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
                 <DashboardPage />
               </RoleProtectedRoute>
             }
@@ -140,7 +140,7 @@ export default function App() {
           <Route path="/admin/users/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UserDetailPage /></RoleProtectedRoute>} />
           <Route path="/admin/admissions" element={<ProtectedRoute roles={['admin', 'officer', 'super_admin']}><AdmissionPipelinePage /></ProtectedRoute>} />
           <Route path="/admin/petitions" element={<ProtectedRoute roles={['admin', 'officer']}><PetitionTrackingPage /></ProtectedRoute>} />
-          <Route path="/admin/settings/registration-rules" element={<ProtectedRoute roles={['admin']}><InstitutionalRulesetPage /></ProtectedRoute>} />
+          <Route path="/admin/settings/registration-rules" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR]}><InstitutionalRulesetPage /></RoleProtectedRoute>} />
           <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
 

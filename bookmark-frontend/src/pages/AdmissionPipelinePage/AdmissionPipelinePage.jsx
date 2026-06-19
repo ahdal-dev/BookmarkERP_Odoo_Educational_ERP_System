@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import KanbanBoard from '../../components/KanbanBoard/KanbanBoard';
 import KanbanColumn from '../../components/KanbanBoard/KanbanColumn';
 import KanbanCard from '../../components/KanbanBoard/KanbanCard';
-import { admissionsNav } from '../../config/navConfigs';
+import { admissionsOfficerNav } from '../../config/navConfigs';
 import { admissionsAPI } from '../../api/apiGateway';
 import useAsync from '../../hooks/useAsync';
 import w from '../_shared/workflow.module.css';
@@ -58,7 +58,7 @@ export default function AdmissionPipelinePage() {
 
   return (
     <AppShell
-      navItems={admissionsNav}
+      navItems={admissionsOfficerNav}
       logoVariant="icon-text"
       topBar={<TopBar searchPlaceholder="Search applicants..." />}
     >
@@ -107,6 +107,7 @@ export default function AdmissionPipelinePage() {
                 starred={card.starred}
                 onStarToggle={() => {}}
                 accentColor={card.accentColor}
+                onClick={() => navigate(`/admissions/officer/application/${card.id}`)}
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
                   handleDragStart(card.id, col.id);
