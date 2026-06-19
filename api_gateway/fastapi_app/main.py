@@ -636,8 +636,14 @@ from routers import registration_tiers as registration_tiers_router
 app.include_router(registration_tiers_router.router)
 from routers import faculty as faculty_router
 app.include_router(faculty_router.router)
+from routers import advising as advising_router
+app.include_router(advising_router.router)
 from routers import admin as admin_router
 app.include_router(admin_router.router)
+from routers import support as support_router
+app.include_router(support_router.router)
+from routers import audit as audit_router
+app.include_router(audit_router.router)
 
 # ============================================================================
 # Middleware — observability and audit logging
@@ -1035,6 +1041,9 @@ async def login(request: Request, body: LoginRequest):
 
         AUTH_COUNTER.labels(outcome="success").inc()
         audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
+        await audit_router.record_audit_event(
+            "login_success", "info", user_id=uid, actor_login=body.login,
+            ip=request.client.host if request.client else None, detail=f"role={role.value}")
         return {**tokens, "user_id": uid, "user_name": name, "role": role.value}
 
     except HTTPException:

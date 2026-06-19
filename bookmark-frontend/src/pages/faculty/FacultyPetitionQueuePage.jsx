@@ -5,23 +5,50 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import DataTable from '../../components/DataTable/DataTable';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { facultyNav } from '../../config/navConfigs';
-import { facultyPetitions, URGENCY_VARIANT } from '../../mocks/facultyMocks';
+import { facultyAPI, petitionsAPI } from '../../api/apiGateway';
+import useAsync from '../../hooks/useAsync';
 import w from '../_shared/workflow.module.css';
 
-/* Petition review queue (shared by Instructor & Advisor; data scope differs). */
+/* Petition review queue (Instructor / Advisor / Chair) — live + persisted actions. */
 
-const TYPES = ['All', 'Prereq Override', 'Course Overload', 'Late Drop', 'Grade Appeal'];
+const URGENCY_VARIANT = { High: 'coral', Medium: 'yellow', Low: 'green' };
+function urgencyOf(d) { return (d ?? 0) > 7 ? 'High' : (d ?? 0) >= 3 ? 'Medium' : 'Low'; }
+
+function mapPetition(p) {
+  return {
+    id: p.id,
+    ref: p.name,
+    studentName: p.student_id?.name || 'Student',
+    type: p.petition_type_id?.name || p.subject || 'Petition',
+    subject: p.subject,
+    date: p.submitted_date || '',
+    tier: p.current_tier,
+    urgency: urgencyOf(p.days_pending),
+  };
+}
 
 export default function FacultyPetitionQueuePage() {
   const navigate = useNavigate();
-  const [type, setType] = useState('All');
-  const [selected, setSelected] = useState(facultyPetitions[0]);
+  const { data, loading, error, reload } = useAsync(() => facultyAPI.getPetitionQueue(), []);
+  const petitions = (data?.petitions || []).map(mapPetition);
+  const [selected, setSelected] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  const rows = facultyPetitions.filter((p) => type === 'All' || p.type === type);
+  const act = async (action) => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await petitionsAPI.facultyAction(selected.id, action);
+      setSelected(null);
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const columns = [
     { key: 'ref', header: 'REF', sortable: true, render: (v) => <strong>{v}</strong> },
-    { key: 'studentName', header: 'Student', sortable: true, render: (v, r) => <span>{v}<br /><span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>{r.sid}</span></span> },
+    { key: 'studentName', header: 'Student', sortable: true },
     { key: 'type', header: 'Petition Type', render: (v) => <StatusPill status={v} variant="yellow" /> },
     { key: 'date', header: 'Submission', sortable: true },
     { key: 'urgency', header: 'Urgency', render: (v) => <StatusPill status={v} variant={URGENCY_VARIANT[v]} /> },
@@ -30,47 +57,40 @@ export default function FacultyPetitionQueuePage() {
 
   return (
     <AppShell navItems={facultyNav} logoVariant="stacked" sidebarLabel="FACULTY">
-      <PageHeader title="Petition Queue" subtitle={`Petitions requiring your review · ${rows.length} pending`} useBrandFont />
+      <PageHeader title="Petition Queue" subtitle={`Petitions requiring your review · ${petitions.length} pending`} useBrandFont />
 
-      <div className={w.filterTabs} style={{ marginBottom: 16 }}>
-        {TYPES.map((t) => (
-          <button key={t} className={`${w.filterTab} ${type === t ? w.filterTabActive : ''}`} onClick={() => setType(t)}>{t}</button>
-        ))}
-      </div>
+      {loading ? (
+        <div className={w.card}><div className={w.empty}>Loading petitions…</div></div>
+      ) : error ? (
+        <div className={w.card}><div className={w.empty}><div className={w.emptyTitle}>Couldn't load the queue</div><p>{error}</p><button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} onClick={reload}>Retry</button></div></div>
+      ) : petitions.length === 0 ? (
+        <div className={w.card}><div className={w.empty}><div className={w.emptyTitle}>Queue clear</div><p>No petitions awaiting your review.</p></div></div>
+      ) : (
+        <div className={w.split}>
+          <div className={w.card} style={{ padding: 0 }}>
+            <DataTable columns={columns} data={petitions} onRowClick={setSelected} rowAccentColor={(r) => `var(--color-${URGENCY_VARIANT[r.urgency]})`} />
+          </div>
 
-      <div className={w.split}>
-        <div className={w.card} style={{ padding: 0 }}>
-          <DataTable columns={columns} data={rows} onRowClick={setSelected} rowAccentColor={(r) => `var(--color-${URGENCY_VARIANT[r.urgency]})`} />
-        </div>
+          {selected && (
+            <aside className={w.sidePanel}>
+              <StatusPill status={`PETITION ${selected.ref}`} variant="coral" />
+              <h3 className={w.cardTitle} style={{ marginTop: 12 }}>{selected.type}</h3>
+              <div className={w.metaRow}><span>{selected.studentName}</span><span>Tier: {selected.tier}</span></div>
 
-        {selected && (
-          <aside className={w.sidePanel}>
-            <StatusPill status={`PETITION ${selected.ref}`} variant="coral" />
-            <h3 className={w.cardTitle} style={{ marginTop: 12 }}>{selected.type}</h3>
-            <div className={w.metaRow}><span>{selected.studentName}</span><span>{selected.department}</span></div>
-
-            <div className={w.section}>
-              <div className={w.sectionTitle}>Justification</div>
-              <div className={w.quote}>{selected.justification}</div>
-            </div>
-
-            <div className={w.section}>
-              <div className={w.sectionTitle}>Student Snapshot</div>
-              <div className={w.metaRow}>
-                <span>GPA <strong>{selected.snapshot.gpa}</strong></span>
-                <span>Credits <strong>{selected.snapshot.credits}</strong></span>
-                <StatusPill status={selected.snapshot.standing} variant="green" />
+              <div className={w.section}>
+                <div className={w.sectionTitle}>Subject</div>
+                <div className={w.quote}>{selected.subject || '—'}</div>
               </div>
-            </div>
 
-            <div className={w.btnRow}>
-              <button className={`${w.btn} ${w.btnGreen}`}>✓ Approve</button>
-              <button className={`${w.btn} ${w.btnDanger}`}>✕ Reject</button>
-              <button className={`${w.btn} ${w.btnOutline}`} onClick={() => navigate(`/faculty/petitions/${selected.id}`)}>Open full review →</button>
-            </div>
-          </aside>
-        )}
-      </div>
+              <div className={w.btnRow}>
+                <button className={`${w.btn} ${w.btnGreen}`} disabled={busy} onClick={() => act('approve')}>✓ Approve</button>
+                <button className={`${w.btn} ${w.btnDanger}`} disabled={busy} onClick={() => act('reject')}>✕ Reject</button>
+                <button className={`${w.btn} ${w.btnOutline}`} onClick={() => navigate(`/faculty/petitions/${selected.id}`)}>Open full review →</button>
+              </div>
+            </aside>
+          )}
+        </div>
+      )}
     </AppShell>
   );
 }

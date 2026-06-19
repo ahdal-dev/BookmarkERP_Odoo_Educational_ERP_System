@@ -10,6 +10,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage/UnauthorizedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import SettingsPage from './pages/settings/SettingsPage';
+import HelpPage from './pages/HelpPage/HelpPage';
 
 // App Launcher (existing component, now mounted at /apps)
 import DashboardPage from './pages/DashboardPage/DashboardPage';
@@ -95,6 +96,12 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/profile" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/handbook" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/support" element={<Navigate to="/support/tickets" replace />} />
+          <Route path="/apply/academic" element={<Navigate to="/admissions/status" replace />} />
 
           {/* App Launcher — Super Admin / Registrar / Admission Officer */}
           <Route
