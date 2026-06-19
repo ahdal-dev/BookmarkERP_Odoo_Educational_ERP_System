@@ -48,7 +48,7 @@ export default function UserManagementPage() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { data: usersData } = useAsync(adminAPI.getUsers);
+  const { data: usersData, loading, error } = useAsync(adminAPI.getUsers);
 
   const liveUsers = usersData?.users?.map((u) => ({
     id: u.id,
@@ -62,18 +62,18 @@ export default function UserManagementPage() {
   const totalAccounts = usersData?.total_accounts ?? mockUserStats.totalAccounts;
   const activeNow = usersData?.active_now ?? mockUserStats.activeNow;
 
+  const reload = () => window.location.reload();
+
   const deactivate = async (u) => {
     if (!window.confirm(`Deactivate ${u.name}?`)) return;
     try {
       await adminAPI.deleteUser(u.id);
-      window.location.reload();
+      reload();
     } catch (e) {
       console.error('Failed to deactivate user:', e);
     }
   };
 
-  const reload = () => window.location.reload();
-
   const tableColumns = [
     ...columns,
     {
@@ -88,24 +88,7 @@ export default function UserManagementPage() {
     },
   ];
 
-  const deactivate = async (u) => {
-    if (!window.confirm(`Deactivate ${u.name}?`)) return;
-    try { await adminAPI.deleteUser(u.id); reload(); } catch { /* ignore */ }
-  };
-
-  const tableColumns = [
-    ...columns,
-    {
-      key: 'actions', header: 'Actions',
-      render: (_, r) => (
-        <span className={styles.actionIcons}>
-          <button className={styles.iconBtn} aria-label="Deactivate" title="Deactivate" onClick={() => deactivate(r)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-          </button>
-        </span>
-      ),
-    },
-  ];
+  const paged = users.slice((page - 1) * 8, page * 8);
 
   return (
     <AppShell

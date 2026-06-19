@@ -6,7 +6,7 @@ import StatCard from '../../../components/StatCard/StatCard';
 import CircularGauge from '../../../components/CircularGauge/CircularGauge';
 import StatusPill from '../../../components/StatusPill/StatusPill';
 import useAsync from '../../../hooks/useAsync';
-import { adminAPI } from '../../../api/apiGateway';
+import { adminAPI, auditAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import {
   mockCommandKPIs,
@@ -15,7 +15,6 @@ import {
   mockAdmissionSummary,
   mockUserGrowth,
   mockUserGrowth90d,
-  openTicketCount,
 } from '../../../mocks/adminMocks';
 import styles from './CommandCenterPage.module.css';
 
@@ -53,6 +52,29 @@ function exportSummaryReport(kpis, growth) {
   URL.revokeObjectURL(url);
 }
 
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseGrowthData(analyticsData) {
+  if (!analyticsData?.data?.length) return null;
+  return analyticsData.data.map((d) => {
+    const [, month] = (d.month || '').split('-');
+    const label = month ? (MONTH_ABBR[parseInt(month, 10) - 1] || d.month) : d.month;
+    return { label, value: d.users };
+  });
+}
+
+const SEVERITY_MAP = { high: 'high', warning: 'medium', info: 'low', error: 'high' };
+
+function parseAuditEvents(auditData) {
+  if (!auditData?.events?.length) return null;
+  return auditData.events.slice(0, 5).map((e, i) => ({
+    id: i + 1,
+    severity: SEVERITY_MAP[e.severity] || 'low',
+    message: e.detail || `${e.event_type} — ${e.actor}`,
+    time: e.date ? new Date(e.date).toLocaleString() : '',
+  }));
+}
+
 export default function CommandCenterPage() {
   const navigate = useNavigate();
   const [alertDismissed, setAlertDismissed] = useState(false);
@@ -60,6 +82,8 @@ export default function CommandCenterPage() {
 
   const { data: statsData } = useAsync(adminAPI.getStats);
   const { data: healthData } = useAsync(adminAPI.getHealth);
+  const { data: analyticsData } = useAsync(adminAPI.getAnalytics);
+  const { data: auditData } = useAsync(() => auditAPI.getLog({ limit: 5 }));
 
   const kpis = {
     totalUsers: statsData?.totalUsers ?? mockCommandKPIs.totalUsers,
@@ -89,14 +113,18 @@ export default function CommandCenterPage() {
     approvedToday: statsData?.admittedApplications ?? mockAdmissionSummary.approvedToday,
   };
 
-  const chartData = chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d;
+  const liveGrowth = parseGrowthData(analyticsData);
+  const chartData = liveGrowth ?? (chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d);
+
+  const liveSecurityEvents = parseAuditEvents(auditData);
+  const securityEvents = liveSecurityEvents ?? mockRecentSecurityEvents;
 
   return (
     <AppShell
       navItems={navWithActive}
       logoVariant="icon-text"
       sidebarLabel="ADMIN PANEL"
-      topBar={<TopBar searchPlaceholder="Search users, pages, settings..." notificationCount={openTicketCount} />}
+      topBar={<TopBar searchPlaceholder="Search users, pages, settings..." notificationCount={kpis.openTickets} />}
     >
       {!alertDismissed && degraded.length > 0 && (
         <div className={styles.alertBanner}>
@@ -216,7 +244,7 @@ export default function CommandCenterPage() {
             <button className={styles.viewAllBtn} onClick={() => navigate('/admin/security')}>View All →</button>
           </div>
           <div className={styles.securityList}>
-            {mockRecentSecurityEvents.map((ev) => (
+            {securityEvents.map((ev) => (
               <div key={ev.id} className={styles.securityRow}>
                 <span
                   className={styles.severityDot}
@@ -255,7 +283,7 @@ export default function CommandCenterPage() {
               onClick={() =>
                 action.path
                   ? navigate(action.path)
-                  : exportSummaryReport(mockCommandKPIs, chartData)
+                  : exportSummaryReport(kpis, chartData)
               }
             >
               {action.label}

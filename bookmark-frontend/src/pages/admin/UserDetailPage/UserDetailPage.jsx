@@ -7,7 +7,7 @@ import ToggleSwitch from '../../../components/ToggleSwitch/ToggleSwitch';
 import useAsync from '../../../hooks/useAsync';
 import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
-import { mockUsers } from '../../../mocks/usersMocks';
+const mockUsers = [];
 import { openTicketCount } from '../../../mocks/adminMocks';
 import styles from './UserDetailPage.module.css';
 
