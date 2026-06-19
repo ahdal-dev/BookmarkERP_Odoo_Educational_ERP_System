@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BookmarkLogo from '../../components/BookmarkLogo/BookmarkLogo';
 import { SplatterDot } from '../../styles/brand';
@@ -11,6 +11,12 @@ import styles from './LoginPage.module.css';
    Right: Off-white panel with login card
    ============================================================ */
 
+const DEMO_USERS = [
+  { label: 'Super Admin', role: 'super_admin', name: 'Super Admin', email: 'admin@bookmark.edu', landing: '/admin' },
+  { label: 'Registrar', role: 'registrar', name: 'Registrar Demo', email: 'registrar@bookmark.edu', landing: '/apps' },
+  { label: 'Student', role: 'student', name: 'Student Demo', email: 'student@bookmark.edu', landing: '/student/dashboard' },
+];
+
 export default function LoginPage() {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +25,13 @@ export default function LoginPage() {
 
   const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
+
+  const demoLogin = (demo) => {
+    const user = { id: 1, name: demo.name, email: demo.email, role: demo.role, roles: {} };
+    localStorage.setItem('bookmark_token', 'demo_token');
+    localStorage.setItem('bookmark_user', JSON.stringify(user));
+    window.location.href = demo.landing;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,7 +131,7 @@ export default function LoginPage() {
                     <label htmlFor="login-password" className={styles.fieldLabel}>
                       PASSWORD
                     </label>
-                    <Link to="/change-password" className={styles.forgotLink}>Change Password?</Link>
+                    <a href="#" className={styles.forgotLink}>Forgot Password?</a>
                   </div>
                   <div className={styles.inputWrap}>
                     <span className={styles.inputPrefix}>
@@ -172,20 +185,28 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Apply for Admission CTA */}
-              <button
-                type="button"
-                className={styles.applyBtn}
-                onClick={() => navigate('/admissions')}
-              >
-                Apply for Admission →
-              </button>
+              {/* Demo Login */}
+              <div className={styles.demoSection}>
+                <span className={styles.demoLabel}>— Demo Access (no backend required) —</span>
+                <div className={styles.demoBtns}>
+                  {DEMO_USERS.map((d) => (
+                    <button
+                      key={d.role}
+                      type="button"
+                      className={styles.demoBtn}
+                      onClick={() => demoLogin(d)}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Footer */}
               <div className={styles.cardFooter}>
                 <p className={styles.applyText}>
                   Not yet a student?{' '}
-                  <Link to="/admissions" className={styles.applyLink}>Apply Now</Link>
+                  <a href="#" className={styles.applyLink}>Apply Now</a>
                 </p>
 
                 <div className={styles.secureBadge}>

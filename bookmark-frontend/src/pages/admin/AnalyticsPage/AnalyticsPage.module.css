@@ -1,0 +1,149 @@
+.breadcrumb {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 8px;
+}
+
+.headerRight { display: flex; gap: 10px; align-items: center; }
+
+.periodToggle {
+  display: flex; background: var(--color-bg-warm); border-radius: 10px; padding: 3px;
+}
+.periodBtn {
+  padding: 5px 12px; border: none; background: transparent; border-radius: 8px;
+  font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); cursor: pointer;
+}
+.periodActive { background: #fff; color: var(--color-primary-black); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+.exportBtn {
+  padding: 9px 20px; border-radius: 999px;
+  border: 2px solid var(--color-primary-black); background: transparent;
+  color: var(--color-primary-black); font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+}
+.exportBtn:hover { background: var(--color-primary-black); color: #fff; }
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 24px;
+  border-bottom: 2px solid var(--color-border-light); padding-bottom: 0;
+}
+.tab {
+  padding: 10px 18px; border: none; background: transparent; font-size: 0.85rem;
+  font-weight: 600; color: var(--color-text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+}
+.tabActive { color: var(--color-primary-black); border-bottom-color: var(--color-lime); }
+
+/* ── KPI Grid ──────────────────────────────────────────────── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpiTile {
+  background: var(--color-bg-white);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-top: 3px solid var(--color-lime);
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.kpiLabel {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-text-muted);
+}
+
+.kpiValue { font-size: 1.6rem; font-weight: 800; color: var(--color-primary-black); line-height: 1.1; }
+
+.kpiDelta { font-size: 0.75rem; font-weight: 600; }
+
+/* ── Charts Row ────────────────────────────────────────────── */
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+.chartCard {
+  background: var(--color-bg-white);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.chartHeader { display: flex; align-items: center; justify-content: space-between; }
+.chartTitle { font-size: 0.9rem; font-weight: 700; color: var(--color-primary-black); }
+.chartSubtitle { font-size: 0.72rem; color: var(--color-text-muted); }
+
+/* Fake line chart */
+.fakeLineChart { display: flex; flex-direction: column; gap: 8px; }
+
+.chartSvg { width: 100%; height: 80px; }
+
+.chartLabels { display: flex; justify-content: space-between; }
+.chartLabel { font-size: 0.65rem; color: var(--color-text-muted); }
+
+/* Mini bar */
+.barItem { display: flex; align-items: center; gap: 10px; }
+.barItemName { font-size: 0.78rem; color: var(--color-text-secondary); width: 120px; flex-shrink: 0; }
+.sparkBar { flex: 1; height: 8px; background: var(--color-bg-warm); border-radius: 4px; overflow: hidden; }
+.sparkFill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.barItemValue { font-size: 0.78rem; font-weight: 700; color: var(--color-primary-black); width: 60px; text-align: right; }
+
+/* ── Section Content ───────────────────────────────────────── */
+.sectionContent { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── Funnel ────────────────────────────────────────────────── */
+.funnelRow { display: flex; align-items: center; gap: 12px; }
+.funnelStage { font-size: 0.82rem; font-weight: 600; color: var(--color-primary-black); width: 140px; flex-shrink: 0; }
+.funnelBar { flex: 1; height: 12px; background: var(--color-bg-warm); border-radius: 6px; overflow: hidden; }
+.funnelFill { height: 100%; background: var(--color-lime); border-radius: 6px; transition: width 0.6s ease; }
+.funnelCount { font-size: 0.78rem; font-weight: 700; color: var(--color-primary-black); width: 48px; text-align: right; }
+.funnelPct { font-size: 0.72rem; color: var(--color-text-muted); width: 38px; text-align: right; }
+
+/* ── Infrastructure ────────────────────────────────────────── */
+.infraRow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+.gaugeCard {
+  background: var(--color-bg-white); border-radius: 14px; padding: 16px 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 8px;
+}
+
+.gaugeLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
+
+.gaugeTrack { height: 10px; background: var(--color-bg-warm); border-radius: 5px; overflow: hidden; }
+.gaugeFill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+
+.gaugeValue { font-size: 1rem; font-weight: 800; color: var(--color-primary-black); }
+
+/* ── Service Table ─────────────────────────────────────────── */
+.tableCard {
+  background: var(--color-bg-white); border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden;
+}
+
+.serviceTable { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.serviceTable thead tr { background: var(--color-primary-black); }
+
+.th {
+  padding: 12px 16px; text-align: left; font-size: 0.68rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.7); white-space: nowrap;
+}
+
+.tr { border-bottom: 1px solid var(--color-border-light); transition: background 0.15s; }
+.tr:hover { background: var(--color-bg-warm); }
+.tr:last-child { border-bottom: none; }
+
+.td { padding: 12px 16px; color: var(--color-primary-black); white-space: nowrap; }
+
+@media (max-width: 1100px) {
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+  .chartsRow { grid-template-columns: 1fr; }
+  .infraRow { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .kpiGrid { grid-template-columns: 1fr 1fr; }
+  .infraRow { grid-template-columns: 1fr 1fr; }
+}
