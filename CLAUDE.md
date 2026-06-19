@@ -61,14 +61,19 @@ The screens below now fetch **live data** through new FastAPI gateway routers (`
 - **Faculty** → `GET /api/v1/faculty/dashboard`, `/faculty/courses`, `/faculty/courses/{id}/roster` (+ existing `/faculty/petitions`).
 - **Admissions pipeline** → `GET /api/v1/admin/admissions/pipeline`, `PATCH /admin/admissions/{id}/stage`. **Admin users** → `GET/POST /api/v1/admin/users`. **Registration rules** → `GET/PUT /api/v1/admin/settings/registration-rules` (stored as `ir.config_parameter`). **Admin petitions** → `GET /api/v1/admin/petitions[/{id}]`.
 
+### Academic records & registration tiers (gap closure)
+New Odoo module `addons/edu_mangment/edu_mang_academic/` adds a `grade` (+ `grade_points`) field to `education.registration` and computes `cumulative_gpa` / `earned_credits` / `class_year` / `academic_standing` on `res.users`, plus an `education.registration.tier` model (seniority windows, demo tiers seeded). A `post_init_hook` seeds sample grades so GPA renders on install. New gateway routers `registration_tiers.py` + additions to `registration.py`/`admin.py`/`deps.py`:
+- **Precise user roles** → `/admin/users` now returns the real canonical role per user (batch `resolve_roles_bulk` in `deps.py`, group-xmlid → role). `UserManagementPage` maps role→label.
+- **Real GPA + grades** → `GET /api/v1/student/grades` (per-term transcript + cumulative GPA/credits/standing); `GET /student/dashboard` now returns a real `gpa`. `GradesPage.jsx` is live.
+- **Registration tiers/windows** → `GET /api/v1/registration/tiers`, `GET /api/v1/student/registration-window`. `InstitutionalRulesetPage` windows table reads live tiers.
+
 ### Deploy note
-The notifications module must be installed/updated once:
-`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -u edu_mang_notification -d edu_demo_new --stop-after-init`
+Install/update the custom modules once (first install uses `-i`, later updates `-u`):
+`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -i edu_mang_notification,edu_mang_academic -d edu_demo_new --stop-after-init`
 then rebuild the gateway: `cd api_gateway && docker-compose up -d --build`.
 
-### Remaining genuine gaps (no Odoo model — intentionally not faked)
-- **Student GPA**: no GPA model → `student/dashboard` returns `gpa: null` (UI shows "—").
-- **Registrar "tiers" / "active concurrent users"**: no model → replaced with real per-course windows and an "Open Courses" metric; concurrent-users card removed.
-- **Waitlist auto-promotion**: `education.registration` has a `waitlist` state but no auto-promote logic.
-- **User role granularity**: `admin/users` returns a coarse Student/Staff role (portal `share` flag), not the full 9-role mapping.
-- **Ruleset windows / prerequisite list** (`InstitutionalRulesetPage`): scalar rules persist via `ir.config_parameter`; the registration-windows table and prerequisite checklist remain UI-local (no model).
+### Remaining gaps (deferred — no Odoo model yet)
+- **Waitlist auto-promotion**: `education.registration` has a `waitlist` state but no auto-promote logic (drop frees a seat via `action_drop`; a cron + promotion hook on `education.registration` would close this).
+- **Active concurrent users** (Registrar dashboard): needs a session/activity-tracking model; currently omitted.
+- **GPA source alternative**: GPA is computed from grades on the active custom stack; OpenEduCat exam results (`op.result.line` / `op.marksheet.line`) are not integrated.
+- **Ruleset prerequisite list** (`InstitutionalRulesetPage`): scalar rules persist via `ir.config_parameter` and the windows table is now live (tiers), but the prerequisite checklist remains UI-local (no model).

@@ -632,6 +632,8 @@ app.include_router(notifications_router.router)
 # Registration catalog + student/faculty/admin data
 from routers import registration as registration_router
 app.include_router(registration_router.router)
+from routers import registration_tiers as registration_tiers_router
+app.include_router(registration_tiers_router.router)
 from routers import faculty as faculty_router
 app.include_router(faculty_router.router)
 from routers import admin as admin_router

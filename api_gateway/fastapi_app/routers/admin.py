@@ -20,7 +20,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from .deps import TokenData, call_kw, odoo_session, require_roles
+from .deps import TokenData, call_kw, odoo_session, require_roles, resolve_roles_bulk
 
 logger = logging.getLogger(__name__)
 
@@ -120,19 +120,20 @@ async def list_users(token: TokenData = Depends(require_roles("super_admin"))):
         users = await call_kw(
             client, "res.users", "search_read",
             [[]],
-            {"fields": ["name", "login", "email", "active", "share"],
+            {"fields": ["name", "login", "email", "active", "share", "group_ids"],
              "order": "name", "limit": 300},
         )
         total = await call_kw(client, "res.users", "search_count", [[]])
         active = await call_kw(client, "res.users", "search_count", [[["active", "=", True]]])
+        roles = await resolve_roles_bulk(client, users)
 
     rows = [
         {
             "id": u["id"],
             "name": u.get("name"),
             "email": u.get("email") or u.get("login"),
-            # Coarse role: portal (share) users are students/applicants; others staff.
-            "role": "Student" if u.get("share") else "Staff",
+            # Precise canonical role resolved from the user's security groups.
+            "role": roles.get(u["id"], "staff"),
             "status": "Active" if u.get("active") else "Inactive",
         }
         for u in users

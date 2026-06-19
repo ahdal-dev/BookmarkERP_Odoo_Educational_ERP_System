@@ -4,7 +4,7 @@ import PageHeader from '../../components/PageHeader/PageHeader';
 import ToggleSwitch from '../../components/ToggleSwitch/ToggleSwitch';
 import CircularGauge from '../../components/CircularGauge/CircularGauge';
 import { adminSettingsNav } from '../../config/navConfigs';
-import { adminAPI } from '../../api/apiGateway';
+import { adminAPI, registrationAPI } from '../../api/apiGateway';
 import { mockRuleset } from '../../mocks/rulesetMocks';
 import styles from './InstitutionalRulesetPage.module.css';
 
@@ -33,12 +33,25 @@ export default function InstitutionalRulesetPage() {
   const [isDirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Load persisted scalar rules on mount.
+  // Load persisted scalar rules + live registration tiers on mount.
   useEffect(() => {
     let active = true;
     adminAPI.getRules()
       .then((rules) => { if (active) setForm((prev) => mergeRules(prev, rules)); })
       .catch(() => { /* keep defaults if endpoint unavailable */ });
+    registrationAPI.getTiers()
+      .then((res) => {
+        if (!active || !res?.tiers) return;
+        const windows = res.tiers.map((t) => ({
+          tier: t.name,
+          openDate: t.registration_start || '—',
+          closeDate: t.registration_end || '—',
+          capacity: t.credit_range,
+          color: t.color || 'var(--color-lime)',
+        }));
+        setForm((prev) => ({ ...prev, registrationWindows: windows }));
+      })
+      .catch(() => { /* keep mock windows if endpoint unavailable */ });
     return () => { active = false; };
   }, []);
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="tier_senior" model="education.registration.tier">
+            <field name="name">Tier 1 — Seniors</field>
+            <field name="sequence">10</field>
+            <field name="color">#4caf27</field>
+            <field name="min_credits">90</field>
+            <field name="max_credits">0</field>
+            <field name="registration_start" eval="(DateTime.now()).strftime('%Y-%m-01')"/>
+            <field name="registration_end" eval="(DateTime.now() + relativedelta(months=2)).strftime('%Y-%m-28')"/>
+        </record>
+        <record id="tier_junior" model="education.registration.tier">
+            <field name="name">Tier 2 — Juniors</field>
+            <field name="sequence">20</field>
+            <field name="color">#f5c842</field>
+            <field name="min_credits">60</field>
+            <field name="max_credits">89</field>
+            <field name="registration_start" eval="(DateTime.now() + relativedelta(weeks=1)).strftime('%Y-%m-%d')"/>
+            <field name="registration_end" eval="(DateTime.now() + relativedelta(months=2)).strftime('%Y-%m-28')"/>
+        </record>
+        <record id="tier_sophomore" model="education.registration.tier">
+            <field name="name">Tier 3 — Sophomores</field>
+            <field name="sequence">30</field>
+            <field name="color">#e8613a</field>
+            <field name="min_credits">30</field>
+            <field name="max_credits">59</field>
+            <field name="registration_start" eval="(DateTime.now() + relativedelta(weeks=2)).strftime('%Y-%m-%d')"/>
+            <field name="registration_end" eval="(DateTime.now() + relativedelta(months=2)).strftime('%Y-%m-28')"/>
+        </record>
+        <record id="tier_freshman" model="education.registration.tier">
+            <field name="name">Tier 4 — Freshmen</field>
+            <field name="sequence">40</field>
+            <field name="color">#6b7280</field>
+            <field name="min_credits">0</field>
+            <field name="max_credits">29</field>
+            <field name="registration_start" eval="(DateTime.now() + relativedelta(weeks=3)).strftime('%Y-%m-%d')"/>
+            <field name="registration_end" eval="(DateTime.now() + relativedelta(months=2)).strftime('%Y-%m-28')"/>
+        </record>
+    </data>
+</odoo>

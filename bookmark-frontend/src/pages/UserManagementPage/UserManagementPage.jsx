@@ -18,12 +18,25 @@ import styles from './UserManagementPage.module.css';
 
 const STATUS_DOT = { Active: 'green', Inactive: 'yellow', Suspended: 'coral' };
 
+const ROLE_LABELS = {
+  super_admin: 'Super Admin',
+  registrar: 'Registrar',
+  department_chair: 'Department Chair',
+  academic_advisor: 'Academic Advisor',
+  instructor: 'Instructor',
+  admission_officer: 'Admission Officer',
+  support_technician: 'Support',
+  student: 'Student',
+  prospective_student: 'Prospective',
+  staff: 'Staff',
+};
+
 const columns = [
   { key: 'name', header: 'Name', sortable: true },
   { key: 'email', header: 'Email', sortable: true },
   {
     key: 'role', header: 'Assigned Role', sortable: true,
-    render: (val) => <StatusPill status={val} />,
+    render: (val) => <StatusPill status={ROLE_LABELS[val] || val} />,
   },
   {
     key: 'status', header: 'Status',

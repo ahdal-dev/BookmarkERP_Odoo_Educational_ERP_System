@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_reg_tier_user,education.registration.tier.user,model_education_registration_tier,base.group_user,1,0,0,0
+access_reg_tier_portal,education.registration.tier.portal,model_education_registration_tier,base.group_portal,1,0,0,0
+access_reg_tier_registrar,education.registration.tier.registrar,model_education_registration_tier,edu_mang_auth.group_erp_registrar,1,1,1,1
+access_reg_tier_admin,education.registration.tier.admin,model_education_registration_tier,edu_mang_auth.group_erp_admin,1,1,1,1
