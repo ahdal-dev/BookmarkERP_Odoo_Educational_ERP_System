@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .deps import TokenData, call_kw, odoo_session, require_roles, resolve_roles_bulk
+from mq import QUEUE_ADMISSION_EMAIL, QUEUE_NOTIFICATION, try_publish
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,16 @@ async def update_admission_stage(
             await call_kw(client, "school.admission", method, [[adm_id]])
         else:
             await call_kw(client, "school.admission", "write", [[adm_id], {"state": body.stage}])
+    await try_publish(QUEUE_NOTIFICATION, {
+        "user_id": token.user_id,
+        "event": "admission.stage_changed",
+        "admission_id": adm_id,
+        "new_stage": body.stage,
+    })
+    await try_publish(QUEUE_ADMISSION_EMAIL, {
+        "admission_id": adm_id,
+        "new_stage": body.stage,
+    })
     return {"ok": True}
 
 
