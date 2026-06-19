@@ -217,6 +217,75 @@ export const registrarAPI = {
     });
     return response.data;
   },
+
+  /** Per-course enrollment monitor */
+  getEnrollment: async () => {
+    const response = await api.get('/api/v1/registrar/enrollment');
+    return response.data;
+  },
+
+  /** Update a registration tier / window */
+  updateTier: async (tierId, values) => {
+    const response = await api.put(`/api/v1/registrar/registration-tiers/${tierId}`, values);
+    return response.data;
+  },
+};
+
+/* ============================================================
+   ADVISING (Advisor / Chair) ENDPOINTS
+   ============================================================ */
+
+export const advisingAPI = {
+  getAdvisees: async () => {
+    const response = await api.get('/api/v1/faculty/advisees');
+    return response.data;
+  },
+  getAdviseeProfile: async (userId) => {
+    const response = await api.get(`/api/v1/faculty/advisees/${userId}`);
+    return response.data;
+  },
+  getDepartmentStudents: async () => {
+    const response = await api.get('/api/v1/faculty/department/students');
+    return response.data;
+  },
+};
+
+/* ============================================================
+   SUPPORT (Tickets / Live Chat) ENDPOINTS
+   ============================================================ */
+
+export const supportAPI = {
+  listTickets: async () => {
+    const response = await api.get('/api/v1/support/tickets');
+    return response.data;
+  },
+  createTicket: async (data) => {
+    const response = await api.post('/api/v1/support/tickets', data);
+    return response.data;
+  },
+  getTicket: async (id) => {
+    const response = await api.get(`/api/v1/support/tickets/${id}`);
+    return response.data;
+  },
+  postMessage: async (id, body) => {
+    const response = await api.post(`/api/v1/support/tickets/${id}/messages`, { body });
+    return response.data;
+  },
+  updateTicket: async (id, patch) => {
+    const response = await api.patch(`/api/v1/support/tickets/${id}`, patch);
+    return response.data;
+  },
+};
+
+/* ============================================================
+   AUDIT LOG ENDPOINTS
+   ============================================================ */
+
+export const auditAPI = {
+  getLog: async (params = {}) => {
+    const response = await api.get('/api/v1/admin/audit-log', { params });
+    return response.data;
+  },
 };
 
 /* ============================================================
@@ -314,6 +383,29 @@ export const adminAPI = {
       current_password: currentPassword,
       new_password: newPassword,
     });
+  /** Deactivate a user */
+  deleteUser: async (id) => {
+    const response = await api.delete(`/api/v1/admin/users/${id}`);
+    return response.data;
+  },
+
+  /** Read / write global system settings */
+  getSystemSettings: async () => {
+    const response = await api.get('/api/v1/admin/system-settings');
+    return response.data;
+  },
+  updateSystemSettings: async (settings) => {
+    const response = await api.put('/api/v1/admin/system-settings', settings);
+    return response.data;
+  },
+
+  /** Maintenance actions */
+  clearCache: async () => {
+    const response = await api.post('/api/v1/admin/maintenance/clear-cache');
+    return response.data;
+  },
+  runTest: async (target) => {
+    const response = await api.post(`/api/v1/admin/maintenance/test/${target}`);
     return response.data;
   },
 };
@@ -334,6 +426,18 @@ export const admissionsAPI = {
     const response = await api.patch(`/api/v1/admin/admissions/${id}/stage`, { stage });
     return response.data;
   },
+
+  /** Application review detail */
+  getDetail: async (id) => {
+    const response = await api.get(`/api/v1/admin/admissions/${id}`);
+    return response.data;
+  },
+
+  /** Public status lookup by reference */
+  getStatus: async (reference) => {
+    const response = await api.get(`/api/v1/admissions/status/${reference}`);
+    return response.data;
+  },
 };
 
 /* ============================================================
@@ -341,9 +445,9 @@ export const admissionsAPI = {
    ============================================================ */
 
 export const applicationAPI = {
-  // TODO(backend): implement POST /api/v1/admission/documents (multipart)
+  /** Extract fields from an uploaded document via OCR */
   uploadDocument: async (formData) => {
-    const response = await api.post('/api/v1/admission/documents', formData, {
+    const response = await api.post('/api/v1/extract-document', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
@@ -367,9 +471,33 @@ export const petitionsAPI = {
     return response.data;
   },
 
-  // TODO(backend): implement POST /api/v1/petitions
+  /** Submit a new petition */
   submitPetition: async (data) => {
-    const response = await api.post('/api/v1/petitions', data);
+    const response = await api.post('/api/v1/petitions/new', data);
+    return response.data;
+  },
+
+  /** Active petition types */
+  getTypes: async () => {
+    const response = await api.get('/api/v1/petitions/types');
+    return response.data;
+  },
+
+  /** The caller's own petitions (student) */
+  getMyPetitions: async () => {
+    const response = await api.get('/api/v1/student/petitions');
+    return response.data;
+  },
+
+  /** Faculty tier action (approve/reject/escalate) */
+  facultyAction: async (id, action, reason) => {
+    const response = await api.post(`/api/v1/faculty/petitions/${id}/action`, { action, reason });
+    return response.data;
+  },
+
+  /** Chair override (approve/reject) */
+  override: async (id, decision, reason) => {
+    const response = await api.post(`/api/v1/faculty/petitions/${id}/override`, { decision, reason });
     return response.data;
   },
 };

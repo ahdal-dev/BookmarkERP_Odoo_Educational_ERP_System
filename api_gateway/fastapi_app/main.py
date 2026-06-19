@@ -8,6 +8,7 @@ Observability: Prometheus metrics, structured JSON logs, X-Request-ID headers
 ============================================================================
 """
 
+import asyncio
 import os
 import json
 import uuid
@@ -545,6 +546,36 @@ odoo_client = OdooClient()
 # FastAPI Lifespan
 # ============================================================================
 
+async def _run_notification_consumer(app: FastAPI) -> None:
+    """Background task: consume notification.created and fan out to SSE queues."""
+    import mq as _mq_module
+    while True:
+        try:
+            conn = _mq_module._mq_connection
+            if conn is None:
+                await asyncio.sleep(5)
+                continue
+            async with conn.channel() as channel:
+                await channel.set_qos(prefetch_count=10)
+                queue = await channel.declare_queue(_mq_module.QUEUE_NOTIFICATION, durable=True)
+                async with queue.iterator() as q_iter:
+                    async for message in q_iter:
+                        async with message.process():
+                            try:
+                                payload = json.loads(message.body.decode())
+                                user_id = payload.get("user_id")
+                                if user_id is not None:
+                                    for q in list(app.state.sse_queues.get(user_id, [])):
+                                        await q.put(payload)
+                            except Exception as exc:
+                                logger.warning("SSE fanout error: %s", exc)
+        except asyncio.CancelledError:
+            break
+        except Exception as exc:
+            logger.error("MQ consumer crashed, restarting in 5s: %s", exc)
+            await asyncio.sleep(5)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _http_client
@@ -570,9 +601,35 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning({"msg": "Odoo not reachable on startup", "err": str(exc)})
 
+    # MQ + SSE setup
+    import mq as _mq_module
+    app.state.sse_queues = {}  # {user_id: [asyncio.Queue, ...]}
+    if _mq_module.mq_enabled():
+        try:
+            _mq_module._mq_connection = await _mq_module.connect_mq()
+            logger.info("RabbitMQ connected")
+            app.state.mq_consumer_task = asyncio.create_task(
+                _run_notification_consumer(app)
+            )
+        except Exception as exc:
+            logger.warning("RabbitMQ unavailable on startup: %s", exc)
+            app.state.mq_consumer_task = None
+    else:
+        app.state.mq_consumer_task = None
+
     yield
 
     logger.info("Shutting down API Gateway...")
+
+    if getattr(app.state, "mq_consumer_task", None):
+        app.state.mq_consumer_task.cancel()
+        try:
+            await app.state.mq_consumer_task
+        except asyncio.CancelledError:
+            pass
+    if _mq_module._mq_connection is not None:
+        await _mq_module._mq_connection.close()
+
     await _http_client.aclose()
     _http_client = None
     if getattr(app.state, "redis", None):
@@ -636,8 +693,14 @@ from routers import registration_tiers as registration_tiers_router
 app.include_router(registration_tiers_router.router)
 from routers import faculty as faculty_router
 app.include_router(faculty_router.router)
+from routers import advising as advising_router
+app.include_router(advising_router.router)
 from routers import admin as admin_router
 app.include_router(admin_router.router)
+from routers import support as support_router
+app.include_router(support_router.router)
+from routers import audit as audit_router
+app.include_router(audit_router.router)
 
 # ============================================================================
 # Middleware — observability and audit logging
@@ -1035,6 +1098,9 @@ async def login(request: Request, body: LoginRequest):
 
         AUTH_COUNTER.labels(outcome="success").inc()
         audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
+        await audit_router.record_audit_event(
+            "login_success", "info", user_id=uid, actor_login=body.login,
+            ip=request.client.host if request.client else None, detail=f"role={role.value}")
         return {**tokens, "user_id": uid, "user_name": name, "role": role.value}
 
     except HTTPException:

@@ -1,4 +1,4 @@
-.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module test-install test-cov test-cov-unit test-cov-integration test-cov-ci odoo-cov odoo-cov-module grade-run grade-install gateway-up gateway-down clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean k8s-obs-deploy k8s-obs-status k8s-obs-forward-prom k8s-obs-forward-grafana k8s-obs-clean
+.PHONY: config run install update-module clean help ocr-run ocr-install ocr-test ocr-stop test-admission test-all test-module test-install test-cov test-cov-unit test-cov-integration test-cov-ci odoo-cov odoo-cov-module grade-run grade-install gateway-up gateway-down fix-fastapi-cache clean-ghosts k8s-install-tools k8s-create-cluster k8s-delete-cluster k8s-minikube-start k8s-minikube-delete k8s-build-images k8s-load-images k8s-minikube-load-images k8s-deploy k8s-status k8s-port-forward k8s-logs k8s-clean k8s-obs-deploy k8s-obs-status k8s-obs-forward-prom k8s-obs-forward-grafana k8s-obs-clean
 
 # Configuration
 PYTHON = venv/Scripts/python.exe
@@ -57,6 +57,7 @@ help:
 	@echo API GATEWAY COMMANDS:
 	@echo   make gateway-up     - Start API gateway services (Docker)
 	@echo   make gateway-down   - Stop API gateway services (Docker)
+	@echo   make fix-fastapi-cache - Clear pycache and restart FastAPI container
 	@echo.
 	@echo KUBERNETES LOCAL TESTING COMMANDS:
 	@echo   make k8s-install-tools      - Install kubectl and kind
@@ -197,6 +198,13 @@ gateway-down:
 	@cd "$(GATEWAY_DIR)" && docker-compose down
 	@echo API Gateway stopped!
 
+# Fix FastAPI stale pycache issue
+fix-fastapi-cache:
+	@echo Clearing __pycache__ from FastAPI Gateway container and restarting...
+	@docker exec edu_erp_fastapi_gateway rm -rf /app/__pycache__ /app/routers/__pycache__
+	@docker restart edu_erp_fastapi_gateway
+	@echo FastAPI Gateway restarted!
+
 # ============================================================================
 # Database Cleanup Commands
 # ============================================================================
@@ -311,7 +319,7 @@ test-cov-ci: test-install test-cov
 # ============================================================================
 
 # All custom modules under addons/edu_mangment
-ODOO_CUSTOM_MODULES = custom_registration,edu_mang_admission,edu_mang_auth,edu_mang_petition,edu_mang_website,edu_portal_gateway
+ODOO_CUSTOM_MODULES = custom_registration,edu_mang_academic,edu_mang_admission,edu_mang_auth,edu_mang_petition,edu_portal_gateway,edu_mang_notification,edu_mang_support,edu_mang_waitlist,custom_chatbot_admin,edu_mang_audit
 ODOO_COV_HTML = htmlcov_odoo
 ODOO_COV_XML = coverage_odoo.xml
 ODOO_COVERAGERC = .coveragerc

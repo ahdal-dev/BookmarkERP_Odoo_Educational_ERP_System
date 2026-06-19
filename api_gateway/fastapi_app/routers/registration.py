@@ -183,3 +183,41 @@ async def student_grades(
         "class_year": _CLASS_LABELS.get(u.get("class_year"), "Freshman"),
         "terms": term_list,
     }
+
+
+@router.get("/student/petitions", summary="Authenticated student's petitions")
+async def student_petitions(token: TokenData = Depends(require_roles("student", "super_admin"))):
+    async with odoo_session() as client:
+        user = await call_kw(client, "res.users", "read", [[token.user_id], ["partner_id"]])
+        partner_id = user[0]["partner_id"][0] if user and user[0].get("partner_id") else None
+        rows = []
+        if partner_id:
+            rows = await call_kw(
+                client, "student.petition", "search_read",
+                [[["student_id", "=", partner_id]]],
+                {"fields": ["name", "subject", "petition_type_id", "state", "current_tier",
+                            "submitted_date", "days_pending"],
+                 "order": "submitted_date desc, id desc", "limit": 100},
+            )
+    petitions = [{
+        "id": r["id"],
+        "ref": r.get("name"),
+        "subject": r.get("subject"),
+        "type": r["petition_type_id"][1] if r.get("petition_type_id") else "Petition",
+        "state": r.get("state"),
+        "tier": r.get("current_tier"),
+        "date": r.get("submitted_date") or "",
+        "days_pending": r.get("days_pending") or 0,
+    } for r in rows]
+    return {"count": len(petitions), "petitions": petitions}
+
+
+@router.get("/petitions/types", summary="Active petition types")
+async def petition_types(token: TokenData = Depends(get_current_token)):
+    async with odoo_session() as client:
+        rows = await call_kw(
+            client, "petition.type", "search_read",
+            [[["active", "=", True]]],
+            {"fields": ["name", "code", "description"], "order": "sequence, name"},
+        )
+    return {"types": rows or []}

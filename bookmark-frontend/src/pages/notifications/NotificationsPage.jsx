@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell/AppShell';
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -52,6 +52,18 @@ export default function NotificationsPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // SSE: real-time notification push — reload feed whenever a new event arrives
+  const sseRef = useRef(null);
+  useEffect(() => {
+    const token = localStorage.getItem('bookmark_token');
+    if (!token) return;
+    const es = new EventSource(`/api/v1/notifications/stream?token=${encodeURIComponent(token)}`);
+    sseRef.current = es;
+    es.addEventListener('notification', () => load());
+    // EventSource reconnects automatically on error — no manual retry needed
+    return () => { es.close(); sseRef.current = null; };
+  }, []);
 
   const unreadCount = items.filter((n) => !n.read).length;
   const grouped = useMemo(() => groupByCategory(items), [items]);

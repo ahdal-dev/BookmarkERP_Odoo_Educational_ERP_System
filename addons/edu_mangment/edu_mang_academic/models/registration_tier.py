@@ -17,6 +17,10 @@ class RegistrationTier(models.Model):
     registration_start = fields.Date(string='Window Opens')
     registration_end = fields.Date(string='Window Closes')
     active = fields.Boolean(string='Active', default=True)
+    notify_students = fields.Boolean(
+        string='Notify Students', default=True,
+        help='Send a notification to eligible students when this window opens.',
+    )
 
     def is_open_now(self):
         self.ensure_one()
