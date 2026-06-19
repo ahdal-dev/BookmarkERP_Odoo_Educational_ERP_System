@@ -11,6 +11,12 @@ import styles from './LoginPage.module.css';
    Right: Off-white panel with login card
    ============================================================ */
 
+const DEMO_USERS = [
+  { label: 'Super Admin', role: 'super_admin', name: 'Super Admin', email: 'admin@bookmark.edu', landing: '/admin' },
+  { label: 'Registrar', role: 'registrar', name: 'Registrar Demo', email: 'registrar@bookmark.edu', landing: '/apps' },
+  { label: 'Student', role: 'student', name: 'Student Demo', email: 'student@bookmark.edu', landing: '/student/dashboard' },
+];
+
 export default function LoginPage() {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +25,13 @@ export default function LoginPage() {
 
   const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
+
+  const demoLogin = (demo) => {
+    const user = { id: 1, name: demo.name, email: demo.email, role: demo.role, roles: {} };
+    localStorage.setItem('bookmark_token', 'demo_token');
+    localStorage.setItem('bookmark_user', JSON.stringify(user));
+    window.location.href = demo.landing;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,6 +184,23 @@ export default function LoginPage() {
                   )}
                 </button>
               </form>
+
+              {/* Demo Login */}
+              <div className={styles.demoSection}>
+                <span className={styles.demoLabel}>— Demo Access (no backend required) —</span>
+                <div className={styles.demoBtns}>
+                  {DEMO_USERS.map((d) => (
+                    <button
+                      key={d.role}
+                      type="button"
+                      className={styles.demoBtn}
+                      onClick={() => demoLogin(d)}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* Footer */}
               <div className={styles.cardFooter}>

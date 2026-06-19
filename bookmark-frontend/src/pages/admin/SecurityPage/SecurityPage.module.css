@@ -1,0 +1,218 @@
+.breadcrumb {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 8px;
+}
+
+.exportBtn {
+  padding: 10px 22px; border-radius: 999px;
+  border: 2px solid var(--color-primary-black); background: transparent;
+  color: var(--color-primary-black); font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+}
+.exportBtn:hover { background: var(--color-primary-black); color: #fff; }
+
+/* ── Top Row ───────────────────────────────────────────────── */
+.topRow {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: start;
+}
+
+/* ── Score Card ────────────────────────────────────────────── */
+.scoreCard {
+  background: var(--color-primary-black);
+  border-radius: 16px;
+  padding: 20px;
+  color: #fff;
+}
+
+.scoreHeader { margin-bottom: 16px; }
+.scoreTitle { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.6); }
+
+.scoreBody { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+.scoreRing { position: relative; width: 120px; height: 120px; }
+
+.scoreOverlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+
+.scoreNumber { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+.scoreMax { font-size: 0.72rem; color: rgba(255,255,255,0.5); }
+.scoreLabel { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; }
+
+/* ── Alerts Card ───────────────────────────────────────────── */
+.alertsCard {
+  background: var(--color-bg-white);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.alertsHeader {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.alertsTitle { font-size: 0.9rem; font-weight: 700; color: var(--color-primary-black); }
+.alertsBadge {
+  padding: 3px 10px; border-radius: 999px; background: rgba(232,97,58,0.1);
+  color: var(--color-coral); font-size: 0.72rem; font-weight: 700;
+}
+
+.alertsList { display: flex; flex-direction: column; gap: 10px; }
+
+.alertRow {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; background: var(--color-bg-warm);
+}
+
+.alertResolved { opacity: 0.5; }
+
+.sevPill {
+  padding: 2px 9px; border-radius: 6px; font-size: 0.62rem;
+  font-weight: 800; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0;
+}
+.sevHigh { background: rgba(232,97,58,0.15); color: var(--color-coral); }
+.sevMed { background: rgba(245,200,66,0.2); color: #854d0e; }
+.sevLow { background: rgba(0,0,0,0.06); color: var(--color-text-muted); }
+
+.alertContent { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.alertMsg { font-size: 0.82rem; color: var(--color-primary-black); }
+.alertTime { font-size: 0.7rem; color: var(--color-text-muted); }
+
+.dismissBtn {
+  border: none; background: transparent; font-size: 0.72rem; font-weight: 700;
+  color: var(--color-text-muted); cursor: pointer; white-space: nowrap; padding: 0;
+}
+.dismissBtn:hover { color: var(--color-coral); }
+
+.resolvedBadge {
+  font-size: 0.7rem; font-weight: 700; color: var(--color-lime-dark);
+  white-space: nowrap;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 2px solid var(--color-border-light);
+}
+.tab {
+  padding: 10px 20px; border: none; background: transparent; font-size: 0.85rem;
+  font-weight: 600; color: var(--color-text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+}
+.tabActive { color: var(--color-primary-black); border-bottom-color: var(--color-lime); }
+
+/* ── Table ─────────────────────────────────────────────────── */
+.tableCard {
+  background: var(--color-bg-white); border-radius: 14px;
+  overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.mono { font-family: monospace; font-size: 0.78rem; }
+
+.actionWarn { color: var(--color-coral); font-weight: 700; font-size: 0.8rem; }
+.actionNorm { font-size: 0.8rem; }
+
+.terminateBtn {
+  padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--color-coral);
+  background: transparent; color: var(--color-coral); font-size: 0.72rem; font-weight: 700; cursor: pointer;
+}
+.terminateBtn:hover { background: var(--color-coral); color: #fff; }
+
+/* ── Sessions Meta ─────────────────────────────────────────── */
+.sessionsMeta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sessionCount { font-size: 0.82rem; color: var(--color-text-muted); font-weight: 600; }
+
+.terminateAllBtn {
+  padding: 7px 16px; border-radius: 999px; border: 1.5px solid var(--color-coral);
+  background: transparent; color: var(--color-coral); font-size: 0.78rem; font-weight: 700; cursor: pointer;
+}
+
+/* ── API Keys ──────────────────────────────────────────────── */
+.keyHeader {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.keyCount { font-size: 0.82rem; color: var(--color-text-muted); font-weight: 600; }
+
+.generateBtn {
+  padding: 9px 20px; border-radius: 999px; border: none;
+  background: var(--color-primary-black); color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+}
+
+.keyList { display: flex; flex-direction: column; gap: 10px; }
+
+.keyCard {
+  background: var(--color-bg-white); border-radius: 14px; padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+
+.keyRevoked { opacity: 0.5; }
+
+.keyMain { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+
+.keyIcon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(76,175,39,0.1); color: var(--color-lime);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.keyInfo { display: flex; flex-direction: column; gap: 2px; }
+.keyName { font-size: 0.88rem; font-weight: 700; color: var(--color-primary-black); }
+.keyPrefix { font-family: monospace; font-size: 0.75rem; color: var(--color-text-muted); }
+
+.keyMeta { display: flex; gap: 20px; flex: 1; flex-wrap: wrap; }
+.keyMetaItem { font-size: 0.75rem; color: var(--color-text-muted); }
+.keyMetaItem strong { color: var(--color-primary-black); }
+
+.keyActions { display: flex; align-items: center; gap: 10px; }
+
+.revokeBtn {
+  padding: 5px 14px; border-radius: 999px; border: 1.5px solid var(--color-coral);
+  background: transparent; color: var(--color-coral); font-size: 0.72rem; font-weight: 700; cursor: pointer;
+}
+.revokeBtn:hover { background: var(--color-coral); color: #fff; }
+
+@media (max-width: 900px) {
+  .topRow { grid-template-columns: 1fr; }
+}
+
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  background: #fff; border-radius: 16px; width: 440px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modalHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.modalTitle { font-size: 1rem; font-weight: 700; color: var(--color-primary-black); }
+.modalClose {
+  background: none; border: none; font-size: 1.1rem; cursor: pointer;
+  color: var(--color-text-muted); line-height: 1;
+}
+.modalBody { padding: 20px 24px; display: flex; flex-direction: column; gap: 4px; }
+.modalFooter {
+  padding: 16px 24px 20px; display: flex; justify-content: flex-end; gap: 10px;
+  border-top: 1px solid var(--color-border-light);
+}
+.fieldLabel { font-size: 0.74rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.fieldInput {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--color-border-light);
+  border-radius: 8px; font-size: 0.88rem; color: var(--color-primary-black);
+  background: var(--color-bg-cream); outline: none; box-sizing: border-box;
+}
+.fieldInput:focus { border-color: var(--color-primary-black); }
+.cancelBtn {
+  padding: 9px 20px; border-radius: 999px; border: 1.5px solid var(--color-border-light);
+  background: transparent; color: var(--color-text-muted); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}

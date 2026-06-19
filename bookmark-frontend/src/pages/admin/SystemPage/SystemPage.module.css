@@ -1,0 +1,206 @@
+.breadcrumb {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 8px;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 24px;
+  border-bottom: 2px solid var(--color-border-light);
+}
+.tab {
+  padding: 10px 20px; border: none; background: transparent; font-size: 0.85rem;
+  font-weight: 600; color: var(--color-text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+}
+.tabActive { color: var(--color-primary-black); border-bottom-color: var(--color-lime); }
+
+/* ── Two-column layout ─────────────────────────────────────── */
+.twoCol { display: grid; grid-template-columns: 1fr 380px; gap: 16px; align-items: start; }
+
+/* ── Form Card ─────────────────────────────────────────────── */
+.formCard {
+  background: var(--color-bg-white); border-radius: 16px; padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 16px;
+}
+
+.sectionLabel {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--color-text-muted); display: block;
+}
+
+.fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.fieldLabel {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--color-text-muted);
+}
+
+.fieldInput {
+  padding: 10px 14px; border: 1.5px solid var(--color-border-light);
+  border-radius: 10px; font-size: 0.85rem; font-family: inherit;
+  outline: none; transition: border-color 0.2s; background: #fff; color: var(--color-primary-black);
+}
+.fieldInput:focus { border-color: var(--color-lime); }
+
+.toggleList {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 16px; background: var(--color-bg-warm); border-radius: 12px;
+}
+
+.saveRow { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+.discardBtn {
+  padding: 10px 22px; border-radius: 999px; border: 2px solid var(--color-border-light);
+  background: transparent; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+}
+
+.saveBtn {
+  padding: 10px 22px; border-radius: 999px; border: none;
+  background: var(--color-primary-black); color: #fff; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+}
+
+/* ── Status Panel ──────────────────────────────────────────── */
+.statusPanel {
+  background: var(--color-bg-white); border-radius: 16px; padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 12px;
+}
+
+.statusRow {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.statusRow:last-child { border-bottom: none; }
+
+.statusDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.statusLabel { flex: 1; font-size: 0.85rem; color: var(--color-primary-black); }
+.statusText { font-size: 0.78rem; font-weight: 700; }
+
+/* ── Feature Flags ─────────────────────────────────────────── */
+.flagsToolbar {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.flagCount { font-size: 0.82rem; color: var(--color-text-muted); font-weight: 600; }
+
+.newFlagBtn {
+  padding: 8px 18px; border-radius: 999px; border: none;
+  background: var(--color-primary-black); color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
+
+.flagsList { display: flex; flex-direction: column; gap: 10px; }
+
+.flagCard {
+  background: var(--color-bg-white); border-radius: 14px; padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+
+.flagLeft { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 200px; }
+.flagName { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--color-primary-black); }
+.flagDesc { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.flagMeta { width: 200px; }
+
+.rolloutRow { display: flex; align-items: center; gap: 8px; }
+.rolloutLabel { font-size: 0.7rem; color: var(--color-text-muted); width: 48px; flex-shrink: 0; }
+.rolloutTrack { flex: 1; height: 6px; background: var(--color-bg-warm); border-radius: 3px; overflow: hidden; }
+.rolloutFill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.rolloutPct { font-size: 0.72rem; font-weight: 700; color: var(--color-primary-black); width: 32px; text-align: right; }
+
+/* ── Backups ───────────────────────────────────────────────── */
+.backupNowBtn {
+  display: flex; align-items: center; gap: 8px;
+  align-self: flex-start;
+  padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--color-lime);
+  background: transparent; color: var(--color-lime-dark); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  margin-top: 4px;
+}
+
+.backupHistoryCard {
+  background: var(--color-bg-white); border-radius: 16px; padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 12px;
+}
+
+.backupList { display: flex; flex-direction: column; gap: 0; }
+
+.backupRow {
+  display: flex; align-items: center; gap: 14px; padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light); flex-wrap: wrap;
+}
+.backupRow:last-child { border-bottom: none; }
+
+.backupInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.backupDate { font-size: 0.82rem; font-weight: 700; color: var(--color-primary-black); }
+.backupType { font-size: 0.72rem; color: var(--color-text-muted); }
+
+.backupActions { display: flex; gap: 6px; }
+.backupActionBtn {
+  padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--color-border-light);
+  background: transparent; font-size: 0.72rem; font-weight: 700; cursor: pointer; color: var(--color-primary-black);
+}
+.backupActionBtn:hover { border-color: var(--color-primary-black); }
+
+/* ── Integrations ──────────────────────────────────────────── */
+.integrationsList { display: flex; flex-direction: column; gap: 10px; }
+
+.integrationCard {
+  background: var(--color-bg-white); border-radius: 14px; padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+
+.integrationInfo { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 200px; }
+.integrationName { font-size: 0.88rem; font-weight: 700; color: var(--color-primary-black); }
+.integrationDesc { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.integrationSync { font-size: 0.72rem; color: var(--color-text-muted); white-space: nowrap; }
+
+.configIntgBtn {
+  padding: 7px 16px; border-radius: 999px; border: 1.5px solid var(--color-primary-black);
+  background: transparent; font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: all 0.2s;
+}
+.configIntgBtn:hover { background: var(--color-primary-black); color: #fff; }
+
+@media (max-width: 900px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .fieldGrid { grid-template-columns: 1fr; }
+}
+
+.savedBanner {
+  background: var(--color-lime); color: #1a2e0a; font-size: 0.82rem; font-weight: 600;
+  padding: 10px 20px; border-radius: 8px; margin-bottom: 12px;
+}
+
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal {
+  background: #fff; border-radius: 16px; width: 460px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modalHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.modalTitle { font-size: 1rem; font-weight: 700; color: var(--color-primary-black); }
+.modalCloseBtn {
+  background: none; border: none; font-size: 1.1rem; cursor: pointer;
+  color: var(--color-text-muted); line-height: 1;
+}
+.modalBody { padding: 20px 24px; display: flex; flex-direction: column; gap: 4px; }
+.modalFooter {
+  padding: 16px 24px 20px; display: flex; justify-content: flex-end; gap: 10px;
+  border-top: 1px solid var(--color-border-light);
+}
+.modalFieldLabel { font-size: 0.74rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.modalFieldInput {
+  width: 100%; padding: 9px 12px; border: 1.5px solid var(--color-border-light);
+  border-radius: 8px; font-size: 0.88rem; color: var(--color-primary-black);
+  background: var(--color-bg-cream); outline: none; box-sizing: border-box;
+}
+.modalFieldInput:focus { border-color: var(--color-primary-black); }
+.intgDesc { font-size: 0.82rem; color: var(--color-text-muted); margin-bottom: 12px; }
