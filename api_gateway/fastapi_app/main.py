@@ -632,6 +632,8 @@ app.include_router(notifications_router.router)
 # Registration catalog + student/faculty/admin data
 from routers import registration as registration_router
 app.include_router(registration_router.router)
+from routers import registration_tiers as registration_tiers_router
+app.include_router(registration_tiers_router.router)
 from routers import faculty as faculty_router
 app.include_router(faculty_router.router)
 from routers import admin as admin_router
@@ -988,6 +990,20 @@ def _make_tokens(uid: int, login: str, email: str, role: UserRole) -> dict:
     }
 
 
+async def _track_active_session(redis_conn, uid: int, access_token: str) -> None:
+    """Record an active session keyed by the access token's jti so the registrar
+    dashboard can report distinct concurrent users. Expires with the token."""
+    if not redis_conn:
+        return
+    try:
+        payload = jwt.decode(access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        jti = payload.get("jti")
+        if jti:
+            await redis_conn.setex(f"active_session:{uid}:{jti}", JWT_EXPIRATION_HOURS * 3600, "1")
+    except Exception:
+        pass  # session tracking is best-effort, never block auth
+
+
 @app.post("/api/v1/auth/login", summary="Authenticate and receive JWT access + refresh tokens")
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
@@ -1015,6 +1031,7 @@ async def login(request: Request, body: LoginRequest):
         name  = result["result"].get("name", body.login)
         role  = await resolve_user_role(uid, redis_conn)
         tokens = _make_tokens(uid, body.login, body.login, role)
+        await _track_active_session(redis_conn, uid, tokens["access_token"])
 
         AUTH_COUNTER.labels(outcome="success").inc()
         audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
@@ -1055,7 +1072,9 @@ async def refresh_token(
         login = payload.get("username", "")
         email = payload.get("email", login)
         role  = UserRole(payload["role"])
-        return _make_tokens(uid, login, email, role)
+        tokens = _make_tokens(uid, login, email, role)
+        await _track_active_session(redis_conn, uid, tokens["access_token"])
+        return tokens
 
     except HTTPException:
         raise
@@ -1074,6 +1093,7 @@ async def logout(
         if remaining > 0:
             await redis_conn.setex(f"blocklist:{user.jti}", remaining, "1")
         await redis_conn.delete(f"role:{user.user_id}")
+        await redis_conn.delete(f"active_session:{user.user_id}:{user.jti}")
     audit_logger.info(json.dumps({"event": "logout", "user_id": user.user_id}))
     return {"success": True, "message": "Logged out successfully"}
 

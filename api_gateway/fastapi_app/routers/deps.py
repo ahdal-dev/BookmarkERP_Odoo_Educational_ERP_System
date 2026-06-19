@@ -139,3 +139,52 @@ async def call_kw(
         logger.error("Odoo call_kw error (%s.%s): %s", model, method, msg)
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=msg)
     return body.get("result")
+
+
+# ---------------------------------------------------------------------------
+# Bulk role resolution (group xmlid → canonical role), highest precedence wins.
+# Mirrors ODOO_GROUP_TO_ROLE in main.py but resolves many users in 2 calls.
+# ---------------------------------------------------------------------------
+
+GROUP_XMLID_TO_ROLE = [
+    ("edu_mang_auth", "group_erp_admin", "super_admin"),
+    ("base", "group_system", "super_admin"),
+    ("edu_mang_auth", "group_erp_registrar", "registrar"),
+    ("edu_mang_auth", "group_erp_department_chair", "department_chair"),
+    ("edu_mang_auth", "group_erp_academic_advisor", "academic_advisor"),
+    ("edu_mang_auth", "group_erp_instructor", "instructor"),
+    ("edu_mang_auth", "group_erp_admission_officer", "admission_officer"),
+    ("edu_mang_auth", "group_erp_support_technician", "support_technician"),
+    ("edu_mang_auth", "group_erp_student", "student"),
+    ("edu_mang_auth", "group_erp_prospective_student", "prospective_student"),
+]
+_ROLE_RANK = {role: i for i, (_, _, role) in enumerate(GROUP_XMLID_TO_ROLE)}
+
+
+async def resolve_roles_bulk(client: httpx.AsyncClient, users: list[dict]) -> dict:
+    """Map each user (dict with 'id', 'group_ids', 'share') → a canonical role
+    string. Two Odoo calls total: one already done by the caller (users), and
+    one ir.model.data lookup here to translate group xmlids → res.groups ids."""
+    names = list({n for _, n, _ in GROUP_XMLID_TO_ROLE})
+    modules = list({m for m, _, _ in GROUP_XMLID_TO_ROLE})
+    imd = await call_kw(
+        client, "ir.model.data", "search_read",
+        [[["model", "=", "res.groups"], ["module", "in", modules], ["name", "in", names]]],
+        {"fields": ["module", "name", "res_id"]},
+    )
+    key_to_gid = {(r["module"], r["name"]): r["res_id"] for r in (imd or [])}
+    gid_to_role = {}
+    for module, name, role in GROUP_XMLID_TO_ROLE:
+        gid = key_to_gid.get((module, name))
+        if gid is not None and gid not in gid_to_role:
+            gid_to_role[gid] = role
+
+    result = {}
+    for u in users:
+        best, best_rank = None, 999
+        for gid in u.get("group_ids", []) or []:
+            role = gid_to_role.get(gid)
+            if role and _ROLE_RANK[role] < best_rank:
+                best, best_rank = role, _ROLE_RANK[role]
+        result[u["id"]] = best or ("student" if u.get("share") else "staff")
+    return result

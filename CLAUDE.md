@@ -61,14 +61,21 @@ The screens below now fetch **live data** through new FastAPI gateway routers (`
 - **Faculty** → `GET /api/v1/faculty/dashboard`, `/faculty/courses`, `/faculty/courses/{id}/roster` (+ existing `/faculty/petitions`).
 - **Admissions pipeline** → `GET /api/v1/admin/admissions/pipeline`, `PATCH /admin/admissions/{id}/stage`. **Admin users** → `GET/POST /api/v1/admin/users`. **Registration rules** → `GET/PUT /api/v1/admin/settings/registration-rules` (stored as `ir.config_parameter`). **Admin petitions** → `GET /api/v1/admin/petitions[/{id}]`.
 
-### Deploy note
-The notifications module must be installed/updated once:
-`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -u edu_mang_notification -d edu_demo_new --stop-after-init`
-then rebuild the gateway: `cd api_gateway && docker-compose up -d --build`.
+### Academic records & registration tiers (gap closure)
+New Odoo module `addons/edu_mangment/edu_mang_academic/` adds a `grade` (+ `grade_points`) field to `education.registration` and computes `cumulative_gpa` / `earned_credits` / `class_year` / `academic_standing` on `res.users`, plus an `education.registration.tier` model (seniority windows, demo tiers seeded). A `post_init_hook` seeds sample grades so GPA renders on install. New gateway routers `registration_tiers.py` + additions to `registration.py`/`admin.py`/`deps.py`:
+- **Precise user roles** → `/admin/users` now returns the real canonical role per user (batch `resolve_roles_bulk` in `deps.py`, group-xmlid → role). `UserManagementPage` maps role→label.
+- **Real GPA + grades** → `GET /api/v1/student/grades` (per-term transcript + cumulative GPA/credits/standing); `GET /student/dashboard` now returns a real `gpa`. `GradesPage.jsx` is live.
+- **Registration tiers/windows** → `GET /api/v1/registration/tiers`, `GET /api/v1/student/registration-window`. `InstitutionalRulesetPage` windows table reads live tiers.
 
-### Remaining genuine gaps (no Odoo model — intentionally not faked)
-- **Student GPA**: no GPA model → `student/dashboard` returns `gpa: null` (UI shows "—").
-- **Registrar "tiers" / "active concurrent users"**: no model → replaced with real per-course windows and an "Open Courses" metric; concurrent-users card removed.
-- **Waitlist auto-promotion**: `education.registration` has a `waitlist` state but no auto-promote logic.
-- **User role granularity**: `admin/users` returns a coarse Student/Staff role (portal `share` flag), not the full 9-role mapping.
-- **Ruleset windows / prerequisite list** (`InstitutionalRulesetPage`): scalar rules persist via `ir.config_parameter`; the registration-windows table and prerequisite checklist remain UI-local (no model).
+### Waitlist, concurrent users & prerequisites (final gap closure)
+- **Waitlist auto-promotion** → new module `addons/edu_mangment/edu_mang_waitlist/`: `education.registration.action_drop` is overridden to call `education.course._promote_waitlist()` (FIFO by `registration_date`, skips on-hold students, notifies via `edu.notification`); a 30-min `ir.cron` (`cron_promote_waitlist`) is the safety-net.
+- **Active concurrent users** → gateway tracks `active_session:{uid}:{jti}` in Redis on login/refresh (`_track_active_session`) and clears it on logout; `GET /api/v1/registrar/dashboard` counts distinct uids (`scan_iter`) → `stats.active_concurrent_users`; `RegistrarDashboardPage` shows the live card.
+- **Ruleset prerequisites (both)** → (1) the policy checklist persists as a JSON `ir.config_parameter` (`edu.reg.prerequisites`, handled in `routers/admin.py`; `InstitutionalRulesetPage` sends/loads it); (2) real per-course prerequisites: `education.course.prerequisite_course_ids` (M2M) in `edu_mang_academic`, **enforced** in `education.registration.create` when `edu.reg.prerequisite_check` is on (officer override bypasses). Gateway exposes prereqs in `/registration/courses` + `PATCH /api/v1/registrar/courses/{id}/prerequisites`; `CourseCatalogManagerPage` edits them, `RegistrationPage` course cards show them.
+
+### Deploy note
+Install/update the custom modules once (first install uses `-i`, later updates `-u`):
+`venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf\odoo.conf -i edu_mang_notification,edu_mang_academic,edu_mang_waitlist -d edu_demo_new --stop-after-init`
+(use `-u edu_mang_academic` when only updating the course-prerequisite fields). Then rebuild the gateway: `cd api_gateway && docker-compose up -d --build`.
+
+### Remaining (optional, not a functional gap)
+- **GPA source alternative**: GPA is computed from grades on the active custom stack; integrating OpenEduCat exam results (`op.result.line` / `op.marksheet.line`) remains an optional alternative, not required.

@@ -143,6 +143,18 @@ export const registrationAPI = {
     const response = await api.get('/api/v1/registration/courses', { params });
     return response.data;
   },
+
+  /** Registration tiers / windows */
+  getTiers: async () => {
+    const response = await api.get('/api/v1/registration/tiers');
+    return response.data;
+  },
+
+  /** The authenticated student's eligible registration window */
+  getMyWindow: async () => {
+    const response = await api.get('/api/v1/student/registration-window');
+    return response.data;
+  },
 };
 
 /* ============================================================
@@ -153,6 +165,12 @@ export const studentAPI = {
   /** Authenticated student's dashboard summary */
   getDashboard: async () => {
     const response = await api.get('/api/v1/student/dashboard');
+    return response.data;
+  },
+
+  /** Authenticated student's grades + GPA grouped by term */
+  getGrades: async () => {
+    const response = await api.get('/api/v1/student/grades');
     return response.data;
   },
 };
@@ -189,6 +207,14 @@ export const registrarAPI = {
   /** Live registrar dashboard aggregates */
   getDashboard: async () => {
     const response = await api.get('/api/v1/registrar/dashboard');
+    return response.data;
+  },
+
+  /** Set a course's prerequisite course ids */
+  setCoursePrerequisites: async (courseId, prerequisiteIds) => {
+    const response = await api.patch(`/api/v1/registrar/courses/${courseId}/prerequisites`, {
+      prerequisite_ids: prerequisiteIds,
+    });
     return response.data;
   },
 };
