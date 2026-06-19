@@ -1,0 +1,96 @@
+graph TD
+    classDef ingress fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
+    classDef pod fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    classDef ai fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000000;
+    classDef storage fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000000;
+    classDef external fill:#f5f5f5,stroke:#757575,stroke-width:2px,color:#000000;
+    classDef pvc fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000000;
+
+    Internet(("Internet<br/>Clients")):::external
+
+    subgraph K8s ["Kubernetes Cluster"]
+
+        subgraph IngressLayer ["Ingress Layer"]
+            Ingress["Nginx Ingress Controller<br/>TLS Termination + Path Routing"]:::ingress
+        end
+
+        subgraph FrontendNS ["Frontend Namespace"]
+            ReactPod["React SPA Pod<br/>Nginx static server<br/>Replicas: 2"]:::pod
+        end
+
+        subgraph GatewayNS ["Gateway Namespace"]
+            GatewayPod["FastAPI Gateway Pod<br/>Uvicorn + Gunicorn<br/>HPA: 2-6 replicas"]:::pod
+            GatewayHPA["HPA<br/>CPU > 70% scale up"]:::ingress
+        end
+
+        subgraph ERPNS ["ERP Namespace"]
+            OdooPod1["Odoo Pod 1<br/>Stateless App Server"]:::pod
+            OdooPod2["Odoo Pod 2<br/>Stateless App Server"]:::pod
+            OdooSvc["Odoo ClusterIP Service<br/>Load Balance"]:::ingress
+        end
+
+        subgraph AINS ["AI Services Namespace"]
+            OCRPod["OCR Service Pod<br/>FastAPI + PyTorch<br/>Replicas: 1"]:::ai
+            GradePod["Grade Predictor Pod<br/>FastAPI + XGBoost<br/>Replicas: 1"]:::ai
+            PerfPod["Student Performance Pod<br/>FastAPI + XGBoost<br/>Replicas: 1"]:::ai
+            ChatbotPod["RAG Chatbot Pod<br/>LangChain Agent<br/>Replicas: 1"]:::ai
+        end
+
+        subgraph PVCs ["Persistent Volume Claims"]
+            PVC_YOLO["PVC: yolo-weights<br/>detect_id_card.pt<br/>detect_objects.pt"]:::pvc
+            PVC_GRADE["PVC: grade-model<br/>grade_predictor_v3.pkl"]:::pvc
+            PVC_PERF["PVC: perf-models<br/>5 Joblib artifacts"]:::pvc
+        end
+
+        subgraph BrokerNS ["Messaging Namespace"]
+            RabbitPod["RabbitMQ Pod<br/>Durable Queues<br/>PVC: rabbit-data"]:::storage
+        end
+
+        subgraph DataNS ["Data Namespace"]
+            PGPod["PostgreSQL Pod<br/>PVC: pg-data (50Gi)<br/>ACID Compliant"]:::storage
+            RedisPod["Redis Pod<br/>Cache + Token Blocklist<br/>PVC: redis-data"]:::storage
+            MongoPod["MongoDB Pod<br/>PVC: mongo-data<br/>Unstructured Files"]:::storage
+        end
+
+    end
+
+    subgraph ExternalAPIs ["External AI APIs (TLS/HTTPS)"]
+        MistralExt["Mistral Large API<br/>api.mistral.ai"]:::external
+        OpenRouterExt["OpenRouter API<br/>openrouter.ai"]:::external
+        OpenAIExt["OpenAI GPT-4 API<br/>api.openai.com"]:::external
+    end
+
+    %% === TRAFFIC FLOWS ===
+    Internet -->|"HTTPS"| Ingress
+    Ingress -->|"/"| ReactPod
+    Ingress -->|"/api/*"| GatewayPod
+    GatewayHPA -.->|"Scale"| GatewayPod
+
+    GatewayPod -->|"REST"| OdooSvc
+    OdooSvc --> OdooPod1 & OdooPod2
+
+    GatewayPod -->|"REST"| OCRPod
+    GatewayPod -->|"REST"| GradePod
+    GatewayPod -->|"REST"| PerfPod
+    GatewayPod -->|"REST"| ChatbotPod
+
+    GatewayPod -->|"AMQP"| RabbitPod
+
+    %% AI -> PVCs
+    OCRPod -.->|"Mount"| PVC_YOLO
+    GradePod -.->|"Mount"| PVC_GRADE
+    PerfPod -.->|"Mount"| PVC_PERF
+
+    %% Data connections
+    OdooPod1 & OdooPod2 -->|"TCP 5432"| PGPod
+    GatewayPod -->|"TCP 6379"| RedisPod
+    GradePod -->|"TCP 5432"| PGPod
+    PerfPod -->|"TCP 5432"| PGPod
+    ChatbotPod -->|"TCP 5432"| PGPod
+    OCRPod -->|"TCP 27017"| MongoPod
+    OCRPod -->|"TCP 5432"| PGPod
+
+    %% External API calls
+    OCRPod -->|"HTTPS"| MistralExt
+    PerfPod -->|"HTTPS"| OpenRouterExt
+    ChatbotPod -->|"HTTPS"| OpenAIExt

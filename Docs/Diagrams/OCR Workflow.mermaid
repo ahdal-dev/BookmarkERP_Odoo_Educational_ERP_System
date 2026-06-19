@@ -1,0 +1,65 @@
+sequenceDiagram
+    autonumber
+    participant UI as React Frontend
+    participant GW as FastAPI Gateway
+    participant OCR as OCR Microservice
+    participant CV as OpenCV Preprocessor
+    participant YOLO as YOLOv8 Models
+    participant MI as Mistral Large API
+    participant DB as PostgreSQL / MongoDB
+
+    UI->>GW: POST /api/v1/extract-document<br/>multipart/form-data (image/PDF)
+    GW->>GW: Validate JWT + RBAC<br/>Check file type + 10MB limit
+    GW->>GW: Circuit breaker check
+    GW->>OCR: Forward file upload
+
+    OCR->>OCR: Save file to /uploads/
+    OCR->>OCR: Validate file extension<br/>(png, jpg, pdf, bmp, tiff, webp)
+
+    Note over OCR,CV: Image Preprocessing
+    OCR->>CV: preprocess_image(filepath)
+    CV->>CV: Grayscale conversion
+    CV->>CV: Deskew (minAreaRect rotation)
+    CV->>CV: Denoise (fastNlMeansDenoising)
+    CV->>CV: Contrast (equalizeHist)
+    CV->>CV: Upscale if < 1500px
+    CV-->>OCR: processed_image_path
+
+    Note over OCR,YOLO: Engine A: YOLO ID Detection
+    OCR->>YOLO: detect_id_card(image, model_id_card)
+    YOLO-->>OCR: id_card_bboxes[]
+
+    alt National ID Detected
+        OCR->>YOLO: process_image(image, model_id_card, model_job)
+        YOLO->>YOLO: Detect subfields (name, ID, photo, etc.)
+        YOLO->>YOLO: Crop + Tesseract OCR per field
+        YOLO-->>OCR: {name, national_id, address, ...}
+    else No ID Detected → Mistral Pipeline
+        OCR->>MI: ocr_image(filepath)<br/>Generic text extraction
+        MI-->>OCR: Raw markdown text
+
+        OCR->>OCR: detect_doc_type(full_text)<br/>Keyword heuristic scoring
+
+        alt Heuristic Confident
+            OCR->>OCR: Use detected doc_type
+        else Ambiguous
+            OCR->>MI: LLM classification prompt
+            MI-->>OCR: Detected doc_type
+        end
+
+        OCR->>MI: Re-OCR with doc-specific prompt<br/>(birth_cert / thanawiya / passport / transcript)
+        MI-->>OCR: Enhanced structured text
+
+        OCR->>MI: extract_structured(text, PROMPTS[doc_type])
+        MI-->>OCR: JSON structured data
+    end
+
+    Note over OCR: Post-Processing
+    OCR->>OCR: force_convert_numerals()<br/>Arabic → Western digits
+    OCR->>OCR: JSON sanitization + validation
+
+    OCR->>OCR: Cleanup uploaded files
+
+    OCR-->>GW: {document_type, extracted_data,<br/>pages_processed}
+    GW-->>UI: OCRResponse JSON
+    UI->>UI: Render extracted fields<br/>+ auto-fill admission form
