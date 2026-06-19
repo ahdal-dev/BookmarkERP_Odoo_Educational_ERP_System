@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { SplatterDot } from '../../styles/brand';
 import BookmarkLogo from '../BookmarkLogo/BookmarkLogo';
 import styles from './AppShell.module.css';
@@ -96,8 +97,8 @@ export default function AppShell({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useAuth();
   const [expandedItems, setExpandedItems] = useState(() => {
-    // Auto-expand items whose children include the current path
     const expanded = {};
     navItems.forEach((item) => {
       if (item.children && (item.active || item.children.some(c => c.active || location.pathname === c.path))) {
@@ -107,6 +108,7 @@ export default function AppShell({
     return expanded;
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const toggleExpand = (label) => {
     setExpandedItems((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -140,33 +142,38 @@ export default function AppShell({
       )}
 
       {/* ===== SIDEBAR ===== */}
-      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
+      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''} ${collapsed ? styles.sidebarCollapsed : ''}`}>
         {/* Logo Area */}
         <div className={styles.logoArea}>
           {logoVariant === 'stacked' ? (
             <div className={styles.logoStacked}>
               <BookmarkLogo size="small" />
-              <span className={styles.brandCursive}>Bookmark</span>
+              {!collapsed && <span className={styles.brandCursive}>Bookmark</span>}
             </div>
           ) : (
             <div className={styles.logoIconText}>
               <div className={styles.logoSmall}>
                 <img src={logoUrl} alt="Bookmark" className={styles.logoImg} />
               </div>
-              <div className={styles.logoText}>
-                <span className={styles.brandCursive}>Bookmark</span>
-                <span className={styles.brandSub}>Academic ERP</span>
-              </div>
+              {!collapsed && (
+                <div className={styles.logoText}>
+                  <span className={styles.brandCursive}>Bookmark</span>
+                  <span className={styles.brandSub}>Academic ERP</span>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Splatter accents */}
-          <SplatterDot color="#e8613a" size={14} top="10px" right="15px" delay="0.3s" />
-          <SplatterDot color="#f5c842" size={8} top="30px" right="8px" delay="0.5s" />
+          {!collapsed && (
+            <>
+              <SplatterDot color="#e8613a" size={14} top="10px" right="15px" delay="0.3s" />
+              <SplatterDot color="#f5c842" size={8} top="30px" right="8px" delay="0.5s" />
+            </>
+          )}
         </div>
 
         {/* Sidebar Label */}
-        {sidebarLabel && (
+        {sidebarLabel && !collapsed && (
           <div className={styles.sidebarLabel}>{sidebarLabel}</div>
         )}
 
@@ -174,13 +181,14 @@ export default function AppShell({
         <nav className={styles.nav}>
           {navItems.map((item) => (
             item.isSectionLabel ? (
-              <div key={item.label} className={styles.sectionLabel}>{item.label}</div>
+              !collapsed && <div key={item.label} className={styles.sectionLabel}>{item.label}</div>
             ) :
             <div key={item.label} className={styles.navGroup}>
               <button
-                className={`${styles.navItem} ${isActive(item) ? styles.navItemActive : ''}`}
+                className={`${styles.navItem} ${isActive(item) ? styles.navItemActive : ''} ${collapsed ? styles.navItemCollapsed : ''}`}
+                title={collapsed ? item.label : undefined}
                 onClick={() => {
-                  if (item.children) {
+                  if (item.children && !collapsed) {
                     toggleExpand(item.label);
                   } else {
                     handleNav(item.path);
@@ -190,8 +198,8 @@ export default function AppShell({
                 <span className={styles.navIcon}>
                   {ICONS[item.icon] || ICONS.dashboard}
                 </span>
-                <span className={styles.navLabel}>{item.label}</span>
-                {item.children && (
+                {!collapsed && <span className={styles.navLabel}>{item.label}</span>}
+                {!collapsed && item.children && (
                   <span className={`${styles.navChevron} ${expandedItems[item.label] ? styles.navChevronOpen : ''}`}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
                   </span>
@@ -201,8 +209,8 @@ export default function AppShell({
                 )}
               </button>
 
-              {/* Children (sub-items) */}
-              {item.children && expandedItems[item.label] && (
+              {/* Children (sub-items) — hidden when collapsed */}
+              {!collapsed && item.children && expandedItems[item.label] && (
                 <div className={styles.subItems}>
                   {item.children.map((child) => (
                     <button
@@ -219,20 +227,43 @@ export default function AppShell({
           ))}
         </nav>
 
-        {/* Sidebar Footer */}
-        {sidebarFooter && (
-          <div className={styles.sidebarFooter}>
-            {sidebarFooter}
-          </div>
-        )}
+        {/* Sidebar Footer — collapse toggle + logout */}
+        <div className={styles.sidebarFooter}>
+          {sidebarFooter && !collapsed && sidebarFooter}
 
-        {/* Bottom splatters */}
-        <SplatterDot color="#e8613a" size={20} bottom="30px" left="10px" delay="0.7s" $animate />
-        <SplatterDot color="#f5c842" size={10} bottom="20px" left="25px" delay="0.9s" />
+          {/* Collapse Toggle */}
+          <button
+            className={`${styles.footerBtn} ${collapsed ? styles.footerBtnCollapsed : ''}`}
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {collapsed
+                ? <><path d="M9 18l6-6-6-6"/></>
+                : <><path d="M15 18l-6-6 6-6"/></>
+              }
+            </svg>
+            {!collapsed && <span>Collapse</span>}
+          </button>
+
+          {/* Logout */}
+          <button
+            className={`${styles.footerBtn} ${styles.footerBtnLogout} ${collapsed ? styles.footerBtnCollapsed : ''}`}
+            onClick={logout}
+            title="Sign out"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16,17 21,12 16,7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </div>
       </aside>
 
       {/* ===== MAIN CONTENT ===== */}
-      <main className={styles.content}>
+      <main className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
         {topBar}
         <div className={styles.contentInner}>
           {children}

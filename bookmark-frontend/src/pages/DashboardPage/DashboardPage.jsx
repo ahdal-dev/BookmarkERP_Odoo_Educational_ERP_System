@@ -121,6 +121,18 @@ export default function DashboardPage() {
         </div>
 
         <div className={styles.headerRight}>
+          {/* Admin Dashboard Button */}
+          <button
+            className={styles.backendBtn}
+            onClick={() => navigate('/admin')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Dashboard
+          </button>
+
           {/* Backend Button */}
           <a
             href={`${odooBackendUrl}/web`}

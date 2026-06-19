@@ -171,7 +171,8 @@ export function navForRole(role) {
 
 // Admin dashboard nav
 export const adminDashboardNav = [
-  { icon: 'dashboard', label: 'Command Center', path: '/admin' },
+  { icon: 'dashboard', label: 'Apps', path: '/apps' },
+  { icon: 'admin', label: 'Command Center', path: '/admin' },
   { icon: 'students', label: 'User Management', path: '/admin/users' },
   { icon: 'admin', label: 'Roles & Permissions', path: '/admin/roles' },
   { icon: 'ai', label: 'AI Services', path: '/admin/ai' },

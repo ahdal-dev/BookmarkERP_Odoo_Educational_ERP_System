@@ -17,7 +17,7 @@ export const ROLES = {
 
 // Where each role lands immediately after login.
 export const ROLE_LANDING = {
-  [ROLES.SUPER_ADMIN]: '/admin',
+  [ROLES.SUPER_ADMIN]: '/apps',
   [ROLES.REGISTRAR]: '/registrar/dashboard',
   [ROLES.ADMISSION_OFFICER]: '/admissions/officer',
   [ROLES.STUDENT]: '/student/dashboard',
