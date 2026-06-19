@@ -1,0 +1,82 @@
+.wrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border-light);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sortable {
+  cursor: pointer;
+}
+
+.sortable:hover {
+  color: var(--color-primary-black);
+}
+
+.sortIcon {
+  margin-left: 4px;
+  font-size: 0.75rem;
+}
+
+.row {
+  position: relative;
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background 0.15s ease;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  background: rgba(76, 175, 39, 0.04);
+}
+
+.td {
+  padding: 14px 16px;
+  color: var(--color-primary-black);
+  vertical-align: middle;
+}
+
+.checkCol {
+  width: 40px;
+  padding: 12px 8px 12px 16px;
+  text-align: center;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-lime);
+  cursor: pointer;
+}
+
+.rowAccent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--row-accent);
+  border-radius: 0 4px 4px 0;
+}

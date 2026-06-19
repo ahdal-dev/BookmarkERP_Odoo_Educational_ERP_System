@@ -100,8 +100,12 @@ config:
 	@echo Configuring Odoo module/database: $(DB_NAME)
 	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF) -d $(DB_NAME) -u base --stop-after-init
 
-# Start Odoo server manually
+# Start all core services (Odoo, API Gateway, Frontend)
 run:
+	@echo Starting API Gateway services...
+	@cd "$(GATEWAY_DIR)" && docker-compose up -d
+	@echo Starting React Frontend...
+	@cmd /c start "Bookmark Frontend" cmd /c "cd bookmark-frontend && npm run dev"
 	@echo Starting Odoo server...
 	$(PYTHON) $(ODOO_BIN) -c $(ODOO_CONF)
 

@@ -1,0 +1,90 @@
+.header {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-primary-black);
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.titleBrand {
+  font-family: var(--font-brand);
+  font-size: 2.6rem;
+  font-weight: 400;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.green {
+  background: rgba(76, 175, 39, 0.15);
+  color: #3d8e1f;
+}
+
+.yellow {
+  background: rgba(245, 200, 66, 0.2);
+  color: #b8860b;
+}
+
+.coral {
+  background: rgba(232, 97, 58, 0.15);
+  color: #c0452a;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .titleBrand {
+    font-size: 2rem;
+  }
+
+  .titleRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

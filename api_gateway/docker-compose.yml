@@ -35,6 +35,8 @@ volumes:
     driver: local
   ssl_certificates:
     driver: local
+  rabbitmq_data:
+    driver: local
 
 # ============================================================================
 # Services Configuration
@@ -87,12 +89,12 @@ services:
       dockerfile: Dockerfile
     container_name: edu_erp_fastapi_gateway
     restart: unless-stopped
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     environment:
       # Service URLs
       - OCR_SERVICE_URL=http://ocr_microservice:5000
-      - ODOO_URL=http://odoo:8069
+      - ODOO_URL=http://host.docker.internal:8081
       
       # Odoo Configuration
       - ODOO_DB=edu_demo_new
@@ -103,14 +105,18 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-key-in-production}
       - JWT_ALGORITHM=HS256
       - JWT_EXPIRATION_HOURS=24
-      
+
+      # Academic Agent (chatbot) integration
+      - RAG_CHATBOT_URL=http://academic-agent:8001
+      - CHATBOT_SHARED_SECRET=${CHATBOT_SHARED_SECRET:-change-me}
+
       # Python Environment
       - PYTHONUNBUFFERED=1
       - TZ=Africa/Cairo
     volumes:
       # Mount application code for development (comment out in production)
       - ./fastapi_app:/app
-      
+
       # Logs
       - ./logs/fastapi:/app/logs
     networks:
@@ -118,6 +124,7 @@ services:
     depends_on:
       - ocr_microservice
       - odoo
+      - academic-agent
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -244,6 +251,103 @@ services:
     labels:
       - "com.edu-erp.service=odoo"
       - "com.edu-erp.layer=erp-core"
+
+  # ==========================================================================
+  # RabbitMQ - Message Broker (async registration/petition writes)
+  # ==========================================================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: edu_erp_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "com.edu-erp.service=rabbitmq"
+      - "com.edu-erp.layer=messaging"
+
+  # ==========================================================================
+  # Academic Agent - LLM chatbot microservice (8 academic tools)
+  # ==========================================================================
+  academic-agent:
+    build:
+      context: ../services/RAG-Chatbot
+      dockerfile: Dockerfile
+    container_name: edu_erp_academic_agent
+    restart: unless-stopped
+    expose:
+      - "8001"
+    environment:
+      # Odoo (runs on the Windows host, per project convention)
+      - ODOO_URL=http://host.docker.internal:8081
+      - ODOO_DB=edu_demo_new
+      - ODOO_USERNAME=admin
+      - ODOO_PASSWORD=${ODOO_PASSWORD:-admin}
+      # Trust boundary: must match the gateway's CHATBOT_SHARED_SECRET
+      - CHATBOT_ADMIN_TOKEN=${CHATBOT_SHARED_SECRET:-change-me}
+      # LLM provider (OpenRouter)
+      - LLM_PROVIDER=openrouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      # Messaging
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/
+      - ENABLE_RAG=false
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks:
+      - backend
+    depends_on:
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8001/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    labels:
+      - "com.edu-erp.service=academic-agent"
+      - "com.edu-erp.layer=ai-services"
+
+  # ==========================================================================
+  # Academic Agent Worker - consumes queued registration/petition writes
+  # ==========================================================================
+  academic-agent-worker:
+    build:
+      context: ../services/RAG-Chatbot
+      dockerfile: Dockerfile
+    container_name: edu_erp_academic_agent_worker
+    restart: unless-stopped
+    command: ["python", "Backend/worker.py"]
+    environment:
+      - ODOO_URL=http://host.docker.internal:8081
+      - ODOO_DB=edu_demo_new
+      - ODOO_USERNAME=admin
+      - ODOO_PASSWORD=${ODOO_PASSWORD:-admin}
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks:
+      - backend
+    depends_on:
+      - rabbitmq
+    labels:
+      - "com.edu-erp.service=academic-agent-worker"
+      - "com.edu-erp.layer=ai-services"
 
   # ==========================================================================
   # Redis - Caching & Session Storage (Optional but Recommended)

@@ -1,16 +1,18 @@
 FROM python:3.11-slim
 
 
-WORKDIR /app
+WORKDIR /student_performance_service
+
 
 COPY requirements.txt .
 
 RUN pip install --default-timeout=1000 --retries 5 --no-cache-dir -r requirements.txt
 
-# Copy the service code and the pre-trained model artifacts in ./models
-# (generate them once with `python train.py` before building the image).
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5002
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
+ENV PYTHONPATH=/student_performance_service
+ENV OPENROUTER_API_KEY="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"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002"]

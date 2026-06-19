@@ -27,6 +27,7 @@ config/odoo.conf
 *.dump
 *.sql
 *.zip
+mlflow.db
 
 # IDE
 .vscode/
@@ -60,6 +61,11 @@ api_gateway/nginx/ssl/*.pem
 
 # Odoo core (uncomment to exclude the official Odoo repo)
 # odoo/
+
+
+# MLflow tracking artifacts
+mlartifacts/
+mlruns/
 
 # Coverage reports (pytest-cov + coverage.py)
 htmlcov/

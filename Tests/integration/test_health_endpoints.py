@@ -26,7 +26,10 @@ class TestMetricsEndpoint:
         response = client.get("/metrics")
         assert response.status_code == 200
 
-    def test_metrics_response_structure(self, client):
-        data = client.get("/metrics").json()
-        assert data["service"] == "api_gateway"
-        assert "uptime" in data
+    def test_metrics_returns_prometheus_format(self, client):
+        """Trigger a request first so counters are non-zero, then check format."""
+        client.get("/health")
+        resp = client.get("/metrics")
+        assert resp.status_code == 200
+        content = resp.text
+        assert "http_requests_total" in content or "# HELP" in content or "# TYPE" in content

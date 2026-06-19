@@ -1,42 +1,41 @@
-# -*- coding: utf-8 -*-
-"""Loads the trained artifacts (XGBoost risk classifier + GRU GPA regressor)."""
+import pickle
+import xgboost as xgb
 from pathlib import Path
 
-import joblib
-import torch
-import torch.nn as nn
+BASE_DIR  = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR.parent / "models"
 
-MODELS = Path(__file__).resolve().parent.parent / "models"
-
-
-class GRURegressor(nn.Module):
-    """Must match the architecture used in train.py."""
-    def __init__(self, n_in=2, hid=48):
-        super().__init__()
-        self.gru = nn.GRU(n_in, hid, batch_first=True)
-        self.head = nn.Sequential(nn.Linear(hid, 24), nn.ReLU(),
-                                  nn.Dropout(0.1), nn.Linear(24, 1))
-
-    def forward(self, x):
-        _, h = self.gru(x)
-        return self.head(h[-1])
+_prep    = None   # preprocessors.pkl dict
+_reg     = None   # XGBRegressor  (next semester GPA, tail-weighted)
+_clf     = None   # XGBClassifier (P(next term GPA < 2.0))
+_cqr_lo  = None   # XGBRegressor  (lower quantile bound)
+_cqr_hi  = None   # XGBRegressor  (upper quantile bound)
 
 
 def _load():
-    risk_path = MODELS / "risk_xgboost.joblib"
-    gru_path = MODELS / "next_gpa_gru.pt"
-    if not risk_path.exists() or not gru_path.exists():
-        raise FileNotFoundError(
-            f"Model artifacts missing in {MODELS}. Run `python train.py` first.")
+    global _prep, _reg, _clf, _cqr_lo, _cqr_hi
 
-    risk = joblib.load(risk_path)
+    prep_path = MODEL_DIR / "preprocessors.pkl"
+    if not prep_path.exists():
+        print(f"[model] preprocessors.pkl not found in {MODEL_DIR} — run train.py first")
+        return
 
-    ckpt = torch.load(gru_path, map_location="cpu", weights_only=False)
-    gru = GRURegressor(len(ckpt["seq_feats"]))
-    gru.load_state_dict(ckpt["state_dict"])
-    gru.eval()
-    return risk, gru, ckpt
+    with open(prep_path, "rb") as f:
+        _prep = pickle.load(f)
+
+    _reg    = xgb.XGBRegressor();  _reg.load_model(str(MODEL_DIR / "xgb_next_gpa.json"))
+    _clf    = xgb.XGBClassifier(); _clf.load_model(str(MODEL_DIR / "xgb_at_risk.json"))
+    _cqr_lo = xgb.XGBRegressor();  _cqr_lo.load_model(str(MODEL_DIR / "cqr_lo.json"))
+    _cqr_hi = xgb.XGBRegressor();  _cqr_hi.load_model(str(MODEL_DIR / "cqr_hi.json"))
+    print("[model] All notebook models loaded (xgb_next_gpa, xgb_at_risk, cqr_lo, cqr_hi)")
 
 
-# Loaded once at import time
-RISK_BUNDLE, GRU_MODEL, GRU_META = _load()
+_load()
+
+
+def get_models():
+    return _prep, _reg, _clf, _cqr_lo, _cqr_hi
+
+
+def is_loaded() -> bool:
+    return _prep is not None

@@ -1,1 +1,0 @@
-{ "student_id": "STU-2021-0042", "program": "Computer Science", "transcript_summary": { "semester_gpas": [3.5, 3.2, 2.8, 2.6], "cumulative_gpa": 3.0, "total_credits_completed": 72, "total_credits_attempted": 78, "fail_withdrawal_count": 2, "academic_standing": "Good Standing", "domain_gpas": {"MATH": 2.9, "CS": 3.4, "HUM": 3.6} } }

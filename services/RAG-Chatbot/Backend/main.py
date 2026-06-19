@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import uuid
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
@@ -15,12 +18,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import get_db, engine
 from models import Organization, User, DocumentChunk, Document, Chat, ChatMessage, SuperAdmin, Feedback
-from schemas import (
+from db.schemas import (
     OrgCreate, UserCreate, UploadResponse, AskRequest, AskResponse,
     OrganizationResponse, UserResponse, FeedbackCreate, FeedbackResponse, FeedbackUpdate
 )
 from ingestion import process_document, process_document_from_bytes, embed_query
-from llm import get_gemini, make_prompt, rewrite_query_with_history, classify_message_llm,judge_answer_llm,make_unknown_reply_llm
+from llm import rewrite_query_with_history, classify_message_llm, judge_answer_llm
+from agent import run_agent
 
 from admin_auth import router as admin_router
 
@@ -440,63 +444,52 @@ def ask(payload: AskRequest, db: Session = Depends(get_db)):
         {"q": qvec_np.tolist(), "org": str(payload.org_id)}
     ).fetchall()
 
-    # 6.a) No retrieved rows → ask LLM to produce a polite unknown reply (NO sources)
-    if not rows:
-        unknown_reply = make_unknown_reply_llm(payload.question)
-        try:
-            db.add(ChatMessage(chat_id=chat.id, role="user", content=payload.question))
-            db.add(ChatMessage(chat_id=chat.id, role="assistant", content=unknown_reply, citations=[]))
-            db.commit()
-        except Exception:
-            db.rollback()
-        return AskResponse(answer=unknown_reply, sources=[])
-
     def row2score(r): return max(0.0, 1.0 - float(r.distance))
     keep = int(os.getenv("RAG_LLM_SNIPPETS", "8"))
     snippets = [r.content for r in rows]
 
-    # 7) Build answer prompt and get LLM draft answer
+    # 7) Run the agent (RAG answer or tool action)
     history_for_answer = history[-6:]
-    prompt = make_prompt(
-        question=payload.question,
-        context_snippets=snippets[:keep],
-        chat_history=history_for_answer
-    )
-
-    model = get_gemini()
     try:
-        result = model.generate_content(prompt)
-        answer_text = (getattr(result, "text", "") or "").strip()
-        # Strip any accidental "Sources:"
-        answer_text = re.sub(r'\n*Sources?:.*', '', answer_text, flags=re.IGNORECASE).strip()
+        agent_result = run_agent(
+            question=payload.question,
+            context_snippets=snippets[:keep],
+            chat_history=history_for_answer,
+            student_email=user.email,
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM error: {e}")
+        print(f"Agent error: {e}")
+        agent_result = {
+            "answer": "Sorry, I ran into a problem processing that request. Please try again shortly.",
+            "tool_used": None,
+            "tool_ok": None,
+        }
+    answer_text = agent_result["answer"]
+    tool_used = agent_result["tool_used"]
 
-    # 8) Ask the LLM-judge if this answer is "answerable" or "unknown"
-    verdict = judge_answer_llm(payload.question, snippets[:keep], answer_text)
-    is_unknown = verdict.get("status") == "unknown"
-
-    # 9) Prepare sources only if answerable
-    citations = []
-    unique_filenames = []
+    # 8)/9) Citations only apply to the pure-RAG path (no tool used)
     final_answer = answer_text
+    citations = []
+    sources_to_return = []
+    is_unknown = False
 
-    if not is_unknown:
-        citations = [
-            {"chunk_id": str(r.chunk_id), "filename": r.filename, "score": row2score(r)}
-            for r in rows[:keep]
-        ]
-        seen = set()
-        for r in rows[:keep]:
-            if r.filename and r.filename not in seen:
-                unique_filenames.append(r.filename)
-                seen.add(r.filename)
-        if unique_filenames:
-            final_answer += "\n\nSources:\n" + "\n".join(unique_filenames)
-        sources_to_return = unique_filenames
-    else:
-        
-        sources_to_return = []
+    if tool_used is None:
+        verdict = judge_answer_llm(payload.question, snippets[:keep], answer_text)
+        is_unknown = verdict.get("status") == "unknown"
+        if not is_unknown:
+            citations = [
+                {"chunk_id": str(r.chunk_id), "filename": r.filename, "score": row2score(r)}
+                for r in rows[:keep]
+            ]
+            unique_filenames = []
+            seen = set()
+            for r in rows[:keep]:
+                if r.filename and r.filename not in seen:
+                    unique_filenames.append(r.filename)
+                    seen.add(r.filename)
+            if unique_filenames:
+                final_answer += "\n\nSources:\n" + "\n".join(unique_filenames)
+            sources_to_return = unique_filenames
 
     # 10) Persist exchange
     try:
@@ -1013,3 +1006,56 @@ def sa_soft_delete_org(org_id: uuid.UUID, db: Session = Depends(get_db)):
 @app.get("/health")
 def health_check():
     return {"status": "ok", "message": "RAG backend is running"}
+
+
+# ---------- Admin config push (from Odoo custom_chatbot_admin) ----------
+import runtime_config
+from pydantic import BaseModel
+
+
+class AdminConfig(BaseModel):
+    token: str
+    llm_api_key: Optional[str] = None
+    llm_model: Optional[str] = None
+    rag_top_k: Optional[int] = None
+    rag_llm_snippets: Optional[int] = None
+    system_prompt: Optional[str] = None
+
+
+@app.post("/admin/config")
+def admin_config(cfg: AdminConfig):
+    """Receive chatbot configuration pushed from the Odoo settings UI.
+
+    Authorized via a shared secret (CHATBOT_ADMIN_TOKEN). RAG params and the
+    API key are read from the environment at call-time, so updating os.environ
+    applies them live; the model name and system prompt are import-time
+    constants elsewhere, so they are stored as runtime overrides.
+    """
+    expected = os.getenv("CHATBOT_ADMIN_TOKEN", "")
+    if not expected or cfg.token != expected:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
+
+    if cfg.llm_api_key:
+        os.environ["GEMINI_API_KEY"] = cfg.llm_api_key
+    if cfg.llm_model:
+        os.environ["GEMINI_MODEL"] = cfg.llm_model
+    if cfg.rag_top_k:
+        os.environ["RAG_TOP_K"] = str(cfg.rag_top_k)
+    if cfg.rag_llm_snippets:
+        os.environ["RAG_LLM_SNIPPETS"] = str(cfg.rag_llm_snippets)
+
+    runtime_config.set_overrides(
+        llm_model=cfg.llm_model,
+        system_prompt=cfg.system_prompt,
+    )
+
+    return {
+        "status": "ok",
+        "applied": {
+            "llm_model": runtime_config.get_model_name(),
+            "rag_top_k": os.getenv("RAG_TOP_K"),
+            "rag_llm_snippets": os.getenv("RAG_LLM_SNIPPETS"),
+            "system_prompt_override": bool(cfg.system_prompt),
+            "llm_api_key_set": bool(cfg.llm_api_key),
+        },
+    }

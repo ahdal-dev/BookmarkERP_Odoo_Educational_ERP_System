@@ -9,6 +9,7 @@
     'depends': ['base', 'web', 'website', 'mail'],
     'data': [
         'security/ir.model.access.csv',
+        'security/security_rules.xml',
         'data/mail_template_acceptance.xml',
         'data/mail_template_rejection.xml',
         'views/admission_views.xml',

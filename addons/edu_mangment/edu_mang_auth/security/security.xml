@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- ============================================== -->
-    <!-- User Groups with Proper Inheritance           -->
+    <!-- Educational ERP — 9 Canonical RBAC Groups       -->
     <!-- ============================================== -->
 
-    <!-- Student Group - Inherits from Portal User -->
-    <!-- Portal users can access website but not backend -->
+    <!-- 1. Student (portal user — no backend) -->
     <record id="group_erp_student" model="res.groups">
         <field name="name">Educational ERP - Student</field>
         <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
@@ -15,8 +14,17 @@
         </field>
     </record>
 
-    <!-- Admission Officer Group - Inherits from Internal User -->
-    <!-- Internal users have access to backend -->
+    <!-- 2. Prospective Student (portal candidate, pre-enrollment) -->
+    <record id="group_erp_prospective_student" model="res.groups">
+        <field name="name">Educational ERP - Prospective Student</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="comment">
+            Prospective students can submit admission applications and
+            track their application status. No access to enrolled-student data.
+        </field>
+    </record>
+
+    <!-- 3. Admission Officer (internal) -->
     <record id="group_erp_admission_officer" model="res.groups">
         <field name="name">Educational ERP - Admission Officer</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
@@ -26,12 +34,66 @@
         </field>
     </record>
 
-    <!-- Admin Group - Inherits from Internal User with elevated privileges -->
-    <record id="group_erp_admin" model="res.groups">
-        <field name="name">Educational ERP - Administrator</field>
+    <!-- 4. Instructor (internal) -->
+    <record id="group_erp_instructor" model="res.groups">
+        <field name="name">Educational ERP - Instructor</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         <field name="comment">
-            ERP Administrators have full access to all Educational ERP
+            Instructors can view rosters for their assigned courses and
+            approve/reject petitions for those courses.
+        </field>
+    </record>
+
+    <!-- 5. Academic Advisor (internal, inherits Instructor capabilities) -->
+    <record id="group_erp_academic_advisor" model="res.groups">
+        <field name="name">Educational ERP - Academic Advisor</field>
+        <field name="implied_ids" eval="[(4, ref('group_erp_instructor'))]"/>
+        <field name="comment">
+            Advisors guide an assigned advisee cohort and approve/reject
+            petitions routed to them.
+        </field>
+    </record>
+
+    <!-- 6. Department Chair (internal, escalation authority over advisors) -->
+    <record id="group_erp_department_chair" model="res.groups">
+        <field name="name">Educational ERP - Department Chair</field>
+        <field name="implied_ids" eval="[(4, ref('group_erp_academic_advisor'))]"/>
+        <field name="comment">
+            Department chairs handle escalated petitions and hold final
+            override authority within their department.
+        </field>
+    </record>
+
+    <!-- 7. Registrar (internal) -->
+    <record id="group_erp_registrar" model="res.groups">
+        <field name="name">Educational ERP - Registrar</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Registrars manage the course catalog, registration time slots,
+            and global enrollment status.
+        </field>
+    </record>
+
+    <!-- 8. Support Technician (internal, read-only academic scope) -->
+    <record id="group_erp_support_technician" model="res.groups">
+        <field name="name">Educational ERP - Support Technician</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">
+            Support technicians assist students via live chat with read-only
+            access to basic profile and registration status.
+        </field>
+    </record>
+
+    <!-- 9. Super Admin (full control) -->
+    <!-- NOTE: XML ID kept as group_erp_admin (not _super_admin) because it is
+         referenced across edu_portal_gateway, edu_mang_website,
+         custom_registration, petition, demo data, and tests. Renaming would
+         break those. The gateway maps this group -> the 'super_admin' role. -->
+    <record id="group_erp_admin" model="res.groups">
+        <field name="name">Educational ERP - Super Administrator</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_system'))]"/>
+        <field name="comment">
+            ERP Super Administrators have full access to all Educational ERP
             modules including user management, system configuration,
             and all academic operations.
         </field>
@@ -65,7 +127,7 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Admission Officers: Full access to admission-related data -->
+    <!-- Admission Officers: Read all users -->
     <record id="admission_officer_user_rule" model="ir.rule">
         <field name="name">Admission Officers: Read All Users</field>
         <field name="model_id" ref="base.model_res_users"/>
@@ -77,9 +139,9 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- ERP Admin: Full access to all data -->
+    <!-- ERP Super Admin: Full access to all data -->
     <record id="erp_admin_full_access_rule" model="ir.rule">
-        <field name="name">ERP Admin: Full Access</field>
+        <field name="name">ERP Super Admin: Full Access</field>
         <field name="model_id" ref="base.model_res_users"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[(4, ref('group_erp_admin'))]"/>
@@ -90,7 +152,7 @@
     </record>
 
     <record id="erp_admin_partner_full_access_rule" model="ir.rule">
-        <field name="name">ERP Admin: Full Partner Access</field>
+        <field name="name">ERP Super Admin: Full Partner Access</field>
         <field name="model_id" ref="base.model_res_partner"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[(4, ref('group_erp_admin'))]"/>

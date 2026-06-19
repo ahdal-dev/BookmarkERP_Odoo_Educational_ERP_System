@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 class EducationCourse(models.Model):
     """
     Course model for educational offerings.
-    
+
     Stores course details including seat availability for registration management.
     """
     _name = 'education.course'
@@ -68,7 +68,7 @@ class EducationCourse(models.Model):
     )
     instructor = fields.Char(
         string='Instructor',
-        help='Name of the course instructor'
+        help='Display name of the course instructor'
     )
     credits = fields.Integer(
         string='Credits',

@@ -2,66 +2,584 @@
 ============================================================================
 FastAPI API Gateway for Educational ERP System
 ============================================================================
-Purpose: Internal API Gateway and orchestration layer for microservices
-Architecture: Receives requests from NGINX and routes to AI/Odoo services
-Author: Educational ERP Development Team
-Version: 1.0.0
+Purpose:       Central API Gateway — authentication, RBAC, service orchestration
+Security:      JWT (HS256) + RBAC + Redis-backed token blocklist
+Observability: Prometheus metrics, structured JSON logs, X-Request-ID headers
 ============================================================================
 """
 
 import os
+import json
+import uuid
+import time
 import logging
+from contextlib import asynccontextmanager
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from functools import wraps
+from enum import Enum
 
 from fastapi import (
-    FastAPI, 
-    HTTPException, 
-    Depends, 
-    UploadFile, 
-    File, 
-    Header,
-    status,
-    Request,
-    BackgroundTasks,
-    Form
+    FastAPI, HTTPException, Depends, UploadFile, File,
+    status, Request, Form,
 )
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, EmailStr, validator
 import httpx
 import jwt
 from jwt.exceptions import InvalidTokenError
-import asyncio
-from enum import Enum
+
+from prometheus_client import Counter, Histogram, make_asgi_app
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
+import redis.asyncio as aioredis
 
 # ============================================================================
-# Configuration and Environment Variables
+# Configuration
 # ============================================================================
 
-# Environment Configuration
 OCR_SERVICE_URL = os.getenv("OCR_SERVICE_URL", "http://ocr_microservice:5000")
-ODOO_URL = os.getenv("ODOO_URL", "http://odoo:8081")
-ODOO_DB = os.getenv("ODOO_DB", "edu_demo_new")
-ODOO_USERNAME = os.getenv("ODOO_USERNAME", "admin")
-ODOO_PASSWORD = os.getenv("ODOO_PASSWORD", "admin")
+ODOO_URL        = os.getenv("ODOO_URL", "http://odoo:8081")
+ODOO_DB         = os.getenv("ODOO_DB", "edu_demo_new")
+ODOO_USERNAME   = os.getenv("ODOO_USERNAME", "admin")
+ODOO_PASSWORD   = os.getenv("ODOO_PASSWORD")   # required — no default
+JWT_SECRET_KEY  = os.getenv("JWT_SECRET_KEY")  # required — no default
+JWT_ALGORITHM                = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_EXPIRATION_HOURS         = int(os.getenv("JWT_EXPIRATION_HOURS", "1"))
+JWT_REFRESH_EXPIRATION_DAYS  = int(os.getenv("JWT_REFRESH_EXPIRATION_DAYS", "7"))
+CORS_ORIGINS    = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")]
+ENABLE_TEST_TOKENS = os.getenv("ENABLE_TEST_TOKENS", "").lower() in ("1", "true", "yes")
 
-# JWT Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
-
-# Logging Configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+_REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+_REDIS_HOST     = os.getenv("REDIS_HOST", "redis")
+_REDIS_PORT     = os.getenv("REDIS_PORT", "6379")
+REDIS_URL = os.getenv(
+    "REDIS_URL",
+    f"redis://:{_REDIS_PASSWORD}@{_REDIS_HOST}:{_REDIS_PORT}/0",
 )
-logger = logging.getLogger(__name__)
+
+# Fail-fast — crash immediately if critical secrets are missing
+for _var, _val in {"JWT_SECRET_KEY": JWT_SECRET_KEY, "ODOO_PASSWORD": ODOO_PASSWORD}.items():
+    if not _val:
+        raise RuntimeError(
+            f"Required environment variable {_var!r} is not set. "
+            "Add it to your .env file before starting the gateway."
+        )
 
 # ============================================================================
-# FastAPI Application Initialization
+# Logging — structured JSON
+# ============================================================================
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        data: Dict[str, Any] = {
+            "ts":      datetime.utcnow().isoformat(timespec="milliseconds") + "Z",
+            "level":   record.levelname,
+            "logger":  record.name,
+            "msg":     record.getMessage(),
+        }
+        if record.exc_info:
+            data["exc"] = self.formatException(record.exc_info)
+        return json.dumps(data, ensure_ascii=False)
+
+
+_handler = logging.StreamHandler()
+_handler.setFormatter(_JsonFormatter())
+logging.root.handlers = [_handler]
+logging.root.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger       = logging.getLogger(__name__)
+audit_logger = logging.getLogger("audit")
+
+# ============================================================================
+# Prometheus Metrics
+# ============================================================================
+
+REQUEST_COUNT = Counter(
+    "http_requests_total", "Total HTTP requests",
+    ["method", "endpoint", "status_code"],
+)
+REQUEST_LATENCY = Histogram(
+    "http_request_duration_seconds", "HTTP request latency in seconds",
+    ["method", "endpoint"],
+    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+)
+ODOO_ERRORS  = Counter("odoo_proxy_errors_total",  "Odoo proxy error count", ["endpoint"])
+AUTH_COUNTER = Counter("auth_login_attempts_total", "Auth login attempts",    ["outcome"])
+
+# ============================================================================
+# Circuit Breaker
+# ============================================================================
+
+class _CircuitBreaker:
+    """Three-state circuit breaker: closed → open → half-open."""
+    CLOSED    = "closed"
+    OPEN      = "open"
+    HALF_OPEN = "half_open"
+
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 30.0):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout  = recovery_timeout
+        self._state            = self.CLOSED
+        self._failures         = 0
+        self._opened_at: float = 0.0
+
+    def success(self) -> None:
+        self._failures = 0
+        self._state    = self.CLOSED
+
+    def failure(self) -> None:
+        self._failures += 1
+        if self._failures >= self.failure_threshold:
+            self._state     = self.OPEN
+            self._opened_at = time.monotonic()
+
+    @property
+    def is_open(self) -> bool:
+        if self._state == self.OPEN:
+            if time.monotonic() - self._opened_at >= self.recovery_timeout:
+                self._state = self.HALF_OPEN
+                return False
+            return True
+        return False
+
+
+_odoo_breaker = _CircuitBreaker()
+_ocr_breaker  = _CircuitBreaker()
+
+# ============================================================================
+# Rate Limiter
+# ============================================================================
+
+limiter = Limiter(key_func=get_remote_address)
+
+# ============================================================================
+# Shared HTTP client (connection pool, set by lifespan)
+# ============================================================================
+
+_http_client: Optional[httpx.AsyncClient] = None
+
+
+def _client() -> httpx.AsyncClient:
+    """Return the shared async HTTP client (raises if lifespan has not run)."""
+    if _http_client is None:
+        raise RuntimeError("Shared HTTP client is not initialised. Is lifespan running?")
+    return _http_client
+
+# ============================================================================
+# Pydantic Models
+# ============================================================================
+
+class UserRole(str, Enum):
+    """
+    9 canonical RBAC roles — mirrors Odoo groups (edu_mang_auth/security/security.xml)
+    and the frontend ROLES map (bookmark-frontend/src/config/roles.js).
+    """
+    PROSPECTIVE_STUDENT = "prospective_student"
+    ADMISSION_OFFICER   = "admission_officer"
+    STUDENT             = "student"
+    INSTRUCTOR          = "instructor"
+    ACADEMIC_ADVISOR    = "academic_advisor"
+    DEPARTMENT_CHAIR    = "department_chair"
+    REGISTRAR           = "registrar"
+    SUPPORT_TECHNICIAN  = "support_technician"
+    SUPER_ADMIN         = "super_admin"
+
+
+# Maps Odoo XML group IDs → canonical role.  Ordered by precedence (highest first).
+ODOO_GROUP_TO_ROLE = [
+    ("group_erp_admin",              UserRole.SUPER_ADMIN),
+    ("group_erp_registrar",          UserRole.REGISTRAR),
+    ("group_erp_department_chair",   UserRole.DEPARTMENT_CHAIR),
+    ("group_erp_academic_advisor",   UserRole.ACADEMIC_ADVISOR),
+    ("group_erp_instructor",         UserRole.INSTRUCTOR),
+    ("group_erp_admission_officer",  UserRole.ADMISSION_OFFICER),
+    ("group_erp_support_technician", UserRole.SUPPORT_TECHNICIAN),
+    ("group_erp_student",            UserRole.STUDENT),
+    ("group_erp_prospective_student", UserRole.PROSPECTIVE_STUDENT),
+]
+
+
+class TokenData(BaseModel):
+    user_id:  int
+    username: str
+    email:    EmailStr
+    role:     UserRole
+    exp:      datetime
+    jti:      Optional[str] = None   # JWT ID — used for token blocklist
+
+
+class OCRResponse(BaseModel):
+    success:         bool
+    extracted_data:  Dict[str, Any]
+    confidence:      Optional[float] = None
+    processing_time: Optional[float] = None
+
+
+class AdmissionApplicationData(BaseModel):
+    full_name:              str   = Field(..., min_length=2,  max_length=200)
+    national_id:            str   = Field(..., pattern=r'^\d{14}$')
+    email:                  EmailStr
+    phone:                  str   = Field(..., pattern=r'^\+?[0-9]{10,15}$')
+    date_of_birth:          datetime
+    address:                str   = Field(..., min_length=10, max_length=500)
+    city:                   str   = Field(..., max_length=100)
+    country:                str   = Field(default="Egypt",   max_length=100)
+    previous_qualification: str   = Field(..., max_length=200)
+    graduation_year:        int   = Field(..., ge=1950, le=2030)
+    gpa:                    float = Field(..., ge=0.0,  le=4.0)
+    desired_program:        str   = Field(..., max_length=200)
+    application_type:       str   = Field(default="regular", max_length=50)
+
+    @validator("graduation_year")
+    def _no_future_year(cls, v: int) -> int:
+        if v > datetime.now().year:
+            raise ValueError("Graduation year cannot be in the future")
+        return v
+
+
+class AdmissionResponse(BaseModel):
+    success:        bool
+    application_id: Optional[int]       = None
+    student_id:     Optional[int]       = None
+    status:         str
+    message:        str
+    next_steps:     Optional[List[str]] = None
+
+
+class OrchestrationRequest(BaseModel):
+    email:            EmailStr
+    phone:            str
+    desired_program:  str
+    application_type: str = "regular"
+
+
+class OrchestrationResponse(BaseModel):
+    success:          bool
+    ocr_result:       Optional[OCRResponse]       = None
+    admission_result: Optional[AdmissionResponse] = None
+    execution_time:   float
+    errors:           Optional[List[str]]          = None
+
+# ============================================================================
+# JWT / RBAC
+# ============================================================================
+
+security = HTTPBearer()
+
+
+class RBACChecker:
+    """Validates the Bearer JWT and enforces role-based access control."""
+
+    def __init__(self, allowed_roles: List[UserRole]):
+        self.allowed_roles = allowed_roles
+
+    async def __call__(
+        self,
+        request: Request,
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+    ) -> TokenData:
+        token = credentials.credentials
+        try:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            token_data = TokenData(
+                user_id  = payload["user_id"],
+                username = payload.get("username", ""),
+                email    = payload.get("email", ""),
+                role     = UserRole(payload["role"]),
+                exp      = datetime.fromtimestamp(payload["exp"]),
+                jti      = payload.get("jti"),
+            )
+
+            if token_data.exp < datetime.utcnow():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has expired",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            # Blocklist check (requires Redis)
+            redis_conn = getattr(request.app.state, "redis", None)
+            if redis_conn and token_data.jti:
+                if await redis_conn.exists(f"blocklist:{token_data.jti}"):
+                    audit_logger.warning(json.dumps({
+                        "event": "revoked_token_used",
+                        "jti": token_data.jti,
+                        "user_id": token_data.user_id,
+                    }))
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Token has been revoked",
+                        headers={"WWW-Authenticate": "Bearer"},
+                    )
+
+            if token_data.role not in self.allowed_roles:
+                audit_logger.warning(json.dumps({
+                    "event": "access_denied",
+                    "user_id": token_data.user_id,
+                    "role": token_data.role.value,
+                    "path": request.url.path,
+                }))
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient permissions",
+                )
+
+            logger.info({"msg": "Authenticated", "user": token_data.username, "role": token_data.role.value})
+            return token_data
+
+        except HTTPException:
+            raise
+        except InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        except Exception:
+            logger.error("Authentication error", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication failed",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+# ============================================================================
+# Odoo helpers
+# ============================================================================
+
+async def _odoo_service_auth(client: httpx.AsyncClient) -> None:
+    """Authenticate the gateway service account with Odoo on the given client."""
+    await client.post(
+        f"{ODOO_URL}/web/session/authenticate",
+        json={"jsonrpc": "2.0", "params": {
+            "db": ODOO_DB, "login": ODOO_USERNAME, "password": ODOO_PASSWORD,
+        }},
+    )
+
+
+async def _get_country_id(country_name: str, redis_conn=None) -> int:
+    """Return the Odoo res.country id for *country_name*, with 24-hour Redis cache."""
+    cache_key = f"country_id:{country_name.lower()}"
+    if redis_conn:
+        cached = await redis_conn.get(cache_key)
+        if cached:
+            return int(cached)
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as c:
+            await _odoo_service_auth(c)
+            resp = await c.post(
+                f"{ODOO_URL}/web/dataset/call_kw",
+                json={"jsonrpc": "2.0", "method": "call", "params": {
+                    "model": "res.country", "method": "search_read",
+                    "args": [[["name", "ilike", country_name]]],
+                    "kwargs": {"fields": ["id"], "limit": 1},
+                }},
+            )
+            result = resp.json().get("result", [])
+            country_id = result[0]["id"] if result else 65  # Egypt fallback
+    except Exception:
+        logger.warning("Country ID lookup failed, using fallback 65", exc_info=True)
+        country_id = 65
+
+    if redis_conn:
+        await redis_conn.setex(cache_key, 86400, str(country_id))
+    return country_id
+
+
+async def _resolve_role_with_client(client: httpx.AsyncClient, uid: int) -> UserRole:
+    """Resolve an Odoo user's canonical role from their security groups."""
+    await _odoo_service_auth(client)
+
+    user_resp = await client.post(
+        f"{ODOO_URL}/web/dataset/call_kw",
+        json={"jsonrpc": "2.0", "method": "call", "params": {
+            "model": "res.users", "method": "read",
+            "args": [[uid], ["group_ids"]], "kwargs": {},
+        }},
+    )
+    user_result = user_resp.json().get("result", [])
+    if not user_result:
+        return UserRole.STUDENT
+    user_group_ids = set(user_result[0].get("group_ids", []))
+
+    data_resp = await client.post(
+        f"{ODOO_URL}/web/dataset/call_kw",
+        json={"jsonrpc": "2.0", "method": "call", "params": {
+            "model": "ir.model.data", "method": "search_read",
+            "args": [[
+                "|",
+                "&", ["module", "=", "edu_mang_auth"],
+                     ["name", "in", [g for g, _ in ODOO_GROUP_TO_ROLE]],
+                "&", ["module", "=", "base"],
+                     ["name", "=", "group_system"],
+            ]],
+            "kwargs": {"fields": ["module", "name", "res_id"]},
+        }},
+    )
+    name_to_resid = {r["name"]: r["res_id"] for r in data_resp.json().get("result", [])}
+
+    system_gid = name_to_resid.get("group_system")
+    if system_gid and system_gid in user_group_ids:
+        return UserRole.SUPER_ADMIN
+
+    for group_name, role in ODOO_GROUP_TO_ROLE:
+        gid = name_to_resid.get(group_name)
+        if gid and gid in user_group_ids:
+            return role
+
+    return UserRole.STUDENT
+
+
+async def resolve_user_role(uid: int, redis_conn=None) -> UserRole:
+    """Resolve role with 5-minute Redis cache."""
+    cache_key = f"role:{uid}"
+    if redis_conn:
+        cached = await redis_conn.get(cache_key)
+        if cached:
+            return UserRole(cached)
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as c:
+            role = await _resolve_role_with_client(c, uid)
+        if redis_conn:
+            await redis_conn.setex(cache_key, 300, role.value)
+        logger.info({"msg": "Role resolved", "uid": uid, "role": role.value})
+        return role
+    except Exception:
+        logger.error("Role resolution failed for uid %s", uid, exc_info=True)
+        return UserRole.STUDENT
+
+
+# ============================================================================
+# OdooClient — admission operations
+# ============================================================================
+
+class OdooClient:
+    """Service-account Odoo client for admission operations."""
+
+    def __init__(self):
+        self._uid: Optional[int] = None
+
+    async def authenticate(self) -> int:
+        if self._uid:
+            return self._uid
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as c:
+                resp = await c.post(
+                    f"{ODOO_URL}/web/session/authenticate",
+                    json={"jsonrpc": "2.0", "params": {
+                        "db": ODOO_DB, "login": ODOO_USERNAME, "password": ODOO_PASSWORD,
+                    }},
+                )
+                result = resp.json()
+                if result.get("result", {}).get("uid"):
+                    self._uid = result["result"]["uid"]
+                    return self._uid
+                raise Exception("No UID in Odoo auth response")
+        except Exception as e:
+            logger.error("Odoo service-account auth failed: %s", e)
+            raise HTTPException(status_code=503, detail="ERP system unavailable")
+
+    async def create_admission_application(
+        self,
+        data: AdmissionApplicationData,
+        redis_conn=None,
+    ) -> Dict[str, Any]:
+        if _odoo_breaker.is_open:
+            raise HTTPException(
+                status_code=503,
+                detail="ERP system is temporarily unavailable. Please try again shortly.",
+            )
+        await self.authenticate()
+        try:
+            country_id = await _get_country_id(data.country, redis_conn)
+            values = {
+                "name":                   data.full_name,
+                "national_id":            data.national_id,
+                "email":                  data.email,
+                "phone":                  data.phone,
+                "date_of_birth":          data.date_of_birth.strftime("%Y-%m-%d"),
+                "street":                 data.address,
+                "city":                   data.city,
+                "country_id":             country_id,
+                "previous_qualification": data.previous_qualification,
+                "graduation_year":        data.graduation_year,
+                "gpa":                    data.gpa,
+                "desired_program":        data.desired_program,
+                "application_type":       data.application_type,
+                "state":                  "draft",
+            }
+            async with httpx.AsyncClient(timeout=60.0) as c:
+                await _odoo_service_auth(c)
+                resp = await c.post(
+                    f"{ODOO_URL}/web/dataset/call_kw",
+                    json={"jsonrpc": "2.0", "method": "call", "params": {
+                        "model": "op.admission", "method": "create",
+                        "args": [values], "kwargs": {},
+                    }, "id": 1},
+                )
+                result = resp.json()
+            if "result" in result:
+                _odoo_breaker.success()
+                app_id = result["result"]
+                logger.info({"msg": "Admission created", "application_id": app_id})
+                return {"application_id": app_id, "status": "draft",
+                        "message": "Application submitted successfully"}
+            raise Exception("No result field in Odoo response")
+        except HTTPException:
+            raise
+        except Exception:
+            _odoo_breaker.failure()
+            ODOO_ERRORS.labels(endpoint="create_admission").inc()
+            logger.error("Admission creation failed", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to submit application to ERP system")
+
+
+odoo_client = OdooClient()
+
+# ============================================================================
+# FastAPI Lifespan
+# ============================================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _http_client
+    logger.info("Starting FastAPI API Gateway...")
+
+    _http_client = httpx.AsyncClient(
+        limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        timeout=httpx.Timeout(30.0),
+    )
+
+    try:
+        _redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+        await _redis.ping()
+        app.state.redis = _redis
+        logger.info("Redis connected")
+    except Exception as exc:
+        logger.warning({"msg": "Redis unavailable — caching/blocklist disabled", "err": str(exc)})
+        app.state.redis = None
+
+    try:
+        await odoo_client.authenticate()
+        logger.info("Odoo connection verified on startup")
+    except Exception as exc:
+        logger.warning({"msg": "Odoo not reachable on startup", "err": str(exc)})
+
+    yield
+
+    logger.info("Shutting down API Gateway...")
+    await _http_client.aclose()
+    _http_client = None
+    if getattr(app.state, "redis", None):
+        await app.state.redis.aclose()
+
+# ============================================================================
+# FastAPI Application
 # ============================================================================
 
 app = FastAPI(
@@ -70,512 +588,189 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
-# ============================================================================
-# CORS Middleware Configuration
-# ============================================================================
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
+# CORS — restricted to configured origins (no wildcard)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately in production
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ============================================================================
-# Pydantic Models - Request/Response Schemas
-# ============================================================================
+# Prometheus metrics at /metrics (separate ASGI app)
+app.mount("/metrics", make_asgi_app())
 
-class UserRole(str, Enum):
-    """
-    User roles for Role-Based Access Control (RBAC)
-    """
-    PROSPECTIVE_STUDENT = "prospective_student"
-    ADMISSION_STAFF = "admission_staff"
-    ADMIN = "admin"
-    SYSTEM = "system"
+# Petition multi-tier workflow router
+from routers import petitions as petitions_router
+app.include_router(petitions_router.router)
 
+# Academic Agent (chatbot) proxy router
+from routers import chatbot as chatbot_router
+app.include_router(chatbot_router.router)
 
-class TokenData(BaseModel):
-    """JWT Token payload structure"""
-    user_id: int
-    username: str
-    email: EmailStr
-    role: UserRole
-    exp: datetime
+# Account self-service (change password)
+from routers import account as account_router
+app.include_router(account_router.router)
 
+# Registrar dashboard aggregates
+from routers import registrar as registrar_router
+app.include_router(registrar_router.router)
 
-class OCRResponse(BaseModel):
-    """Response from OCR Microservice"""
-    success: bool
-    extracted_data: Dict[str, Any]
-    confidence: Optional[float] = None
-    processing_time: Optional[float] = None
+# In-app notifications feed
+from routers import notifications as notifications_router
+app.include_router(notifications_router.router)
 
-
-class AdmissionApplicationData(BaseModel):
-    """
-    Structured data for admission application
-    Extracted from OCR or manually entered
-    """
-    # Personal Information
-    full_name: str = Field(..., min_length=2, max_length=200)
-    national_id: str = Field(..., pattern=r'^\d{14}$')  # Egyptian NID format
-    email: EmailStr
-    phone: str = Field(..., pattern=r'^\+?[0-9]{10,15}$')
-    date_of_birth: datetime
-    
-    # Address Information
-    address: str = Field(..., min_length=10)
-    city: str
-    country: str = "Egypt"
-    
-    # Academic Information
-    previous_qualification: str
-    graduation_year: int = Field(..., ge=1950, le=2030)
-    gpa: float = Field(..., ge=0.0, le=4.0)
-    
-    # Application Details
-    desired_program: str
-    application_type: str = "regular"
-    
-    @validator('graduation_year')
-    def validate_graduation_year(cls, v):
-        current_year = datetime.now().year
-        if v > current_year:
-            raise ValueError('Graduation year cannot be in the future')
-        return v
-
-
-class AdmissionResponse(BaseModel):
-    """Response from Odoo Admission Module"""
-    success: bool
-    application_id: Optional[int] = None
-    student_id: Optional[int] = None
-    status: str
-    message: str
-    next_steps: Optional[List[str]] = None
-
-
-class OrchestrationRequest(BaseModel):
-    """Request for orchestrated document processing + admission"""
-    email: EmailStr
-    phone: str
-    desired_program: str
-    application_type: str = "regular"
-
-
-class OrchestrationResponse(BaseModel):
-    """Response from orchestrated workflow"""
-    success: bool
-    ocr_result: Optional[OCRResponse] = None
-    admission_result: Optional[AdmissionResponse] = None
-    execution_time: float
-    errors: Optional[List[str]] = None
-
+# Registration catalog + student/faculty/admin data
+from routers import registration as registration_router
+app.include_router(registration_router.router)
+from routers import registration_tiers as registration_tiers_router
+app.include_router(registration_tiers_router.router)
+from routers import faculty as faculty_router
+app.include_router(faculty_router.router)
+from routers import admin as admin_router
+app.include_router(admin_router.router)
 
 # ============================================================================
-# Security - JWT Authentication and RBAC
+# Middleware — observability and audit logging
 # ============================================================================
 
-security = HTTPBearer()
+@app.middleware("http")
+async def _observability(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    t0 = time.monotonic()
+
+    response = await call_next(request)
+
+    elapsed  = time.monotonic() - t0
+    endpoint = request.url.path
+    REQUEST_COUNT.labels(
+        method=request.method, endpoint=endpoint,
+        status_code=str(response.status_code),
+    ).inc()
+    REQUEST_LATENCY.labels(method=request.method, endpoint=endpoint).observe(elapsed)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
-class RBACChecker:
-    """
-    Role-Based Access Control (RBAC) Checker
-    Validates JWT tokens and enforces role-based permissions
-    """
-    
-    def __init__(self, allowed_roles: List[UserRole]):
-        self.allowed_roles = allowed_roles
-    
-    async def __call__(
-        self, 
-        credentials: HTTPAuthorizationCredentials = Depends(security)
-    ) -> TokenData:
-        """
-        Validate JWT token and check user permissions
-        
-        Args:
-            credentials: Bearer token from Authorization header
-            
-        Returns:
-            TokenData: Validated user data
-            
-        Raises:
-            HTTPException: If token is invalid or user lacks permission
-        """
-        token = credentials.credentials
-        
-        try:
-            # Decode JWT token
-            payload = jwt.decode(
-                token, 
-                JWT_SECRET_KEY, 
-                algorithms=[JWT_ALGORITHM]
-            )
-            
-            # Extract user data
-            token_data = TokenData(
-                user_id=payload.get("user_id"),
-                username=payload.get("username"),
-                email=payload.get("email"),
-                role=UserRole(payload.get("role")),
-                exp=datetime.fromtimestamp(payload.get("exp"))
-            )
-            
-            # Check if token is expired
-            if token_data.exp < datetime.utcnow():
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token has expired",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            
-            # Check role-based permissions
-            if token_data.role not in self.allowed_roles:
-                logger.warning(
-                    f"Access denied for user {token_data.username} "
-                    f"with role {token_data.role}"
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Insufficient permissions. Required roles: "
-                           f"{[role.value for role in self.allowed_roles]}",
-                )
-            
-            logger.info(
-                f"Authenticated user: {token_data.username} "
-                f"(Role: {token_data.role.value})"
-            )
-            
-            return token_data
-            
-        except InvalidTokenError as e:
-            logger.error(f"Invalid JWT token: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication failed",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+_AUDIT_PREFIXES = ("/api/v1/auth/", "/api/v1/admin/")
 
+@app.middleware("http")
+async def _audit(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if (
+        any(path.startswith(p) for p in _AUDIT_PREFIXES)
+        or response.status_code in (401, 403)
+    ):
+        audit_logger.info(json.dumps({
+            "event":      "security",
+            "method":     request.method,
+            "path":       path,
+            "status":     response.status_code,
+            "ip":         request.client.host if request.client else "unknown",
+            "request_id": getattr(request.state, "request_id", None),
+        }))
+    return response
 
 # ============================================================================
-# Helper Functions - Odoo XML-RPC Client
-# ============================================================================
-
-class OdooClient:
-    """
-    Asynchronous Odoo XML-RPC Client
-    Handles authentication and API calls to Odoo ERP
-    """
-    
-    def __init__(self):
-        self.url = ODOO_URL
-        self.db = ODOO_DB
-        self.username = ODOO_USERNAME
-        self.password = ODOO_PASSWORD
-        self.uid: Optional[int] = None
-    
-    async def authenticate(self) -> int:
-        """
-        Authenticate with Odoo and get user ID
-        
-        Returns:
-            int: User ID if authentication successful
-        """
-        if self.uid:
-            return self.uid
-        
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                # Odoo authentication endpoint
-                auth_url = f"{self.url}/web/session/authenticate"
-                
-                payload = {
-                    "jsonrpc": "2.0",
-                    "params": {
-                        "db": self.db,
-                        "login": self.username,
-                        "password": self.password
-                    }
-                }
-                
-                response = await client.post(auth_url, json=payload)
-                response.raise_for_status()
-                
-                result = response.json()
-                
-                if "result" in result and "uid" in result["result"]:
-                    self.uid = result["result"]["uid"]
-                    logger.info(f"Authenticated with Odoo as user ID: {self.uid}")
-                    return self.uid
-                else:
-                    raise Exception("Authentication failed: No UID returned")
-                    
-        except Exception as e:
-            logger.error(f"Odoo authentication failed: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Failed to connect to Odoo ERP system"
-            )
-    
-    async def create_admission_application(
-        self, 
-        application_data: AdmissionApplicationData
-    ) -> Dict[str, Any]:
-        """
-        Create admission application in Odoo
-        
-        Args:
-            application_data: Structured admission data
-            
-        Returns:
-            dict: Created application details
-        """
-        await self.authenticate()
-        
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                # Odoo JSON-RPC endpoint for model operations
-                url = f"{self.url}/web/dataset/call_kw"
-                
-                # Prepare application data for Odoo
-                values = {
-                    "name": application_data.full_name,
-                    "national_id": application_data.national_id,
-                    "email": application_data.email,
-                    "phone": application_data.phone,
-                    "date_of_birth": application_data.date_of_birth.strftime("%Y-%m-%d"),
-                    "street": application_data.address,
-                    "city": application_data.city,
-                    "country_id": self._get_country_id(application_data.country),
-                    "previous_qualification": application_data.previous_qualification,
-                    "graduation_year": application_data.graduation_year,
-                    "gpa": application_data.gpa,
-                    "desired_program": application_data.desired_program,
-                    "application_type": application_data.application_type,
-                    "state": "draft",
-                }
-                
-                payload = {
-                    "jsonrpc": "2.0",
-                    "method": "call",
-                    "params": {
-                        "model": "op.admission",  # OpenEduCat admission model
-                        "method": "create",
-                        "args": [values],
-                        "kwargs": {}
-                    },
-                    "id": 1
-                }
-                
-                response = await client.post(url, json=payload)
-                response.raise_for_status()
-                
-                result = response.json()
-                
-                if "result" in result:
-                    application_id = result["result"]
-                    logger.info(f"Created admission application: {application_id}")
-                    
-                    return {
-                        "application_id": application_id,
-                        "status": "draft",
-                        "message": "Application submitted successfully"
-                    }
-                else:
-                    raise Exception("Failed to create application")
-                    
-        except Exception as e:
-            logger.error(f"Failed to create admission application: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create admission application: {str(e)}"
-            )
-    
-    def _get_country_id(self, country_name: str) -> int:
-        """Get Odoo country ID (simplified - would query Odoo in production)"""
-        # In production, this would query res.country model
-        return 65  # Egypt's typical ID in Odoo
-
-
-# Global Odoo client instance
-odoo_client = OdooClient()
-
-
-# ============================================================================
-# API Endpoints
+# Health
 # ============================================================================
 
 @app.get("/health")
 async def health_check():
-    """
-    Health check endpoint for monitoring
-    """
     return {
-        "status": "healthy",
-        "service": "api_gateway",
+        "status":    "healthy",
+        "service":   "api_gateway",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version":   "1.0.0",
     }
 
+# ============================================================================
+# OCR Endpoint
+# ============================================================================
 
-@app.get("/metrics")
-async def metrics():
-    """
-    Basic metrics endpoint (extend with Prometheus in production)
-    """
-    return {
-        "service": "api_gateway",
-        "uptime": "operational",
-        "endpoints_available": 5
-    }
+_ALLOWED_MIME = {"image/jpeg", "image/png", "image/jpg", "application/pdf"}
+_MAX_UPLOAD   = 10 * 1024 * 1024  # 10 MB
 
 
-@app.post(
-    "/api/v1/extract-document",
-    response_model=OCRResponse,
-    summary="Extract data from uploaded document using OCR",
-    description="""
-    Accepts an uploaded document (National ID, certificate, etc.) and 
-    extracts structured data using the OCR Microservice.
-    
-    **Access:** Prospective students and admission staff
-    **Rate Limit:** 2 requests/second (configured in NGINX)
-    """
-)
+@app.post("/api/v1/extract-document", response_model=OCRResponse,
+          summary="Extract data from uploaded document using OCR")
+@limiter.limit("5/minute")
 async def extract_document(
-    file: UploadFile = File(..., description="Document image/PDF file"),
-    user: TokenData = Depends(
-        RBACChecker([
-            UserRole.PROSPECTIVE_STUDENT, 
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
-        ])
-    )
+    request: Request,
+    file: UploadFile = File(...),
+    user: TokenData = Depends(RBACChecker([
+        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
+    ])),
 ):
-    """
-    Route 1: OCR Service Integration
-    
-    Forwards uploaded document to OCR Microservice for text extraction
-    """
-    start_time = datetime.utcnow()
-    
-    try:
-        # Validate file type
-        allowed_types = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
-        if file.content_type not in allowed_types:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid file type. Allowed: {allowed_types}"
-            )
-        
-        # Read file content
-        file_content = await file.read()
-        
-        # Validate file size (max 10MB)
-        max_size = 10 * 1024 * 1024  # 10MB
-        if len(file_content) > max_size:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="File size exceeds 10MB limit"
-            )
-        
-        logger.info(
-            f"Processing document: {file.filename} "
-            f"({len(file_content)} bytes) for user {user.username}"
+    if _ocr_breaker.is_open:
+        raise HTTPException(status_code=503, detail="OCR service temporarily unavailable")
+
+    if file.content_type not in _ALLOWED_MIME:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type '{file.content_type}'. Allowed: {sorted(_ALLOWED_MIME)}",
         )
-        
-        # Forward to OCR Microservice
-        async with httpx.AsyncClient(timeout=90.0) as client:
-            files = {"file": (file.filename, file_content, file.content_type)}
-            
-            response = await client.post(
+
+    content = await file.read()
+    if len(content) > _MAX_UPLOAD:
+        raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
+
+    t0 = datetime.utcnow()
+    logger.info({"msg": "OCR request", "user": user.username, "size": len(content)})
+
+    try:
+        async with httpx.AsyncClient(timeout=90.0) as c:
+            resp = await c.post(
                 f"{OCR_SERVICE_URL}/ocr",
-                files=files
+                files={"file": (file.filename, content, file.content_type)},
             )
-            
-            response.raise_for_status()
-            ocr_result = response.json()
-        
-        processing_time = (datetime.utcnow() - start_time).total_seconds()
-        
-        logger.info(
-            f"OCR processing completed in {processing_time:.2f}s "
-            f"for user {user.username}"
-        )
-        
-        return OCRResponse(
-            success=True,
-            extracted_data=ocr_result.get("result", {}),
-            confidence=ocr_result.get("confidence", 0.0),
-            processing_time=processing_time
-        )
-        
-    except httpx.HTTPError as e:
-        logger.error(f"OCR service communication error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="OCR service is currently unavailable"
-        )
-    except Exception as e:
-        logger.error(f"Document extraction failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Document extraction failed: {str(e)}"
-        )
+            resp.raise_for_status()
+            ocr_data = resp.json()
+        _ocr_breaker.success()
+    except httpx.HTTPError:
+        _ocr_breaker.failure()
+        logger.error("OCR service HTTP error", exc_info=True)
+        raise HTTPException(status_code=503, detail="OCR service is currently unavailable")
+    except Exception:
+        _ocr_breaker.failure()
+        logger.error("OCR processing failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Document processing failed")
 
-
-@app.post(
-    "/api/v1/admissions/apply",
-    response_model=AdmissionResponse,
-    summary="Submit admission application to Odoo",
-    description="""
-    Submits structured admission application data to Odoo ERP system.
-    
-    **Access:** Prospective students and admission staff
-    **Rate Limit:** 5 requests/second with burst of 10
-    """
-)
-async def submit_admission_application(
-    application: AdmissionApplicationData,
-    user: TokenData = Depends(
-        RBACChecker([
-            UserRole.PROSPECTIVE_STUDENT,
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
-        ])
+    return OCRResponse(
+        success=True,
+        extracted_data=ocr_data.get("result", {}),
+        confidence=ocr_data.get("confidence", 0.0),
+        processing_time=(datetime.utcnow() - t0).total_seconds(),
     )
+
+# ============================================================================
+# Admission Endpoints
+# ============================================================================
+
+@app.post("/api/v1/admissions/apply", response_model=AdmissionResponse,
+          summary="Submit an admission application to the ERP")
+async def submit_admission_application(
+    request: Request,
+    application: AdmissionApplicationData,
+    user: TokenData = Depends(RBACChecker([
+        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
+    ])),
 ):
-    """
-    Route 2: Odoo Admission Module Integration
-    
-    Creates admission application in Odoo ERP system
-    """
+    redis_conn = getattr(request.app.state, "redis", None)
     try:
-        logger.info(
-            f"Creating admission application for {application.full_name} "
-            f"(submitted by {user.username})"
-        )
-        
-        # Create application in Odoo
-        result = await odoo_client.create_admission_application(application)
-        
-        logger.info(
-            f"Admission application created: ID {result['application_id']}"
-        )
-        
+        logger.info({"msg": "Admission apply", "name": application.full_name, "by": user.username})
+        result = await odoo_client.create_admission_application(application, redis_conn)
         return AdmissionResponse(
             success=True,
             application_id=result["application_id"],
@@ -584,380 +779,410 @@ async def submit_admission_application(
             next_steps=[
                 "Check your email for confirmation",
                 "Wait for admission committee review",
-                "Track application status in student portal"
-            ]
+                "Track application status in the student portal",
+            ],
         )
-        
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Admission application submission failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to submit admission application: {str(e)}"
-        )
+    except Exception:
+        logger.error("Admission apply failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Application submission failed")
 
 
-@app.post(
-    "/api/v1/admissions/submit-with-document",
-    response_model=OrchestrationResponse,
-    summary="Orchestrated workflow: OCR + Admission Application",
-    description="""
-    Composite endpoint that orchestrates the complete admission workflow:
-    1. Extract data from uploaded document using OCR
-    2. Validate and enrich extracted data
-    3. Submit admission application to Odoo
-    
-    **Access:** Prospective students and admission staff
-    **Rate Limit:** 2 requests/second (most restrictive)
-    """
-)
-async def submit_with_document(
-    file: UploadFile = File(..., description="National ID or certificate"),
-    email: EmailStr = Form(..., description="Applicant email"),
-    phone: str = Form(..., description="Applicant phone number"),
-    desired_program: str = Form(..., description="Desired academic program"),
-    application_type: str = Form("regular", description="Application type"),
-    user: TokenData = Depends(
-        RBACChecker([
-            UserRole.PROSPECTIVE_STUDENT,
-            UserRole.ADMISSION_STAFF,
-            UserRole.ADMIN
-        ])
-    )
+@app.get("/api/v1/admissions", summary="List the authenticated user's admission applications")
+async def list_my_admissions(
+    request: Request,
+    user: TokenData = Depends(RBACChecker([
+        UserRole.PROSPECTIVE_STUDENT, UserRole.STUDENT,
+        UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
+    ])),
 ):
-    """
-    Route 3: Orchestration Endpoint
-    
-    Combines OCR extraction and admission application in single workflow
-    """
-    start_time = datetime.utcnow()
-    errors = []
-    ocr_result = None
-    admission_result = None
-    
+    """Returns school.admission records for the authenticated user's email address."""
     try:
-        logger.info(
-            f"Starting orchestrated admission workflow for user {user.username}"
-        )
-        
-        # Step 1: Extract data from document using OCR
+        async with httpx.AsyncClient(timeout=30.0) as c:
+            await _odoo_service_auth(c)
+            resp = await c.post(
+                f"{ODOO_URL}/web/dataset/call_kw",
+                json={"jsonrpc": "2.0", "method": "call", "params": {
+                    "model": "school.admission", "method": "search_read",
+                    "args": [[["email", "=", user.email]]],
+                    "kwargs": {
+                        "fields": ["name", "email", "state", "reference",
+                                   "application_date", "program_id"],
+                        "order": "application_date desc",
+                    },
+                }},
+            )
+        records = resp.json().get("result", [])
+        return {"count": len(records), "applications": records}
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("list_my_admissions failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve applications")
+
+
+@app.get("/api/v1/admissions/status/{reference}",
+         summary="Public status check by application reference number")
+async def get_admission_status(reference: str):
+    """Public endpoint — does not require authentication."""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as c:
+            await _odoo_service_auth(c)
+            resp = await c.post(
+                f"{ODOO_URL}/web/dataset/call_kw",
+                json={"jsonrpc": "2.0", "method": "call", "params": {
+                    "model": "school.admission", "method": "search_read",
+                    "args": [[["reference", "=", reference]]],
+                    "kwargs": {
+                        "fields": ["reference", "state", "application_date", "name"],
+                        "limit": 1,
+                    },
+                }},
+            )
+        result = resp.json().get("result", [])
+        if not result:
+            raise HTTPException(status_code=404, detail="Application not found")
+        rec = result[0]
+        return {
+            "reference":      rec["reference"],
+            "applicant_name": rec["name"],
+            "status":         rec["state"],
+            "applied_on":     rec["application_date"],
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("get_admission_status failed for ref=%s", reference, exc_info=True)
+        raise HTTPException(status_code=500, detail="Status lookup failed")
+
+
+@app.post("/api/v1/admissions/submit-with-document", response_model=OrchestrationResponse,
+          summary="Orchestrated workflow: OCR extraction + ERP admission submission")
+@limiter.limit("2/minute")
+async def submit_with_document(
+    request: Request,
+    file: UploadFile = File(...),
+    email: EmailStr = Form(...),
+    phone: str = Form(...),
+    desired_program: str = Form(...),
+    application_type: str = Form("regular"),
+    user: TokenData = Depends(RBACChecker([
+        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
+    ])),
+):
+    t0            = datetime.utcnow()
+    errors: List[str] = []
+    ocr_result    = None
+    adm_result    = None
+
+    try:
+        logger.info({"msg": "Orchestrated workflow", "user": user.username})
+
+        # Step 1 — OCR
         try:
-            file_content = await file.read()
-            
-            async with httpx.AsyncClient(timeout=90.0) as client:
-                files = {"file": (file.filename, file_content, file.content_type)}
-                response = await client.post(
+            content = await file.read()
+            async with httpx.AsyncClient(timeout=90.0) as c:
+                resp = await c.post(
                     f"{OCR_SERVICE_URL}/ocr",
-                    files=files
+                    files={"file": (file.filename, content, file.content_type)},
                 )
-                response.raise_for_status()
-                ocr_data = response.json()
-            
+                resp.raise_for_status()
+                ocr_data = resp.json()
             ocr_result = OCRResponse(
                 success=True,
                 extracted_data=ocr_data.get("result", {}),
-                confidence=ocr_data.get("confidence", 0.0)
+                confidence=ocr_data.get("confidence", 0.0),
             )
-            
-            logger.info("OCR extraction completed successfully")
-            
-        except Exception as e:
-            error_msg = f"OCR extraction failed: {str(e)}"
-            logger.error(error_msg)
-            errors.append(error_msg)
+        except Exception:
+            logger.error("OCR step failed", exc_info=True)
+            errors.append("OCR extraction failed")
             raise
-        
-        # Step 2: Map OCR data to admission application structure
+
+        # Step 2 — map
         try:
-            extracted = ocr_result.extracted_data
-            
-            # Create application data from OCR results
-            application_data = AdmissionApplicationData(
-                full_name=extracted.get("name", "Unknown"),
-                national_id=extracted.get("nid", "00000000000000"),
-                email=email,
-                phone=phone,
-                date_of_birth=datetime.strptime(
-                    extracted.get("date_of_birth", "2000-01-01"),
-                    "%Y-%m-%d"
+            ex = ocr_result.extracted_data
+            app_data = AdmissionApplicationData(
+                full_name              = ex.get("name", "Unknown"),
+                national_id            = ex.get("nid", "00000000000000"),
+                email                  = email,
+                phone                  = phone,
+                date_of_birth          = datetime.strptime(
+                    ex.get("date_of_birth", "2000-01-01"), "%Y-%m-%d"
                 ),
-                address=extracted.get("address", "Not provided"),
-                city=extracted.get("city", "Cairo"),
-                country="Egypt",
-                previous_qualification=extracted.get("qualification", "High School"),
-                graduation_year=int(extracted.get("graduation_year", 2020)),
-                gpa=float(extracted.get("gpa", 3.0)),
-                desired_program=desired_program,
-                application_type=application_type
+                address                = ex.get("address", "Not provided"),
+                city                   = ex.get("city", "Cairo"),
+                country                = "Egypt",
+                previous_qualification = ex.get("qualification", "High School"),
+                graduation_year        = int(ex.get("graduation_year", 2020)),
+                gpa                    = float(ex.get("gpa", 3.0)),
+                desired_program        = desired_program,
+                application_type       = application_type,
             )
-            
-        except Exception as e:
-            error_msg = f"Data mapping failed: {str(e)}"
-            logger.error(error_msg)
-            errors.append(error_msg)
+        except Exception:
+            logger.error("OCR data mapping failed", exc_info=True)
+            errors.append("Data mapping from OCR result failed")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to map extracted data to application format"
+                status_code=400, detail="Failed to map extracted data to application format"
             )
-        
-        # Step 3: Submit to Odoo
+
+        # Step 3 — submit to Odoo
         try:
-            odoo_result = await odoo_client.create_admission_application(
-                application_data
-            )
-            
-            admission_result = AdmissionResponse(
+            redis_conn = getattr(request.app.state, "redis", None)
+            odoo_res = await odoo_client.create_admission_application(app_data, redis_conn)
+            adm_result = AdmissionResponse(
                 success=True,
-                application_id=odoo_result["application_id"],
-                status=odoo_result["status"],
-                message=odoo_result["message"],
-                next_steps=[
-                    "Document verified via OCR",
-                    "Application submitted to admission office",
-                    "Check email for updates"
-                ]
+                application_id=odoo_res["application_id"],
+                status=odoo_res["status"],
+                message=odoo_res["message"],
+                next_steps=["Document verified via OCR", "Application submitted", "Check email for updates"],
             )
-            
-            logger.info(
-                f"Orchestrated workflow completed: "
-                f"Application ID {odoo_result['application_id']}"
-            )
-            
-        except Exception as e:
-            error_msg = f"Odoo submission failed: {str(e)}"
-            logger.error(error_msg)
-            errors.append(error_msg)
+        except Exception:
+            logger.error("Odoo submission step failed", exc_info=True)
+            errors.append("ERP submission failed")
             raise
-        
-        execution_time = (datetime.utcnow() - start_time).total_seconds()
-        
+
         return OrchestrationResponse(
-            success=True,
-            ocr_result=ocr_result,
-            admission_result=admission_result,
-            execution_time=execution_time,
-            errors=errors if errors else None
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        execution_time = (datetime.utcnow() - start_time).total_seconds()
-        logger.error(f"Orchestrated workflow failed: {str(e)}")
-        
-        return OrchestrationResponse(
-            success=False,
-            ocr_result=ocr_result,
-            admission_result=admission_result,
-            execution_time=execution_time,
-            errors=errors + [str(e)]
+            success=True, ocr_result=ocr_result, admission_result=adm_result,
+            execution_time=(datetime.utcnow() - t0).total_seconds(),
         )
 
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Orchestrated workflow failed", exc_info=True)
+        return OrchestrationResponse(
+            success=False, ocr_result=ocr_result, admission_result=adm_result,
+            execution_time=(datetime.utcnow() - t0).total_seconds(),
+            errors=errors or ["Workflow failed unexpectedly"],
+        )
 
 # ============================================================================
 # Auth Endpoints
 # ============================================================================
 
 class LoginRequest(BaseModel):
-    login: str
+    login:    str
     password: str
-    db: str = "edu_demo_new"
+    db:       str = "edu_demo_new"
 
-@app.post("/api/v1/auth/login")
-async def login(request: LoginRequest):
-    """
-    Authenticate via Odoo session, then issue a JWT token.
-    """
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            auth_url = f"{ODOO_URL}/web/session/authenticate"
-            payload = {
-                "jsonrpc": "2.0",
-                "params": {
-                    "db": request.db,
-                    "login": request.login,
-                    "password": request.password,
-                }
-            }
-            response = await client.post(auth_url, json=payload)
-            result = response.json()
-            
-            if "result" in result and result["result"].get("uid"):
-                uid = result["result"]["uid"]
-                user_name = result["result"].get("name", request.login)
-                
-                # Issue JWT
-                jwt_payload = {
-                    "user_id": uid,
-                    "username": request.login,
-                    "email": request.login,
-                    "role": "admin",  # Default to admin for now
-                    "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
-                }
-                token = jwt.encode(jwt_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-                
-                return {
-                    "access_token": token,
-                    "token_type": "bearer",
-                    "user_id": uid,
-                    "user_name": user_name,
-                    "expires_in": JWT_EXPIRATION_HOURS * 3600,
-                }
-            else:
-                raise HTTPException(status_code=401, detail="Invalid credentials")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
-@app.get("/api/v1/auth/session")
-async def check_session(
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT,
-        UserRole.ADMISSION_STAFF,
-        UserRole.ADMIN,
-        UserRole.SYSTEM
-    ]))
-):
-    """Validate current JWT token and return user info."""
+def _make_tokens(uid: int, login: str, email: str, role: UserRole) -> dict:
+    """Issue an access token (1 h) and a refresh token (7 d)."""
+    now            = datetime.utcnow()
+    jti_access     = str(uuid.uuid4())
+    jti_refresh    = str(uuid.uuid4())
+    access_payload = {
+        "user_id": uid, "username": login, "email": email,
+        "role": role.value, "jti": jti_access, "type": "access",
+        "exp": now + timedelta(hours=JWT_EXPIRATION_HOURS),
+    }
+    refresh_payload = {
+        "user_id": uid, "username": login, "email": email,
+        "role": role.value, "jti": jti_refresh, "type": "refresh",
+        "exp": now + timedelta(days=JWT_REFRESH_EXPIRATION_DAYS),
+    }
     return {
-        "valid": True,
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "role": user.role.value,
+        "access_token":  jwt.encode(access_payload,  JWT_SECRET_KEY, algorithm=JWT_ALGORITHM),
+        "refresh_token": jwt.encode(refresh_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM),
+        "token_type":    "bearer",
+        "expires_in":    JWT_EXPIRATION_HOURS * 3600,
     }
 
 
+async def _track_active_session(redis_conn, uid: int, access_token: str) -> None:
+    """Record an active session keyed by the access token's jti so the registrar
+    dashboard can report distinct concurrent users. Expires with the token."""
+    if not redis_conn:
+        return
+    try:
+        payload = jwt.decode(access_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        jti = payload.get("jti")
+        if jti:
+            await redis_conn.setex(f"active_session:{uid}:{jti}", JWT_EXPIRATION_HOURS * 3600, "1")
+    except Exception:
+        pass  # session tracking is best-effort, never block auth
+
+
+@app.post("/api/v1/auth/login", summary="Authenticate and receive JWT access + refresh tokens")
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginRequest):
+    redis_conn = getattr(request.app.state, "redis", None)
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as c:
+            resp = await c.post(
+                f"{ODOO_URL}/web/session/authenticate",
+                json={"jsonrpc": "2.0", "params": {
+                    "db": body.db, "login": body.login, "password": body.password,
+                }},
+            )
+            result = resp.json()
+
+        if not result.get("result", {}).get("uid"):
+            AUTH_COUNTER.labels(outcome="failure").inc()
+            audit_logger.warning(json.dumps({
+                "event": "login_failed",
+                "login": body.login,
+                "ip":    request.client.host if request.client else None,
+            }))
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        uid   = result["result"]["uid"]
+        name  = result["result"].get("name", body.login)
+        role  = await resolve_user_role(uid, redis_conn)
+        tokens = _make_tokens(uid, body.login, body.login, role)
+        await _track_active_session(redis_conn, uid, tokens["access_token"])
+
+        AUTH_COUNTER.labels(outcome="success").inc()
+        audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
+        return {**tokens, "user_id": uid, "user_name": name, "role": role.value}
+
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Login error", exc_info=True)
+        raise HTTPException(status_code=500, detail="Authentication service error")
+
+
+@app.post("/api/v1/auth/refresh", summary="Obtain new tokens using a refresh token")
+async def refresh_token(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    redis_conn = getattr(request.app.state, "redis", None)
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Not a refresh token")
+        if datetime.fromtimestamp(payload["exp"]) < datetime.utcnow():
+            raise HTTPException(status_code=401, detail="Refresh token expired")
+
+        jti = payload.get("jti")
+        if redis_conn and jti and await redis_conn.exists(f"blocklist:{jti}"):
+            raise HTTPException(status_code=401, detail="Refresh token has been revoked")
+
+        # Single-use: blocklist the consumed refresh token
+        if redis_conn and jti:
+            remaining = int((datetime.fromtimestamp(payload["exp"]) - datetime.utcnow()).total_seconds())
+            if remaining > 0:
+                await redis_conn.setex(f"blocklist:{jti}", remaining, "1")
+
+        uid   = payload["user_id"]
+        login = payload.get("username", "")
+        email = payload.get("email", login)
+        role  = UserRole(payload["role"])
+        tokens = _make_tokens(uid, login, email, role)
+        await _track_active_session(redis_conn, uid, tokens["access_token"])
+        return tokens
+
+    except HTTPException:
+        raise
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+
+@app.post("/api/v1/auth/logout", summary="Revoke the current access token")
+async def logout(
+    request: Request,
+    user: TokenData = Depends(RBACChecker(list(UserRole))),
+):
+    redis_conn = getattr(request.app.state, "redis", None)
+    if redis_conn and user.jti:
+        remaining = int((user.exp - datetime.utcnow()).total_seconds())
+        if remaining > 0:
+            await redis_conn.setex(f"blocklist:{user.jti}", remaining, "1")
+        await redis_conn.delete(f"role:{user.user_id}")
+        await redis_conn.delete(f"active_session:{user.user_id}:{user.jti}")
+    audit_logger.info(json.dumps({"event": "logout", "user_id": user.user_id}))
+    return {"success": True, "message": "Logged out successfully"}
+
+
+@app.get("/api/v1/auth/session", summary="Validate JWT and return user info")
+async def check_session(user: TokenData = Depends(RBACChecker(list(UserRole)))):
+    return {
+        "valid":    True,
+        "user_id":  user.user_id,
+        "username": user.username,
+        "email":    user.email,
+        "role":     user.role.value,
+    }
+
 # ============================================================================
-# Module Management Endpoints
+# Admin — Module Management
 # ============================================================================
 
-@app.get("/api/v1/admin/modules")
-async def list_modules(
-    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
-):
-    """List available Odoo modules."""
+@app.get("/api/v1/admin/modules", summary="List Odoo modules (super_admin only)")
+async def list_modules(user: TokenData = Depends(RBACChecker([UserRole.SUPER_ADMIN]))):
     await odoo_client.authenticate()
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "call",
-            "params": {
-                "model": "ir.module.module",
-                "method": "search_read",
+    async with httpx.AsyncClient(timeout=30.0) as c:
+        await _odoo_service_auth(c)
+        resp = await c.post(
+            f"{ODOO_URL}/web/dataset/call_kw",
+            json={"jsonrpc": "2.0", "method": "call", "params": {
+                "model": "ir.module.module", "method": "search_read",
                 "args": [[["state", "in", ["installed", "uninstalled"]]]],
-                "kwargs": {
-                    "fields": ["name", "shortdesc", "state", "summary"],
-                    "limit": 200,
-                }
-            }
-        }
-        response = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=payload)
-        return response.json().get("result", [])
+                "kwargs": {"fields": ["name", "shortdesc", "state", "summary"], "limit": 200},
+            }},
+        )
+        return resp.json().get("result", [])
+
 
 class InstallModuleRequest(BaseModel):
     module_name: str
 
-@app.post("/api/v1/admin/modules/install")
+
+@app.post("/api/v1/admin/modules/install", summary="Install an Odoo module (super_admin only)")
 async def install_module(
-    request: InstallModuleRequest,
-    user: TokenData = Depends(RBACChecker([UserRole.ADMIN, UserRole.SYSTEM]))
+    body: InstallModuleRequest,
+    user: TokenData = Depends(RBACChecker([UserRole.SUPER_ADMIN])),
 ):
-    """Install an Odoo module by technical name."""
     await odoo_client.authenticate()
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        # Find the module
-        search_payload = {
-            "jsonrpc": "2.0",
-            "method": "call",
-            "params": {
-                "model": "ir.module.module",
-                "method": "search_read",
-                "args": [[["name", "=", request.module_name]]],
-                "kwargs": {"fields": ["id", "state"], "limit": 1}
-            }
-        }
-        search_resp = await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=search_payload)
-        modules = search_resp.json().get("result", [])
-        
-        if not modules:
-            raise HTTPException(status_code=404, detail=f"Module '{request.module_name}' not found")
-        
-        module = modules[0]
-        if module["state"] == "installed":
-            return {"success": True, "message": f"Module '{request.module_name}' is already installed"}
-        
-        # Install the module
-        install_payload = {
-            "jsonrpc": "2.0",
-            "method": "call",
-            "params": {
-                "model": "ir.module.module",
-                "method": "button_immediate_install",
-                "args": [[module["id"]]],
-                "kwargs": {}
-            }
-        }
-        await client.post(f"{ODOO_URL}/web/dataset/call_kw", json=install_payload)
-        return {"success": True, "message": f"Module '{request.module_name}' installed successfully"}
+    async with httpx.AsyncClient(timeout=120.0) as c:
+        await _odoo_service_auth(c)
+        search = await c.post(
+            f"{ODOO_URL}/web/dataset/call_kw",
+            json={"jsonrpc": "2.0", "method": "call", "params": {
+                "model": "ir.module.module", "method": "search_read",
+                "args": [[["name", "=", body.module_name]]],
+                "kwargs": {"fields": ["id", "state"], "limit": 1},
+            }},
+        )
+        mods = search.json().get("result", [])
+        if not mods:
+            raise HTTPException(status_code=404, detail=f"Module '{body.module_name}' not found")
+        if mods[0]["state"] == "installed":
+            return {"success": True, "message": f"Module '{body.module_name}' is already installed"}
+        await c.post(
+            f"{ODOO_URL}/web/dataset/call_kw",
+            json={"jsonrpc": "2.0", "method": "call", "params": {
+                "model": "ir.module.module", "method": "button_immediate_install",
+                "args": [[mods[0]["id"]]], "kwargs": {},
+            }},
+        )
+        return {"success": True, "message": f"Module '{body.module_name}' installed successfully"}
 
 # ============================================================================
-# Utility Endpoints - JWT Token Generation (for testing)
+# Test Token Endpoint (disabled in production)
 # ============================================================================
 
-@app.post("/api/v1/auth/token")
-async def generate_test_token(
-    username: str,
-    role: UserRole = UserRole.PROSPECTIVE_STUDENT
-):
-    """
-    Generate JWT token for testing purposes
-    ** REMOVE IN PRODUCTION - Use proper authentication service **
-    """
+@app.post("/api/v1/auth/token", summary="Generate test JWT (disabled unless ENABLE_TEST_TOKENS=1)")
+async def generate_test_token(username: str, role: UserRole = UserRole.PROSPECTIVE_STUDENT):
+    if not ENABLE_TEST_TOKENS:
+        raise HTTPException(status_code=403, detail="Test token endpoint is disabled in this environment")
     payload = {
-        "user_id": 1,
-        "username": username,
+        "user_id": 1, "username": username,
         "email": f"{username}@example.com",
         "role": role.value,
-        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+        "jti": str(uuid.uuid4()), "type": "access",
+        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
     }
-    
-    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-    
     return {
-        "access_token": token,
-        "token_type": "bearer",
-        "expires_in": JWT_EXPIRATION_HOURS * 3600,
-        "role": role.value
+        "access_token": jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM),
+        "token_type":   "bearer",
+        "expires_in":   JWT_EXPIRATION_HOURS * 3600,
+        "role":         role.value,
     }
-
-
-# ============================================================================
-# Application Startup and Shutdown Events
-# ============================================================================
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize connections and resources on startup"""
-    logger.info("Starting FastAPI API Gateway...")
-    logger.info(f"OCR Service URL: {OCR_SERVICE_URL}")
-    logger.info(f"Odoo URL: {ODOO_URL}")
-    
-    # Test Odoo connection
-    try:
-        await odoo_client.authenticate()
-        logger.info("Successfully connected to Odoo ERP")
-    except Exception as e:
-        logger.warning(f"Failed to connect to Odoo on startup: {str(e)}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup resources on shutdown"""
-    logger.info("Shutting down FastAPI API Gateway...")
-
 
 # ============================================================================
 # Main Entry Point
@@ -965,12 +1190,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info",
-        access_log=True
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

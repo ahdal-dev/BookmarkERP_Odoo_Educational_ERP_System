@@ -1,0 +1,41 @@
+graph TD
+    A([📩 Start: Auto-Notification Received
+Advisee Petition Routed by System]) --> B[(ERP DB: Fetch Advisee Profile:
+GPA, Credits, Academic Standing)]
+    B --> C[Review Student's
+Full Academic Record]
+    C --> D[(ERP DB: Fetch Petition Details
+& Instructor Decision if Available)]
+    D --> E[Review Petition Type,
+Reason & Instructor Comments]
+    E --> F{Petition
+Type}
+    F -- Prerequisite Override --> G[Evaluate Readiness:
+Grades in Related Courses]
+    F -- Course Overload --> H[Evaluate Capacity:
+Current Load, Past Performance]
+    F -- Other Academic --> I[Evaluate Based on
+Institutional Guidelines]
+    G --> J{Academic Advisor
+Recommendation}
+    H --> J
+    I --> J
+    J -- Approve with Guidance --> K[Draft Academic Guidance Note
+for Student Record]
+    K --> L[(ERP DB: Log Approval +
+Guidance Note)]
+    L --> M[Notify Student:
+Petition Approved by Advisor]
+    J -- Reject --> N[Document Reason
+for Rejection]
+    N --> O[(ERP DB: Log Rejection
+& Close Petition)]
+    O --> P[Notify Student:
+Petition Rejected — Reason Provided]
+    J -- Escalate to Chair --> Q[(ERP DB: Escalate Petition
+to Department Chair)]
+    Q --> R[Notify Student & Chair:
+Petition Under Escalated Review]
+    M --> S([✅ End: Advisor Action Logged])
+    P --> S
+    R --> S

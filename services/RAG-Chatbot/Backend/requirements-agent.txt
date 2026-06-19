@@ -1,0 +1,10 @@
+# Slim dependency set for the integrated Academic Agent microservice
+# (agent_service.py + worker.py). Excludes the legacy RAG/admin stack
+# (SQLAlchemy, pgvector, FlagEmbedding, Whisper, etc.) so the container image
+# and cold-start stay light. Odoo access uses xmlrpc from the stdlib.
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic>=2.9.0
+python-dotenv==1.2.2
+openai>=1.40
+pika>=1.3.0

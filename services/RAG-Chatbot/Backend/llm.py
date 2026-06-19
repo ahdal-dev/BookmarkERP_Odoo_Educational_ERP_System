@@ -5,6 +5,8 @@ import json
 
 import google.generativeai as genai
 
+from runtime_config import get_model_name
+
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
 def get_gemini():
@@ -12,7 +14,7 @@ def get_gemini():
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel(MODEL_NAME)
+    return genai.GenerativeModel(get_model_name())
 
 SYSTEM_RULES = """
 You are a retrieval-augmented assistant.

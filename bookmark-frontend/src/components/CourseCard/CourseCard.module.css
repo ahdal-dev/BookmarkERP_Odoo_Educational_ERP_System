@@ -1,0 +1,109 @@
+.card {
+  background: var(--color-bg-white);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  border-left: 5px solid var(--border-color, var(--color-lime));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: fadeIn 0.4s ease both;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.code {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--border-color, var(--color-lime));
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-black);
+  line-height: 1.3;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+.metaLine svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.actionBtn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionGreen {
+  background: var(--color-lime);
+  color: #fff;
+}
+
+.actionGreen:hover {
+  background: var(--color-lime-dark);
+}
+
+.actionYellow {
+  background: var(--color-yellow);
+  color: var(--color-primary-black);
+}
+
+.actionYellow:hover {
+  background: #e0b530;
+}
+
+.actionGray {
+  background: var(--color-border-light);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.iconBadge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ -->
+    <!-- Chatbot Administrator group                                   -->
+    <!-- Only designated chatbot admins may manage settings/documents. -->
+    <!-- Implies the ERP Super Administrator group.                    -->
+    <!-- ============================================================ -->
+    <record id="group_chatbot_admin" model="res.groups">
+        <field name="name">Chatbot Administrator</field>
+        <field name="implied_ids" eval="[(4, ref('edu_mang_auth.group_erp_admin'))]"/>
+        <field name="comment">
+            Designated administrators who can configure the chatbot backend and
+            manage the RAG knowledge-base documents.
+        </field>
+    </record>
+
+    <!-- Full access to RAG documents for chatbot admins -->
+    <record id="chatbot_rag_document_admin_rule" model="ir.rule">
+        <field name="name">Chatbot RAG Documents: Admin Full Access</field>
+        <field name="model_id" ref="model_chatbot_rag_document"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_chatbot_admin'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>

@@ -252,7 +252,26 @@
                         });
                     } else if (typeof result.extracted_data === 'object') {
                         Object.entries(result.extracted_data).forEach(([key, value]) => {
-                            html += `<div class="field"><h3>${key}:</h3><p>${value}</p></div>`;
+                            if (Array.isArray(value)) {
+                                if (value.length === 0) {
+                                    html += `<div class="field"><h3>${key}:</h3><p>—</p></div>`;
+                                } else if (typeof value[0] === 'object') {
+                                    // Array of objects (subjects, witnesses, etc.)
+                                    html += `<div class="field"><h3>${key}:</h3><ul>`;
+                                    value.forEach(item => {
+                                        const row = Object.entries(item).map(([k, v]) => `<b>${k}</b>: ${v}`).join(' | ');
+                                        html += `<li>${row}</li>`;
+                                    });
+                                    html += `</ul></div>`;
+                                } else {
+                                    html += `<div class="field"><h3>${key}:</h3><p>${value.join(', ')}</p></div>`;
+                                }
+                            } else if (typeof value === 'object' && value !== null) {
+                                const row = Object.entries(value).map(([k, v]) => `<b>${k}</b>: ${v}`).join(' | ');
+                                html += `<div class="field"><h3>${key}:</h3><p>${row}</p></div>`;
+                            } else {
+                                html += `<div class="field"><h3>${key}:</h3><p>${value ?? '—'}</p></div>`;
+                            }
                         });
                     }
                     

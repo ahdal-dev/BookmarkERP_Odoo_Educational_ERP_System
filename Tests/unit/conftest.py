@@ -54,12 +54,12 @@ def valid_jwt_payload():
 
 @pytest.fixture
 def admin_jwt_payload():
-    """Return a valid JWT payload dict for an admin user."""
+    """Return a valid JWT payload dict for a super-admin user."""
     return {
         "user_id": 1,
         "username": "admin_user",
         "email": "admin@example.com",
-        "role": "admin",
+        "role": "super_admin",
         "exp": datetime.utcnow() + timedelta(hours=1),
     }
 
