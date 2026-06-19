@@ -1,31 +1,23 @@
 """
-RabbitMQ producer scaffold for the API gateway (next-phase readiness).
+RabbitMQ async producer/consumer for the API gateway.
 
-This mirrors ``services/RAG-Chatbot/Backend/mq.py``. It is intentionally NOT
-wired into any hot path yet — it exists so the upcoming async-messaging phase
-can move blocking work (emails, mailbox provisioning, notification fan-out,
-waitlist promotion, grade posting) off the request path with a one-line
-``publish_event(...)`` call plus a worker consumer.
+Uses aio_pika (async-native) to match the FastAPI async architecture.
+The module-level _mq_connection is set by the lifespan hook in main.py.
 
 Design: durable queues, persistent messages, graceful fallback. If the broker
-is unreachable or ``ENABLE_MQ`` is off, ``try_publish`` returns False and the
-caller continues synchronously — messaging never breaks a request.
+is unreachable or ENABLE_MQ is off, try_publish returns False and the caller
+continues synchronously — messaging never breaks a request.
 """
 import json
 import logging
 import os
-
-try:
-    import pika
-except ImportError:  # pika is optional when MQ is disabled
-    pika = None
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 AMQP_URL = os.getenv("AMQP_URL", "amqp://guest:guest@rabbitmq:5672/")
-_SOCKET_TIMEOUT = float(os.getenv("AMQP_TIMEOUT", "5"))
 
-# Planned queues (== routing keys on the default exchange) for the next phase.
+# Planned queues (== routing keys on the default exchange).
 QUEUE_NOTIFICATION = "notification.created"
 QUEUE_ADMISSION_EMAIL = "admission.email"
 QUEUE_ADMISSION_MAILBOX = "admission.mailbox"
@@ -36,55 +28,38 @@ QUEUES = (
     QUEUE_WAITLIST_PROMOTION, QUEUE_GRADE_POSTED,
 )
 
-
-class MQUnavailable(Exception):
-    """Broker unreachable — callers fall back to synchronous handling."""
+# Set by the lifespan hook; None means MQ is off or unavailable.
+_mq_connection = None
 
 
 def mq_enabled() -> bool:
     return os.getenv("ENABLE_MQ", "false").strip().lower() in ("1", "true", "yes", "on")
 
 
-def _connect():
-    if pika is None:
-        raise MQUnavailable("pika is not installed")
-    params = pika.URLParameters(AMQP_URL)
-    params.socket_timeout = _SOCKET_TIMEOUT
-    params.blocked_connection_timeout = _SOCKET_TIMEOUT
-    try:
-        return pika.BlockingConnection(params)
-    except Exception as e:  # noqa: BLE001
-        raise MQUnavailable(str(e))
+async def connect_mq():
+    """Create a RobustConnection (auto-reconnects on transient broker failures)."""
+    import aio_pika
+    return await aio_pika.connect_robust(AMQP_URL)
 
 
-def publish_event(routing_key: str, payload: dict) -> None:
-    """Publish a durable JSON message. Raises MQUnavailable if the broker is down."""
-    conn = _connect()
-    try:
-        channel = conn.channel()
-        for q in QUEUES:
-            channel.queue_declare(queue=q, durable=True)
-        channel.basic_publish(
-            exchange="",
-            routing_key=routing_key,
-            body=json.dumps(payload, default=str).encode("utf-8"),
-            properties=pika.BasicProperties(delivery_mode=2, content_type="application/json"),
-        )
-    finally:
-        try:
-            conn.close()
-        except Exception:  # noqa: BLE001
-            pass
-
-
-def try_publish(routing_key: str, payload: dict) -> bool:
-    """Best-effort publish. Returns True if queued, False if MQ is off/unavailable
-    so the caller can proceed synchronously. Never raises."""
-    if not mq_enabled():
+async def try_publish(routing_key: str, payload: dict) -> bool:
+    """Best-effort async publish. Returns True if queued, False if MQ is off/unavailable.
+    Never raises — the caller always continues synchronously on False."""
+    if not mq_enabled() or _mq_connection is None:
         return False
     try:
-        publish_event(routing_key, payload)
+        import aio_pika
+        async with _mq_connection.channel() as channel:
+            await channel.declare_queue(routing_key, durable=True)
+            await channel.default_exchange.publish(
+                aio_pika.Message(
+                    body=json.dumps(payload, default=str).encode("utf-8"),
+                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    content_type="application/json",
+                ),
+                routing_key=routing_key,
+            )
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("MQ publish skipped (%s): %s", routing_key, exc)
         return False
