@@ -2,6 +2,8 @@
    NAV CONFIGS — Sidebar navigation arrays for each app context
    ============================================================ */
 
+import { ROLES } from './roles';
+
 // Icons are rendered inline as SVG strings in AppShell;
 // here we use icon identifiers that AppShell maps to SVG components.
 
@@ -75,11 +77,73 @@ export const petitionsStudentNav = [
 // Student nav for the AI Assistant (chatbot) view.
 export const chatbotStudentNav = [
   { icon: 'dashboard', label: 'Dashboard', path: '/student/dashboard' },
-  { icon: 'grades', label: 'Grades', path: '/grades' },
-  { icon: 'registration', label: 'Enrollment', path: '/enrollment' },
-  { icon: 'petition', label: 'Petitions', path: '/petitions/new' },
+  { icon: 'grades', label: 'Grades', path: '/student/grades' },
+  { icon: 'registration', label: 'Enrollment', path: '/registration' },
+  { icon: 'petition', label: 'Petitions', path: '/student/petitions' },
   { icon: 'chat', label: 'Assistant', path: '/student/assistant', active: true },
   { icon: 'handbook', label: 'Handbook', path: '/handbook' },
+];
+
+// ----------------------------------------------------------------------------
+// Per-role nav arrays (active item resolved by current path inside AppShell)
+// ----------------------------------------------------------------------------
+
+export const studentNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/student/dashboard' },
+  { icon: 'grades', label: 'Grades', path: '/student/grades' },
+  { icon: 'registration', label: 'Enrollment', path: '/registration' },
+  { icon: 'petition', label: 'Petitions', path: '/student/petitions' },
+  { icon: 'chat', label: 'Assistant', path: '/student/assistant' },
+  { icon: 'handbook', label: 'Handbook', path: '/handbook' },
+];
+
+export const facultyNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/faculty/dashboard' },
+  { icon: 'program', label: 'My Courses', path: '/faculty/courses' },
+  { icon: 'petition', label: 'Petition Queue', path: '/faculty/petitions' },
+  { icon: 'profile', label: 'Profile', path: '/profile' },
+];
+
+export const advisorNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/faculty/dashboard' },
+  { icon: 'advising', label: 'My Advisees', path: '/faculty/advisees' },
+  { icon: 'petition', label: 'Petition Queue', path: '/faculty/petitions' },
+  { icon: 'profile', label: 'Profile', path: '/profile' },
+];
+
+export const chairNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/faculty/dashboard' },
+  { icon: 'appeals', label: 'Department Petitions', path: '/faculty/chair/petitions' },
+  { icon: 'students', label: 'Department Students', path: '/faculty/chair/students' },
+  { icon: 'petition', label: 'Petition Queue', path: '/faculty/petitions' },
+];
+
+export const registrarNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/registrar/dashboard' },
+  { icon: 'management', label: 'Time Slots', path: '/registrar/timeslots' },
+  { icon: 'program', label: 'Course Catalog', path: '/registrar/courses' },
+  { icon: 'reports', label: 'Enrollment Monitor', path: '/registrar/enrollment' },
+  { icon: 'settings', label: 'Ruleset', path: '/admin/settings/registration-rules' },
+];
+
+export const supportNav = [
+  { icon: 'chat', label: 'Live Queue', path: '/support/chat-queue' },
+  { icon: 'documents', label: 'Tickets', path: '/support/tickets' },
+  { icon: 'profile', label: 'Profile', path: '/profile' },
+];
+
+export const admissionsOfficerNav = [
+  { icon: 'dashboard', label: 'Dashboard', path: '/apps' },
+  { icon: 'admission', label: 'Pipeline', path: '/admissions/officer' },
+  { icon: 'documents', label: 'Documents', path: '/apply/documents' },
+  { icon: 'reports', label: 'Reports', path: '/admin/reports' },
+];
+
+export const adminNav = [
+  { icon: 'dashboard', label: 'Apps', path: '/apps' },
+  { icon: 'admin', label: 'Users', path: '/admin/users' },
+  { icon: 'reports', label: 'Audit Log', path: '/admin/audit-log' },
+  { icon: 'settings', label: 'Settings', path: '/admin/settings' },
 ];
 
 export const petitionsAdminNav = [
@@ -90,3 +154,35 @@ export const petitionsAdminNav = [
   { icon: 'documents', label: 'Documents', path: '/admin/documents' },
   { icon: 'settings', label: 'Settings', path: '/admin/settings' },
 ];
+
+// ----------------------------------------------------------------------------
+// Role → primary sidebar nav resolver.
+// Used by cross-role pages (Notifications, Settings) so the sidebar always
+// matches the signed-in user, and to guarantee Notifications + Settings are
+// reachable from every role's sidebar.
+// ----------------------------------------------------------------------------
+
+const ROLE_NAV = {
+  [ROLES.STUDENT]: studentNav,
+  [ROLES.INSTRUCTOR]: facultyNav,
+  [ROLES.ACADEMIC_ADVISOR]: advisorNav,
+  [ROLES.DEPARTMENT_CHAIR]: chairNav,
+  [ROLES.REGISTRAR]: registrarNav,
+  [ROLES.SUPPORT_TECHNICIAN]: supportNav,
+  [ROLES.ADMISSION_OFFICER]: admissionsOfficerNav,
+  [ROLES.SUPER_ADMIN]: adminNav,
+};
+
+// Shared entries appended to every role's sidebar (deduped by path).
+const SHARED_NAV = [
+  { icon: 'notifications', label: 'Notifications', path: '/notifications' },
+  { icon: 'settings', label: 'Account Settings', path: '/settings' },
+];
+
+export function navForRole(role) {
+  const base = ROLE_NAV[role] || studentNav;
+  const paths = new Set(base.map((i) => i.path));
+  const labels = new Set(base.map((i) => i.label));
+  const extras = SHARED_NAV.filter((i) => !paths.has(i.path) && !labels.has(i.label));
+  return [...base, ...extras];
+}

@@ -617,6 +617,26 @@ app.include_router(petitions_router.router)
 from routers import chatbot as chatbot_router
 app.include_router(chatbot_router.router)
 
+# Account self-service (change password)
+from routers import account as account_router
+app.include_router(account_router.router)
+
+# Registrar dashboard aggregates
+from routers import registrar as registrar_router
+app.include_router(registrar_router.router)
+
+# In-app notifications feed
+from routers import notifications as notifications_router
+app.include_router(notifications_router.router)
+
+# Registration catalog + student/faculty/admin data
+from routers import registration as registration_router
+app.include_router(registration_router.router)
+from routers import faculty as faculty_router
+app.include_router(faculty_router.router)
+from routers import admin as admin_router
+app.include_router(admin_router.router)
+
 # ============================================================================
 # Middleware — observability and audit logging
 # ============================================================================

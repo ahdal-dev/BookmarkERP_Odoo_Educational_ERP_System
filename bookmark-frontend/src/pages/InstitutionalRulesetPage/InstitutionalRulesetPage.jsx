@@ -1,19 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '../../components/AppShell/AppShell';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import ToggleSwitch from '../../components/ToggleSwitch/ToggleSwitch';
 import CircularGauge from '../../components/CircularGauge/CircularGauge';
 import { adminSettingsNav } from '../../config/navConfigs';
+import { adminAPI } from '../../api/apiGateway';
 import { mockRuleset } from '../../mocks/rulesetMocks';
 import styles from './InstitutionalRulesetPage.module.css';
 
 /* ============================================================
-   INSTITUTIONAL RULESET — Admin settings for registration rules
+   INSTITUTIONAL RULESET — Admin settings for registration rules.
+   Scalar rules (toggles, GPA, application status) persist to the
+   gateway (ir.config_parameter). Registration windows / prerequisite
+   list have no Odoo model yet and remain UI-local structure.
    ============================================================ */
+
+// Map gateway rules payload → form fields (rest comes from mockRuleset structure).
+function mergeRules(base, rules) {
+  if (!rules) return base;
+  return {
+    ...base,
+    autoEnroll: rules.autoEnroll ?? base.autoEnroll,
+    prerequisiteCheck: rules.prerequisiteCheck ?? base.prerequisiteCheck,
+    waitlistManagement: rules.waitlistManagement ?? base.waitlistManagement,
+    gpa: rules.minGpa || base.gpa,
+    applicationStatus: rules.applicationStatus || base.applicationStatus,
+  };
+}
 
 export default function InstitutionalRulesetPage() {
   const [form, setForm] = useState({ ...mockRuleset });
   const [isDirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load persisted scalar rules on mount.
+  useEffect(() => {
+    let active = true;
+    adminAPI.getRules()
+      .then((rules) => { if (active) setForm((prev) => mergeRules(prev, rules)); })
+      .catch(() => { /* keep defaults if endpoint unavailable */ });
+    return () => { active = false; };
+  }, []);
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -31,10 +58,22 @@ export default function InstitutionalRulesetPage() {
     setDirty(false);
   };
 
-  const handleCommit = () => {
-    // TODO(backend): implement PUT /api/v1/admin/settings/registration-rules
-    console.log('Commit:', form);
-    setDirty(false);
+  const handleCommit = async () => {
+    setSaving(true);
+    try {
+      await adminAPI.updateRules({
+        autoEnroll: form.autoEnroll,
+        prerequisiteCheck: form.prerequisiteCheck,
+        waitlistManagement: form.waitlistManagement,
+        minGpa: String(form.gpa ?? ''),
+        applicationStatus: form.applicationStatus,
+      });
+      setDirty(false);
+    } catch {
+      // leave dirty so the user can retry
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -55,11 +94,11 @@ export default function InstitutionalRulesetPage() {
         </button>
         <button
           className={styles.btnBlack}
-          disabled={!isDirty}
+          disabled={!isDirty || saving}
           onClick={handleCommit}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8m0-16v5h8"/></svg>
-          Commit Changes
+          {saving ? 'Saving…' : 'Commit Changes'}
         </button>
       </div>
 
