@@ -57,6 +57,20 @@ export default function UserManagementPage() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const { data: usersData } = useAsync(adminAPI.getUsers);
+
+  const liveUsers = usersData?.users?.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    status: u.status,
+  }));
+
+  const users = liveUsers ?? mockUsers;
+  const totalAccounts = usersData?.total_accounts ?? mockUserStats.totalAccounts;
+  const activeNow = usersData?.active_now ?? mockUserStats.activeNow;
+
   return (
     <AppShell
       navItems={navWithActive}
@@ -91,19 +105,19 @@ export default function UserManagementPage() {
       <div className={styles.statsRow}>
         <StatCard
           label="TOTAL ACCOUNTS"
-          value={mockUserStats.totalAccounts}
+          value={totalAccounts}
           delta={mockUserStats.delta}
         />
         <StatCard
           label="ACTIVE NOW"
-          value={mockUserStats.activeNow}
+          value={activeNow}
         >
           {/* Avatar stack */}
           <div className={styles.avatarStack}>
             {['A', 'E', 'J'].map((l, i) => (
               <div key={i} className={styles.miniAvatar}>{l}</div>
             ))}
-            <div className={styles.miniAvatarMore}>+3k</div>
+            <div className={styles.miniAvatarMore}>+{Math.max(0, activeNow - 3).toLocaleString()}</div>
           </div>
         </StatCard>
         <div className={styles.permCard}>
@@ -119,7 +133,7 @@ export default function UserManagementPage() {
       <div className={styles.tableCard}>
         <DataTable
           columns={columns}
-          data={mockUsers}
+          data={users}
           selectable
           onRowClick={(row) => navigate(`/admin/users/${row.id}`)}
         />
@@ -127,7 +141,7 @@ export default function UserManagementPage() {
 
       {/* Footer */}
       <div className={styles.tableFooter}>
-        <span className={styles.showing}>Showing 1–{mockUsers.length} of 12,482 users</span>
+        <span className={styles.showing}>Showing 1–{users.length} of {totalAccounts.toLocaleString()} users</span>
         <Pagination currentPage={page} totalPages={8} onPageChange={setPage} />
       </div>
 
