@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    participant UI as React Frontend
+    participant GW as FastAPI Gateway
+    participant GP as Grade Predictor Service
+    participant DB as PostgreSQL (Odoo)
+
+    UI->>GW: POST /predict<br/>{student_id, target_course,<br/>cumulative_gpa, transcript_history}
+    GW->>GW: Validate JWT + RBAC
+    GW->>GP: Forward prediction request
+
+    GP->>GP: normalize_course_id(target_course)
+    GP->>GP: build_history_lookup(transcript_history)
+    GP->>GP: check_prerequisites(prior, target)
+
+    Note over GP: Feature Engineering (27 features)
+    GP->>GP: Compute domain_avg, GPA trend,<br/>decay_weighted_GPA, fail_count,<br/>retake_flag, prereq_chain_depth
+
+    GP->>GP: Build feature_vec (1x27 NumPy array)
+
+    alt Classifier Mode (USE_CLASSIFIER=true)
+        GP->>GP: MODEL_CLF.predict_proba(X)
+        GP->>GP: Best class → letter grade + confidence
+    else Regressor Mode
+        GP->>GP: MODEL_REG.predict(X)
+        GP->>GP: numeric_to_letter(predicted_gpa)
+    end
+
+    GP->>GP: Apply Conformal Prediction<br/>grade_interval = [lo..hi] via CONFORMAL_K
+
+    GP->>GP: Generate reasoning factors<br/>(prereq status, domain avg, GPA trend)
+
+    GP-->>GW: {predicted_grade, predicted_numeric,<br/>confidence, grade_interval, reasoning}
+    GW-->>UI: JSON Response
+    UI->>UI: Render prediction card<br/>with confidence gauge
