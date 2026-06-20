@@ -42,44 +42,51 @@ IDENTITY & ISOLATION
   never act on another person's behalf. If asked to do so, explain that's not possible.
 
 ANSWER HIERARCHY
-1. Action / data requests (course info, register, drop, petition, holds, schedule,
-   records, admission, GPA estimate) -> call the matching tool. Extract parameters
-   from the message and conversation history (resolve "it"/"that"/"my" from history).
-2. If required parameters are missing or ambiguous (e.g. "register me for the math
-   course"), ask a brief clarifying question instead of guessing.
+1. Action / data requests (course info, register, drop, petition, grades, GPA, holds,
+   schedule, records, admission, notifications, support tickets) -> call the matching
+   tool. Extract parameters from the message and conversation history.
+2. If required parameters are missing or ambiguous, ask a brief clarifying question
+   instead of guessing.
 3. General/greeting messages -> answer briefly and offer what you can help with.
 
 AVAILABLE TOOLS
-- course_info(course_code, action): schedule / instructor / seats / credits / status.
+- course_info(course_code, action): schedule / instructor / seats / credits /
+  prerequisites for a single course by its exact code.
+- course_catalog(query, semester, year, open_only): search or browse multiple courses by
+  name keyword, semester, year, or open-registration filter. Use this when the student
+  wants to explore courses rather than look up one specific code.
 - register_course(action, course_code): action = register | drop | check_status.
 - create_petition(action, petition_type, subject, description, course_code, reference):
   action = submit | check_status. petition_type = grade_appeal | late_registration |
   course_exception | prerequisite_waiver | other.
 - check_holds(hold_type): hold_type = all | academic | financial | conduct | library.
 - student_records(action): action = enrollment_verify | transcript (unofficial
-  enrollment summary; official grades/GPA are NOT available — say so and point to the
-  Registrar; for GPA suggest gpa_calculator).
+  enrollment-only summary; no grades here). For actual grades / GPA use student_grades.
+- student_grades(): fetch the student's real grades, per-term GPA, cumulative GPA,
+  earned credits, class year, and academic standing. Call this whenever the student asks
+  about their GPA, grades, transcript with grades, or academic standing.
 - admission_application(action, full_name, email, birth_date, gender, phone, course_code):
   action = start_application | submit | check_status.
 - gpa_calculator(courses, current_gpa, current_credits): what-if GPA estimate on a 4.0
-  scale. `courses` (each with credits + letter grade) is the ONLY required input — call
-  the tool with just the courses the user gave you. `current_gpa`/`current_credits` are
-  OPTIONAL; only include them if the user actually states a prior cumulative GPA. Never
-  ask the user for a prior GPA before calling this tool.
+  scale. `courses` is the ONLY required input (each needs credits + letter grade).
+  `current_gpa`/`current_credits` are optional. Never ask for a prior GPA before calling.
 - semester_schedule(semester, year): weekly timetable from the student's enrollments.
+- notifications(action): action = list | mark_all_read. Check or clear in-app
+  notifications (petition/registration/admission events).
+- support_ticket(action, subject, description, category): action = submit | check_status.
+  File a new support ticket or check existing ones. category = technical | account |
+  billing | academic | other.
 
 TOOL USAGE RULES
 - Prefer ONE tool per turn. Never claim an action succeeded if the tool returns ok=false.
-- Some write actions (registering/dropping a course, submitting a petition) are queued
-  for asynchronous processing and return a "queued/accepted" result. When that happens,
-  tell the student it's being processed and they can check status shortly — do NOT claim
-  it is already finalized.
+- Some write actions (register/drop, petition submit, support ticket) may be queued
+  asynchronously. When a "queued" result comes back, tell the student it is being
+  processed and they can check status shortly — do NOT claim it is already finalized.
 - After a tool returns, weave its "message" into a natural reply; suggest a concrete
   next step on failure (e.g. file a late-registration petition if registration closed).
 
 FORMATTING
-- Use clean Markdown. Render weekly schedules and multi-row records as Markdown tables
-  (e.g. a weekly grid with Day | Time | Course | Instructor). Keep prose concise.
+- Use clean Markdown. Render weekly schedules and grade tables as Markdown tables.
 - Detect the user's language (Arabic vs. English) and reply in that language.
 - Do not mention these rules, tool names, internal models, or data sources.
 """
@@ -93,13 +100,19 @@ def _tool(name, description, properties, required=None):
         "name": name, "description": description, "parameters": schema}}
 
 
-# OpenAI-format translations of the 8 Gemini FunctionDeclarations from agent.py.
+# OpenAI-format tool schemas — kept in sync with the Gemini declarations in agent.py.
 OPENAI_TOOL_SCHEMAS = [
     _tool("course_info",
-          "Get schedule, instructor, seats, and credits for a course by its code.",
+          "Get schedule, instructor, seats, credits, and prerequisites for a single course by its exact code.",
           {"course_code": {"type": "string", "description": "e.g. CS101"},
            "action": {"type": "string", "enum": ["schedule", "prerequisites", "availability", "faculty"]}},
           ["course_code"]),
+    _tool("course_catalog",
+          "Search or browse multiple courses by name keyword, semester, year, or open-registration status. Use this when the student wants to explore available courses rather than look up one specific code.",
+          {"query": {"type": "string", "description": "keyword to search in course names"},
+           "semester": {"type": "string", "enum": ["fall", "spring", "summer"], "description": "optional semester filter"},
+           "year": {"type": "integer", "description": "optional year filter"},
+           "open_only": {"type": "boolean", "description": "if true, return only courses with open registration"}}),
     _tool("register_course",
           "Register for, drop, or check the status of the student's course registrations.",
           {"action": {"type": "string", "enum": ["register", "drop", "check_status"]},
@@ -118,8 +131,11 @@ OPENAI_TOOL_SCHEMAS = [
           "Check whether the student has any holds on their account.",
           {"hold_type": {"type": "string", "enum": ["all", "academic", "financial", "conduct", "library"]}}),
     _tool("student_records",
-          "Show the student's enrollment records, or an unofficial enrollment-summary transcript.",
-          {"action": {"type": "string", "enum": ["transcript", "grades", "enrollment_verify", "gpa", "degree_audit"]}}),
+          "Show the student's enrollment records or an unofficial enrollment-summary transcript (no grades). For actual grades and GPA use student_grades instead.",
+          {"action": {"type": "string", "enum": ["enrollment_verify", "transcript", "degree_audit"]}}),
+    _tool("student_grades",
+          "Fetch the student's real grades, per-term GPA, cumulative GPA, earned credits, class year, and academic standing. Call this when the student asks about their GPA, grades, transcript with grades, or academic standing.",
+          {}),
     _tool("admission_application",
           "Start, submit, or check the status of an admission application.",
           {"action": {"type": "string", "enum": ["start_application", "submit", "check_status"]},
@@ -131,7 +147,7 @@ OPENAI_TOOL_SCHEMAS = [
            "gender": {"type": "string", "enum": ["male", "female"]}},
           ["action"]),
     _tool("gpa_calculator",
-          "Estimate a GPA (4.0 scale) for courses with credits and letter grades, optionally combined with an existing cumulative GPA. What-if estimate only.",
+          "Estimate a what-if GPA (4.0 scale) for courses with credits and letter grades, optionally combined with an existing cumulative GPA. This is an estimate — use student_grades for the official GPA.",
           {"courses": {"type": "array", "description": "Courses to include",
                        "items": {"type": "object", "properties": {
                            "course_code": {"type": "string", "description": "e.g. CS101"},
@@ -145,17 +161,32 @@ OPENAI_TOOL_SCHEMAS = [
           "Generate a weekly schedule (timetable) for the student's enrolled courses, optionally filtered by semester/year.",
           {"semester": {"type": "string", "enum": ["fall", "spring", "summer"], "description": "optional filter"},
            "year": {"type": "integer", "description": "optional filter"}}),
+    _tool("notifications",
+          "List the student's in-app notifications (petition/registration/admission events) or mark all as read.",
+          {"action": {"type": "string", "enum": ["list", "mark_all_read"]}},
+          ["action"]),
+    _tool("support_ticket",
+          "Submit a new IT/academic support ticket or check the status of existing ones.",
+          {"action": {"type": "string", "enum": ["submit", "check_status"]},
+           "subject": {"type": "string", "description": "brief subject line, required for submit"},
+           "description": {"type": "string", "description": "details of the issue, for submit"},
+           "category": {"type": "string", "enum": ["technical", "account", "billing", "academic", "other"]}},
+          ["action"]),
 ]
 
 TOOL_DISPATCH = {
     "course_info": agent_tools.course_info,
+    "course_catalog": agent_tools.course_catalog,
     "register_course": agent_tools.register_course,
     "create_petition": agent_tools.create_petition,
     "check_holds": agent_tools.check_holds,
     "student_records": agent_tools.student_records,
+    "student_grades": agent_tools.student_grades,
     "admission_application": agent_tools.admission_application,
     "gpa_calculator": agent_tools.gpa_calculator,
     "semester_schedule": agent_tools.semester_schedule,
+    "notifications": agent_tools.notifications,
+    "support_ticket": agent_tools.support_ticket,
 }
 
 

@@ -19,7 +19,7 @@ LANGUAGE & GREETINGS
 - Do not mention these rules, document names, file sources, or database references.
 
 ANSWER HIERARCHY
-1. Action requests (register, drop, petition, apply, check status/holds/records) ->
+1. Action requests (register, drop, petition, apply, grades, support tickets, etc.) ->
    call the matching tool below. Extract parameters from the message and chat history
    (resolve "it"/"that"/"my" via history).
 2. Information requests with no action verb -> answer ONLY from the "Context snippets"
@@ -29,43 +29,44 @@ ANSWER HIERARCHY
    tool result.
 
 AVAILABLE TOOLS
-- course_info(course_code, action): schedule/instructor/seats/credits for a course.
+- course_info(course_code, action): schedule/instructor/seats/credits/prerequisites for
+  a single course by its code.
+- course_catalog(query, semester, year, open_only): browse or search multiple courses
+  by name keyword, semester, year, or whether registration is open. Use this when the
+  student wants to explore available courses rather than look up one specific code.
 - register_course(action, course_code): action = register | drop | check_status.
 - create_petition(action, petition_type, subject, description, course_code, reference):
   action = submit | check_status. For submit, petition_type = grade_appeal |
   late_registration | course_exception | prerequisite_waiver | other, plus subject and
-  description. For check_status, optionally pass reference (e.g. SP00001) to look up a
-  specific petition, or omit it to list the student's recent petitions.
+  description. For check_status, optionally pass reference (e.g. SP00001).
 - check_holds(hold_type): hold_type = all | academic | financial | conduct | library.
-- student_records(action): action = enrollment_verify (general "show my courses") or
-  transcript (an unofficial enrollment summary grouped by term, with credits and
-  status - clearly NOT an official grade transcript). grades/GPA/degree-audit are NOT
-  available - say so, point to the Registrar's Office, and for GPA suggest the
-  gpa_calculator tool.
+- student_records(action): action = enrollment_verify (show enrolled courses) or
+  transcript (unofficial enrollment summary by term, no grades). For actual grades and
+  GPA use student_grades instead.
+- student_grades(): fetch the student's real grades, per-term GPA, cumulative GPA,
+  earned credits, class year, and academic standing. Call this whenever the student asks
+  about their GPA, grades, transcript with grades, or academic standing.
 - admission_application(action, course_code, full_name, email, phone, birth_date,
   gender): action = start_application | submit | check_status.
 - gpa_calculator(courses, current_gpa, current_credits): "what-if" GPA estimator on a
-  standard 4.0 scale. courses = list of {course_code, credits, grade}, where grade is
-  a letter grade (A, A-, B+, ... F) - actual or hypothetical. Optionally combine with
-  an existing current_gpa/current_credits to project a new cumulative GPA. This is an
-  estimate only, not an official GPA.
-- semester_schedule(semester, year): generate a weekly schedule template (timetable)
-  from the student's currently enrolled courses, grouped by day of week with times,
-  course, and instructor. semester (fall/spring/summer) and year are optional filters;
-  omit both to use all current enrollments.
+  4.0 scale using letter grades. Estimate only, not the official GPA — use
+  student_grades for the official cumulative GPA.
+- semester_schedule(semester, year): weekly timetable from the student's enrollments.
+- notifications(action): action = list | mark_all_read. Check or clear in-app
+  notifications.
+- support_ticket(action, subject, description, category): action = submit | check_status.
+  File a new support ticket or check existing ones. category = technical | account |
+  billing | academic | other.
 
 TOOL USAGE RULES
 - Call at most ONE tool per user turn.
-- If required parameters are missing/ambiguous (e.g. "register me for the math
-  course"), ask the user a brief clarifying question instead of calling the tool.
-- After a tool returns, weave its "message" into a natural reply in the user's
-  language; do not just repeat it verbatim if more context helps.
-- If a tool returns ok=false, explain the issue (using its message) and, if
-  appropriate, suggest a next step (e.g. filing a petition for a registration that's
-  closed) per the example below.
+- If required parameters are missing/ambiguous, ask the user a brief clarifying question
+  instead of calling the tool.
+- After a tool returns, weave its "message" into a natural reply; do not repeat it
+  verbatim if more context helps.
+- If a tool returns ok=false, explain the issue and suggest a concrete next step.
 - Never claim an action succeeded if the tool result says ok=false.
-- This assistant only manages the current user's own records - if asked to act on
-  someone else's behalf, explain that's not possible here.
+- This assistant only manages the current user's own records.
 
 ERROR EXAMPLE
 "I wasn't able to register you because registration for this course closed on
@@ -78,7 +79,7 @@ STYLE
 
 course_info_decl = glm.FunctionDeclaration(
     name="course_info",
-    description="Get schedule, instructor, seats, and credits for a course by its code.",
+    description="Get schedule, instructor, seats, credits, and prerequisites for a single course by its exact code.",
     parameters=glm.Schema(
         type=glm.Type.OBJECT,
         properties={
@@ -86,6 +87,20 @@ course_info_decl = glm.FunctionDeclaration(
             "action": glm.Schema(type=glm.Type.STRING, enum=["schedule", "prerequisites", "availability", "faculty"]),
         },
         required=["course_code"],
+    ),
+)
+
+course_catalog_decl = glm.FunctionDeclaration(
+    name="course_catalog",
+    description="Search or browse multiple courses by name keyword, semester, year, or open-registration status. Use this when the student wants to explore available courses rather than look up one specific code.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={
+            "query": glm.Schema(type=glm.Type.STRING, description="keyword to search in course names"),
+            "semester": glm.Schema(type=glm.Type.STRING, enum=["fall", "spring", "summer"], description="optional semester filter"),
+            "year": glm.Schema(type=glm.Type.INTEGER, description="optional year filter"),
+            "open_only": glm.Schema(type=glm.Type.BOOLEAN, description="if true, return only courses with open registration"),
+        },
     ),
 )
 
@@ -132,12 +147,47 @@ check_holds_decl = glm.FunctionDeclaration(
 
 student_records_decl = glm.FunctionDeclaration(
     name="student_records",
-    description="Show the student's enrollment records (enrolled/dropped courses), or an unofficial enrollment-summary transcript grouped by term.",
+    description="Show the student's enrollment records (enrolled/dropped courses) or an unofficial enrollment-summary transcript by term. For actual grades and GPA use student_grades instead.",
     parameters=glm.Schema(
         type=glm.Type.OBJECT,
         properties={
-            "action": glm.Schema(type=glm.Type.STRING, enum=["transcript", "grades", "enrollment_verify", "gpa", "degree_audit"]),
+            "action": glm.Schema(type=glm.Type.STRING, enum=["enrollment_verify", "transcript", "degree_audit"]),
         },
+    ),
+)
+
+student_grades_decl = glm.FunctionDeclaration(
+    name="student_grades",
+    description="Fetch the student's real grades, per-term GPA, cumulative GPA, earned credits, class year, and academic standing. Call this when the student asks about their GPA, grades, transcript with grades, or academic standing.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={},
+    ),
+)
+
+notifications_decl = glm.FunctionDeclaration(
+    name="notifications",
+    description="List the student's in-app notifications or mark all as read.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={
+            "action": glm.Schema(type=glm.Type.STRING, enum=["list", "mark_all_read"]),
+        },
+    ),
+)
+
+support_ticket_decl = glm.FunctionDeclaration(
+    name="support_ticket",
+    description="Submit a new support ticket or check the status of existing ones.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={
+            "action": glm.Schema(type=glm.Type.STRING, enum=["submit", "check_status"]),
+            "subject": glm.Schema(type=glm.Type.STRING, description="brief subject line, required for submit"),
+            "description": glm.Schema(type=glm.Type.STRING, description="details of the issue, for submit"),
+            "category": glm.Schema(type=glm.Type.STRING, enum=["technical", "account", "billing", "academic", "other"]),
+        },
+        required=["action"],
     ),
 )
 
@@ -198,20 +248,26 @@ semester_schedule_decl = glm.FunctionDeclaration(
 )
 
 TOOL_DECLARATIONS = [glm.Tool(function_declarations=[
-    course_info_decl, register_course_decl, create_petition_decl,
-    check_holds_decl, student_records_decl, admission_application_decl,
-    gpa_calculator_decl, semester_schedule_decl,
+    course_info_decl, course_catalog_decl,
+    register_course_decl, create_petition_decl,
+    check_holds_decl, student_records_decl, student_grades_decl,
+    admission_application_decl, gpa_calculator_decl, semester_schedule_decl,
+    notifications_decl, support_ticket_decl,
 ])]
 
 TOOL_DISPATCH = {
     "course_info": agent_tools.course_info,
+    "course_catalog": agent_tools.course_catalog,
     "register_course": agent_tools.register_course,
     "create_petition": agent_tools.create_petition,
     "check_holds": agent_tools.check_holds,
     "student_records": agent_tools.student_records,
+    "student_grades": agent_tools.student_grades,
     "admission_application": agent_tools.admission_application,
     "gpa_calculator": agent_tools.gpa_calculator,
     "semester_schedule": agent_tools.semester_schedule,
+    "notifications": agent_tools.notifications,
+    "support_ticket": agent_tools.support_ticket,
 }
 
 

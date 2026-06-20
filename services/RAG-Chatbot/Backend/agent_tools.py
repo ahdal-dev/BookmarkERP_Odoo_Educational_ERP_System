@@ -3,6 +3,7 @@ from typing import Optional
 
 from odoo_client import search_read, execute_kw, find_student, OdooError, OdooConnectionError
 from mq import publish_event, mq_enabled, MQUnavailable, QUEUE_REGISTRATION, QUEUE_PETITION
+from gateway_client import gateway_get, GatewayError, GatewayUnavailable
 
 SYSTEM_DOWN_MSG = (
     "I'm having trouble accessing the student records system right now. "
@@ -39,6 +40,18 @@ GRADE_POINTS = {
 }
 
 WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+_STANDING_LABELS = {
+    "new": "New", "deans_list": "Dean's List",
+    "good": "Good Standing", "probation": "Academic Probation",
+}
+_CLASS_LABELS = {
+    "freshman": "Freshman", "sophomore": "Sophomore",
+    "junior": "Junior", "senior": "Senior",
+}
+_SUPPORT_CATEGORIES = {
+    "technical", "account", "billing", "academic", "other",
+}
 
 # Two-letter day codes are checked before single-letter ones, e.g. "Th" -> Thursday
 # before "T" -> Tuesday. Used to parse education.course.schedule (e.g. "MWF 10:00-11:00").
@@ -121,7 +134,7 @@ def course_info(args: dict, student_email: Optional[str]) -> dict:
             [["code", "=ilike", course_code]],
             ["name", "code", "description", "schedule", "timing_start", "timing_end",
              "instructor", "credits", "available_seats", "total_seats",
-             "registration_open", "semester", "year"],
+             "registration_open", "semester", "year", "prerequisite_course_ids"],
             limit=1,
         )
     except OdooError:
@@ -142,7 +155,18 @@ def course_info(args: dict, student_email: Optional[str]) -> dict:
         f"({c.get('semester', '')} {c.get('year', '')})."
     )
     if action == "prerequisites":
-        message += " Note: prerequisite information is not tracked in this system."
+        prereq_ids = c.get("prerequisite_course_ids") or []
+        if not prereq_ids:
+            message += " This course has no listed prerequisites."
+        else:
+            try:
+                prereq_rows = search_read(
+                    "education.course", [["id", "in", prereq_ids]], ["code", "name"],
+                )
+                labels = [f"{p['code']} — {p['name']}" for p in prereq_rows]
+                message += " Prerequisites: " + ", ".join(labels) + "."
+            except OdooError:
+                message += " (Prerequisite details unavailable at this time.)"
 
     return {"ok": True, "data": c, "message": message}
 
@@ -391,18 +415,15 @@ def check_holds(args: dict, student_email: Optional[str]) -> dict:
 def student_records(args: dict, student_email: Optional[str]) -> dict:
     action = args.get("action") or "enrollment_verify"
 
-    if action in ("grades", "gpa", "degree_audit"):
-        message = (
-            "Official grades, GPA, and degree audits aren't available through this "
-            "assistant yet — please request them from the Registrar's Office at "
-            "registrar@university.edu."
-        )
-        if action == "gpa":
-            message += (
-                " If you'd like to estimate a GPA from courses, credits, and grades, "
-                "just give me those and I can calculate it for you."
-            )
-        return {"ok": False, "message": message}
+    if action == "degree_audit":
+        return {
+            "ok": False,
+            "message": (
+                "Degree audit reports aren't available through this assistant. "
+                "Please contact the Registrar's Office at registrar@university.edu "
+                "to request a formal degree audit."
+            ),
+        }
 
     if not student_email:
         return {"ok": False, "message": NO_PROFILE_MSG}
@@ -705,6 +726,273 @@ def admission_application(args: dict, student_email: Optional[str]) -> dict:
         "ok": True,
         "data": {"id": new_id},
         "message": f"Your application has been started (reference #{new_id}){note}. We'll follow up with next steps and required documents.",
+    }
+
+
+# --- New tools: grades, notifications, support tickets, course catalog -------
+
+def student_grades(args: dict, student_email: Optional[str]) -> dict:
+    """Return real grades, GPA, and academic standing from the edu_mang_academic module."""
+    if not student_email:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+
+    try:
+        student = find_student(student_email)
+        if not student:
+            return {"ok": False, "message": NO_PROFILE_MSG}
+
+        # GPA summary is a computed field on res.users (edu_mang_academic).
+        user_rows = search_read(
+            "res.users",
+            [["id", "=", student["id"]]],
+            ["cumulative_gpa", "earned_credits", "academic_standing", "class_year"],
+            limit=1,
+        )
+        u = user_rows[0] if user_rows else {}
+
+        # Graded registrations carry grade + grade_points set by edu_mang_academic.
+        regs = search_read(
+            "education.registration",
+            [["student_id", "=", student["id"]], ["is_graded", "=", True]],
+            ["course_id", "grade", "grade_points"],
+        )
+        course_ids = sorted({r["course_id"][0] for r in regs if r.get("course_id")})
+        courses: dict = {}
+        if course_ids:
+            for c in search_read(
+                "education.course", [["id", "in", course_ids]],
+                ["code", "name", "credits", "semester", "year"],
+            ):
+                courses[c["id"]] = c
+    except OdooError:
+        return {"ok": False, "message": SYSTEM_DOWN_MSG}
+
+    # Group by academic term.
+    terms: dict = {}
+    for r in regs:
+        cid = r["course_id"][0] if r.get("course_id") else None
+        c = courses.get(cid, {})
+        sem = (c.get("semester") or "").title() or "Other"
+        yr = c.get("year") or ""
+        key = f"{sem} {yr}".strip() or "Unspecified"
+        bucket = terms.setdefault(key, {"term": key, "courses": [], "_qp": 0.0, "_cr": 0})
+        cr = c.get("credits", 0)
+        bucket["courses"].append({
+            "code": c.get("code"), "name": c.get("name"),
+            "credits": cr, "grade": r.get("grade"),
+        })
+        bucket["_qp"] += (r.get("grade_points") or 0.0) * cr
+        bucket["_cr"] += cr
+
+    term_list = []
+    for t in terms.values():
+        t_gpa = round(t["_qp"] / t["_cr"], 2) if t["_cr"] else 0.0
+        term_list.append({"term": t["term"], "gpa": t_gpa, "credits": t["_cr"], "courses": t["courses"]})
+
+    cum_gpa = u.get("cumulative_gpa") or 0.0
+    earned = u.get("earned_credits") or 0
+    standing = _STANDING_LABELS.get(u.get("academic_standing"), "New")
+    class_yr = _CLASS_LABELS.get(u.get("class_year"), "Freshman")
+
+    if not term_list:
+        message = (
+            f"No graded courses on record yet. "
+            f"Cumulative GPA: {cum_gpa:.2f} ({earned} earned credits, {class_yr}, {standing})."
+        )
+    else:
+        lines = []
+        for t in term_list:
+            course_str = "; ".join(
+                f"{c['code']} {c['grade']} ({c['credits']}cr)"
+                for c in t["courses"]
+            )
+            lines.append(f"{t['term']}: GPA {t['gpa']:.2f}, {t['credits']}cr — {course_str}")
+        message = (
+            f"Cumulative GPA: {cum_gpa:.2f} | {earned} credits earned | {class_yr} | {standing}\n"
+            + "\n".join(lines)
+        )
+
+    return {
+        "ok": True,
+        "data": {
+            "cumulative_gpa": cum_gpa, "earned_credits": earned,
+            "academic_standing": standing, "class_year": class_yr,
+            "terms": term_list,
+        },
+        "message": message,
+    }
+
+
+def notifications(args: dict, student_email: Optional[str]) -> dict:
+    """List the student's in-app notifications or mark all as read."""
+    action = args.get("action") or "list"
+
+    if not student_email:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+
+    try:
+        student = find_student(student_email)
+        if not student:
+            return {"ok": False, "message": NO_PROFILE_MSG}
+
+        if action == "mark_all_read":
+            unread_ids = execute_kw(
+                "edu.notification", "search",
+                [[["user_id", "=", student["id"]], ["is_read", "=", False]]],
+            )
+            if unread_ids:
+                execute_kw("edu.notification", "write", [unread_ids, {"is_read": True}])
+            msg = "All notifications marked as read." if unread_ids else "You have no unread notifications."
+            return {"ok": True, "message": msg}
+
+        # action == "list"
+        notifs = search_read(
+            "edu.notification",
+            [["user_id", "=", student["id"]]],
+            ["title", "message", "category", "is_read", "create_date"],
+            limit=10, order="create_date desc",
+        )
+    except OdooError:
+        return {"ok": False, "message": SYSTEM_DOWN_MSG}
+
+    if not notifs:
+        return {"ok": True, "data": [], "message": "You have no notifications."}
+
+    unread = sum(1 for n in notifs if not n.get("is_read"))
+    lines = []
+    for n in notifs:
+        prefix = "[NEW] " if not n.get("is_read") else ""
+        lines.append(f"{prefix}{n.get('title', '')}: {n.get('message', '')}")
+
+    return {
+        "ok": True,
+        "data": notifs,
+        "message": (
+            f"You have {unread} unread notification(s). Recent notifications:\n"
+            + "\n".join(lines)
+        ),
+    }
+
+
+def support_ticket(args: dict, student_email: Optional[str]) -> dict:
+    """Submit a new support ticket or check the status of existing ones."""
+    action = args.get("action") or "check_status"
+
+    if not student_email:
+        return {"ok": False, "message": NO_PROFILE_MSG}
+
+    try:
+        student = find_student(student_email)
+        if not student:
+            return {"ok": False, "message": NO_PROFILE_MSG}
+
+        if action == "check_status":
+            tickets = search_read(
+                "support.ticket",
+                [["user_id", "=", student["id"]]],
+                ["name", "subject", "state", "priority", "category", "create_date"],
+                limit=5, order="create_date desc",
+            )
+            if not tickets:
+                return {"ok": True, "data": [], "message": "You have no support tickets on file."}
+            lines = [
+                f"{t['name']} ({t.get('subject')}) — {t.get('state')}, priority: {t.get('priority')}"
+                for t in tickets
+            ]
+            return {
+                "ok": True,
+                "data": tickets,
+                "message": "Your recent support tickets: " + "; ".join(lines),
+            }
+
+        # action == "submit"
+        subject = (args.get("subject") or "").strip()
+        description = (args.get("description") or "").strip()
+        raw_cat = (args.get("category") or "other").strip().lower()
+        category = raw_cat if raw_cat in _SUPPORT_CATEGORIES else "other"
+
+        if not subject:
+            return {"ok": False, "message": "Please provide a brief subject for your support ticket."}
+
+        new_id = execute_kw("support.ticket", "create", [{
+            "user_id": student["id"],
+            "subject": subject,
+            "description": description or subject,
+            "category": category,
+            "channel": "ticket",
+        }])
+        created = search_read("support.ticket", [["id", "=", new_id]], ["name"], limit=1)
+        ref = created[0]["name"] if created else str(new_id)
+        return {
+            "ok": True,
+            "data": {"id": new_id, "ref": ref},
+            "message": (
+                f"Support ticket submitted (reference: {ref}). "
+                "Our support team will follow up with you."
+            ),
+        }
+    except OdooError as e:
+        return {"ok": False, "message": _error_message(e)}
+
+
+def course_catalog(args: dict, student_email: Optional[str]) -> dict:
+    """Search or browse the course catalog.
+
+    Unlike ``course_info`` (which looks up a single course by exact code), this
+    tool returns a filtered list of courses. Use it when the student wants to
+    browse available courses, search by name, or filter by semester/year.
+    """
+    query = (args.get("query") or "").strip()
+    semester = (args.get("semester") or "").strip().lower()
+    year = args.get("year")
+    open_only = bool(args.get("open_only"))
+
+    domain: list = []
+    if query:
+        domain.append(["name", "ilike", query])
+    if semester:
+        domain.append(["semester", "=", semester])
+    if year is not None:
+        try:
+            domain.append(["year", "=", int(year)])
+        except (TypeError, ValueError):
+            pass
+    if open_only:
+        domain.append(["registration_open", "=", True])
+
+    try:
+        courses = search_read(
+            "education.course", domain,
+            ["name", "code", "credits", "instructor", "available_seats", "total_seats",
+             "registration_open", "semester", "year", "schedule"],
+            limit=15, order="code",
+        )
+    except OdooError:
+        return {"ok": False, "message": SYSTEM_DOWN_MSG}
+
+    if not courses:
+        parts = list(filter(None, [
+            f'matching "{query}"' if query else "",
+            f"for {semester.title()}" if semester else "",
+            str(year) if year is not None else "",
+            "(open only)" if open_only else "",
+        ]))
+        criteria = " ".join(parts)
+        return {"ok": True, "data": [], "message": f"No courses found{' ' + criteria if criteria else ''}."}
+
+    lines = []
+    for c in courses:
+        status = "open" if c.get("registration_open") else "closed"
+        lines.append(
+            f"{c['code']} — {c['name']}, {c.get('credits', 0)}cr, "
+            f"{(c.get('semester') or '').title()} {c.get('year', '')}, "
+            f"{c.get('available_seats', 0)}/{c.get('total_seats', 0)} seats ({status})"
+        )
+
+    return {
+        "ok": True,
+        "data": courses,
+        "message": f"Found {len(courses)} course(s):\n" + "\n".join(lines),
     }
 
 
