@@ -1,0 +1,32 @@
+# ============================================================================
+# docker-compose.proxy.yml  ->  runs on the Proxy VM (e2-micro, Always-Free)
+# ----------------------------------------------------------------------------
+# Single nginx container: serves the React SPA static build (frontend-dist)
+# and reverse-proxies /api and /web to the App VM over the VPC.
+# Run from the repo's Deployment/ directory:
+#   docker compose -f docker-compose.proxy.yml --env-file .env up -d
+#
+# Prereqs on the VM (see CLAUDE.md Phase 9):
+#   - ./frontend-dist        the `vite build` output copied here
+#   - ./nginx/nginx.conf      upstream points at the App VM internal IP
+#   - ./nginx/ssl             (optional) TLS cert + key for 443
+# ============================================================================
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: edu_erp_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend-dist:/usr/share/nginx/html:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
