@@ -11,7 +11,7 @@ import json
 
 from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, func
 import numpy as np
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -364,6 +364,46 @@ def update_chat_title(chat_id: str, payload: dict, db: Session = Depends(get_db)
     db.commit()
     
     return {"message": "Chat title updated successfully", "title": title}
+
+@app.post("/chats/{chat_id}/attach")
+def attach_file_to_chat(
+    chat_id: str,
+    user_id: uuid.UUID = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    chat = db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == user_id).first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found or access denied")
+
+    filetype = (file.filename or "").rsplit(".", 1)[-1].lower()
+    supported = {"pdf", "docx", "txt", "csv", "xlsx", "xls"}
+    if filetype not in supported:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: .{filetype}")
+
+    file_bytes = file.file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    try:
+        extracted = extract_text_from_bytes(file_bytes, filetype)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not read file: {e}")
+
+    if not extracted.strip():
+        raise HTTPException(status_code=400, detail="No extractable text found in file")
+
+    content = f"[File: {file.filename}]\n{extracted[:8000]}"
+    msg = ChatMessage(chat_id=chat_id, role="user", content=content)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    return {"message_id": str(msg.id), "filename": file.filename, "chars_extracted": len(extracted)}
 
 # ---------- RAG API with MEMORY ----------
 
@@ -895,7 +935,7 @@ def get_feedback_stats(org_id: uuid.UUID, user_id: uuid.UUID = Query(...), db: S
         User.organization_id == org_id
     ).count()
     
-    avg_rating = db.query(db.func.avg(Feedback.rating)).join(User, Feedback.user_id == User.id).filter(
+    avg_rating = db.query(func.avg(Feedback.rating)).join(User, Feedback.user_id == User.id).filter(
         User.organization_id == org_id
     ).scalar()
     
@@ -906,7 +946,7 @@ def get_feedback_stats(org_id: uuid.UUID, user_id: uuid.UUID = Query(...), db: S
     
     rating_distribution = db.query(
         Feedback.rating,
-        db.func.count(Feedback.id)
+        func.count(Feedback.id)
     ).join(User, Feedback.user_id == User.id).filter(
         User.organization_id == org_id
     ).group_by(Feedback.rating).order_by(Feedback.rating).all()

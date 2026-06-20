@@ -75,6 +75,15 @@ def _read_csv_bytes(data: bytes) -> str:
         lines.append(line)
     return "\n".join(lines)
 
+def _read_excel_bytes(data: bytes) -> str:
+    df = pd.read_excel(io.BytesIO(data))
+    df = df.fillna("")
+    lines = []
+    for _, row in df.iterrows():
+        line = " | ".join(f"{col}: {row[col]}" for col in df.columns)
+        lines.append(line)
+    return "\n".join(lines)
+
 def extract_text(file_path: str, filetype: str) -> str:
     ft = (filetype or "").lower()
     if ft == "pdf":
@@ -100,6 +109,8 @@ def extract_text_from_bytes(file_bytes: bytes, filetype: str) -> str:
             text = _read_txt_bytes(file_bytes)
         elif ft == "csv":
             text = _read_csv_bytes(file_bytes)
+        elif ft in ("xlsx", "xls"):
+            text = _read_excel_bytes(file_bytes)
         else:
             raise ValueError(f"Unsupported file type: {filetype}")
         
