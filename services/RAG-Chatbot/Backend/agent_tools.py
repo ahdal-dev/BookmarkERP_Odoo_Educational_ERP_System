@@ -1,9 +1,23 @@
+import os
 from datetime import date
 from typing import Optional
+
+import requests
 
 from odoo_client import search_read, execute_kw, find_student, OdooError, OdooConnectionError
 from mq import publish_event, mq_enabled, MQUnavailable, QUEUE_REGISTRATION, QUEUE_PETITION
 from gateway_client import gateway_get, GatewayError, GatewayUnavailable
+
+# --- AI prediction microservices (separate FastAPI apps, reached over HTTP) ----
+# These two tools call ML services instead of Odoo. URLs default to local dev
+# ports; in Docker they are overridden to the compose service names.
+GRADE_PREDICTOR_URL = os.getenv("GRADE_PREDICTOR_URL", "http://localhost:8000")
+STUDENT_PERFORMANCE_URL = os.getenv("STUDENT_PERFORMANCE_URL", "http://localhost:5002")
+
+PREDICTION_DOWN_MSG = (
+    "The prediction service is temporarily unavailable right now. "
+    "Please try again shortly."
+)
 
 SYSTEM_DOWN_MSG = (
     "I'm having trouble accessing the student records system right now. "
@@ -994,6 +1008,151 @@ def course_catalog(args: dict, student_email: Optional[str]) -> dict:
         "data": courses,
         "message": f"Found {len(courses)} course(s):\n" + "\n".join(lines),
     }
+
+
+# --- AI prediction tools (call external ML microservices over HTTP) -----------
+# Unlike the tools above, these do NOT touch Odoo. They POST the student's data
+# to a separate FastAPI ML service and translate the JSON response into a natural
+# reply. Predictions are advisory only — never an official grade or standing.
+
+def predict_grade(args: dict, student_email: Optional[str]) -> dict:
+    """Predict the likely letter grade for one course via the Grade Predictor service."""
+    target_course = (args.get("target_course") or "").strip()
+    if not target_course:
+        return {"ok": False, "message": "Which course would you like a grade prediction for?"}
+
+    # transcript_history is a list of {course, grade, semester}; keep only valid rows.
+    history = []
+    for row in args.get("transcript_history") or []:
+        if isinstance(row, dict) and row.get("course") and row.get("grade"):
+            history.append({
+                "course": str(row.get("course")),
+                "grade": str(row.get("grade")),
+                "semester": str(row.get("semester") or ""),
+            })
+
+    body = {
+        "student_id": student_email or "anonymous",
+        "target_course": target_course,
+        "cumulative_gpa": float(args.get("cumulative_gpa") or 2.5),
+        "current_semester_credit_load": int(args.get("credit_load") or 15),
+        "transcript_history": history,
+    }
+
+    try:
+        resp = requests.post(f"{GRADE_PREDICTOR_URL}/predict", json=body, timeout=10)
+    except requests.exceptions.RequestException as e:
+        print(f"predict_grade service error: {e}")
+        return {"ok": False, "message": PREDICTION_DOWN_MSG}
+
+    if resp.status_code == 422:
+        try:
+            detail = resp.json().get("detail")
+        except ValueError:
+            detail = None
+        return {"ok": False, "message": _detail_to_text(detail) or
+                "I couldn't make a prediction with the details provided. Could you share your recent grades?"}
+    if resp.status_code != 200:
+        print(f"predict_grade HTTP {resp.status_code}: {resp.text[:200]}")
+        return {"ok": False, "message": PREDICTION_DOWN_MSG}
+
+    data = resp.json()
+
+    grade = data.get("predicted_grade", "?")
+    confidence = data.get("confidence")
+    interval = data.get("grade_interval") or []
+    reasoning = data.get("reasoning") or {}
+
+    lines = [f"Based on your record, you're likely to get around a {grade} in {target_course}."]
+    if isinstance(confidence, (int, float)):
+        lines.append(f"Confidence: {round(confidence * 100)}%.")
+    if interval:
+        lines.append(f"Likely range: {' / '.join(str(g) for g in interval)}.")
+    for v in reasoning.values():
+        if v:
+            lines.append(f"- {v}")
+    if data.get("off_catalog"):
+        lines.append(f"Note: {target_course} isn't in the known course catalog, so this is a rough estimate.")
+    lines.append("This is an AI prediction to help you plan — not an official or guaranteed grade.")
+
+    return {"ok": True, "data": data, "message": " ".join(lines[:2]) + "\n" + "\n".join(lines[2:])}
+
+
+def predict_performance(args: dict, student_email: Optional[str]) -> dict:
+    """Full academic-risk assessment via the Student Performance service."""
+    semesters = args.get("semesters") or []
+    if not isinstance(semesters, list) or len(semesters) < 2:
+        return {"ok": False, "message":
+                "To assess your performance I need at least 2 completed semesters of grades. "
+                "Could you share your past terms (courses, grades, and credits)?"}
+
+    body = {
+        "student_id": student_email or "anonymous",
+        "program": args.get("program") or "Computer Science",
+        "school": args.get("school") or "Engineering",
+        "entry_year": int(args.get("entry_year") or 2020),
+        "semesters": semesters,
+        # The service requires study_plan to be present (may be empty).
+        "study_plan": args.get("study_plan") or [],
+    }
+
+    try:
+        resp = requests.post(f"{STUDENT_PERFORMANCE_URL}/predict", json=body, timeout=15)
+    except requests.exceptions.RequestException as e:
+        print(f"predict_performance service error: {e}")
+        return {"ok": False, "message": PREDICTION_DOWN_MSG}
+
+    if resp.status_code == 422:
+        try:
+            detail = resp.json().get("detail")
+        except ValueError:
+            detail = None
+        return {"ok": False, "message": _detail_to_text(detail) or
+                "Some of the academic details look incomplete. Could you double-check your terms and try again?"}
+    if resp.status_code != 200:
+        print(f"predict_performance HTTP {resp.status_code}: {resp.text[:200]}")
+        return {"ok": False, "message": PREDICTION_DOWN_MSG}
+
+    data = resp.json()
+
+    gpa = data.get("predicted_gpa")
+    lo, hi = data.get("interval_lo"), data.get("interval_hi")
+    risk = data.get("risk_level", "Unknown")
+    trajectory = data.get("trajectory", "")
+    msg = data.get("student_message") or {}
+    recs = data.get("recommendations") or []
+
+    lines = []
+    summary = msg.get("summary")
+    if summary:
+        lines.append(summary)
+    elif isinstance(gpa, (int, float)):
+        rng = f" (between {lo} and {hi})" if lo is not None and hi is not None else ""
+        lines.append(f"Your projected next-semester GPA is about {gpa}{rng}.")
+    lines.append(f"Risk level: {risk}." + (f" Trajectory: {trajectory}." if trajectory else ""))
+    for r in recs[:3]:
+        lines.append(f"- {r}")
+    action = msg.get("suggested_action")
+    if action:
+        lines.append(action)
+
+    return {"ok": True, "data": data, "message": "\n".join(lines)}
+
+
+def _detail_to_text(detail) -> str:
+    """Flatten a FastAPI 422 `detail` (str or list of error dicts) into one line."""
+    if not detail:
+        return ""
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, list):
+        parts = []
+        for d in detail:
+            if isinstance(d, dict) and d.get("msg"):
+                loc = ".".join(str(x) for x in (d.get("loc") or []) if x not in ("body",))
+                parts.append(f"{loc}: {d['msg']}" if loc else d["msg"])
+        return "; ".join(parts)
+    return str(detail)
 
 
 # --- RabbitMQ worker entry points --------------------------------------------

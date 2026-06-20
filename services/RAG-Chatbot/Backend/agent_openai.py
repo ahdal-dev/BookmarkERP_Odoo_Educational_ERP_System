@@ -76,6 +76,14 @@ AVAILABLE TOOLS
 - support_ticket(action, subject, description, category): action = submit | check_status.
   File a new support ticket or check existing ones. category = technical | account |
   billing | academic | other.
+- predict_grade(target_course, cumulative_gpa, credit_load, transcript_history): predict
+  the likely letter grade for a specific course using an ML model. target_course is required.
+  transcript_history is a list of {course, grade, semester}. The prediction is advisory only.
+- predict_performance(program, school, entry_year, semesters, study_plan): full academic
+  risk assessment. Predicts next-semester GPA, risk level (High/Medium/Low), trajectory,
+  and gives personalized recommendations based on completed semesters and a planned course
+  load. Requires at least 2 completed semesters. study_plan is optional but improves the
+  prediction. The result includes a student_message with a natural summary.
 
 TOOL USAGE RULES
 - Prefer ONE tool per turn. Never claim an action succeeded if the tool returns ok=false.
@@ -172,6 +180,40 @@ OPENAI_TOOL_SCHEMAS = [
            "description": {"type": "string", "description": "details of the issue, for submit"},
            "category": {"type": "string", "enum": ["technical", "account", "billing", "academic", "other"]}},
           ["action"]),
+    _tool("predict_grade",
+          "Predict the likely letter grade a student would receive in a specific course, based on their transcript history and GPA. Returns predicted grade, confidence, and reasoning. This is an AI prediction, not an official grade.",
+          {"target_course": {"type": "string", "description": "Course code to predict grade for, e.g. MATH 201"},
+           "cumulative_gpa": {"type": "number", "description": "Student's current cumulative GPA (0.0-4.0)"},
+           "credit_load": {"type": "integer", "description": "Current semester credit load"},
+           "transcript_history": {"type": "array", "description": "Past courses with grades",
+                                  "items": {"type": "object", "properties": {
+                                      "course": {"type": "string", "description": "Course code"},
+                                      "grade": {"type": "string", "description": "Letter grade received"},
+                                      "semester": {"type": "string", "description": "e.g. Fall 2023"}},
+                                      "required": ["course", "grade"]}}},
+          ["target_course"]),
+    _tool("predict_performance",
+          "Analyze a student's full academic history and planned courses to predict next-semester GPA, assess academic risk level (High/Medium/Low), and provide personalized recommendations. Requires at least 2 completed semesters of data.",
+          {"program": {"type": "string", "description": "Student's program, e.g. Computer Science"},
+           "school": {"type": "string", "description": "School/faculty, e.g. Engineering"},
+           "entry_year": {"type": "integer", "description": "Year the student started"},
+           "semesters": {"type": "array", "description": "Completed semesters in chronological order",
+                         "items": {"type": "object", "properties": {
+                             "term_name": {"type": "string", "description": "e.g. 2023 Fall"},
+                             "courses": {"type": "array", "items": {"type": "object", "properties": {
+                                 "course_id": {"type": "string"}, "grade": {"type": "string"},
+                                 "credits": {"type": "integer", "default": 3}}}},
+                             "term_gpa": {"type": "number"},
+                             "earned_credits": {"type": "integer"},
+                             "attempted_credits": {"type": "integer"},
+                             "cumulative_gpa": {"type": "number"}},
+                             "required": ["term_name", "courses"]}},
+           "study_plan": {"type": "array", "description": "Courses planned for next semester (no grades)",
+                          "items": {"type": "object", "properties": {
+                              "course_id": {"type": "string"}, "credits": {"type": "integer", "default": 3},
+                              "title": {"type": "string"}},
+                              "required": ["course_id"]}}},
+          ["semesters"]),
 ]
 
 TOOL_DISPATCH = {
@@ -187,6 +229,8 @@ TOOL_DISPATCH = {
     "semester_schedule": agent_tools.semester_schedule,
     "notifications": agent_tools.notifications,
     "support_ticket": agent_tools.support_ticket,
+    "predict_grade": agent_tools.predict_grade,
+    "predict_performance": agent_tools.predict_performance,
 }
 
 

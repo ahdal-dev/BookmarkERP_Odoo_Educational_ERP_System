@@ -57,6 +57,14 @@ AVAILABLE TOOLS
 - support_ticket(action, subject, description, category): action = submit | check_status.
   File a new support ticket or check existing ones. category = technical | account |
   billing | academic | other.
+- predict_grade(target_course, cumulative_gpa, credit_load, transcript_history): predict
+  the likely letter grade for a specific course using an ML model. target_course is required.
+  transcript_history is a list of {course, grade, semester}. The prediction is advisory only.
+- predict_performance(program, school, entry_year, semesters, study_plan): full academic
+  risk assessment. Predicts next-semester GPA, risk level (High/Medium/Low), trajectory,
+  and gives personalized recommendations based on completed semesters and a planned course
+  load. Requires at least 2 completed semesters. study_plan is optional but improves the
+  prediction. The result includes a student_message with a natural summary.
 
 TOOL USAGE RULES
 - Call at most ONE tool per user turn.
@@ -247,12 +255,67 @@ semester_schedule_decl = glm.FunctionDeclaration(
     ),
 )
 
+predict_grade_decl = glm.FunctionDeclaration(
+    name="predict_grade",
+    description="Predict the likely letter grade for a specific course based on transcript history and GPA. Advisory AI prediction only.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={
+            "target_course": glm.Schema(type=glm.Type.STRING, description="Course code, e.g. MATH 201"),
+            "cumulative_gpa": glm.Schema(type=glm.Type.NUMBER, description="Current cumulative GPA"),
+            "credit_load": glm.Schema(type=glm.Type.INTEGER, description="Current semester credit load"),
+            "transcript_history": glm.Schema(type=glm.Type.ARRAY, description="Past courses",
+                items=glm.Schema(type=glm.Type.OBJECT, properties={
+                    "course": glm.Schema(type=glm.Type.STRING),
+                    "grade": glm.Schema(type=glm.Type.STRING),
+                    "semester": glm.Schema(type=glm.Type.STRING),
+                }, required=["course", "grade"])),
+        },
+        required=["target_course"],
+    ),
+)
+
+predict_performance_decl = glm.FunctionDeclaration(
+    name="predict_performance",
+    description="Full academic risk assessment: predict next-semester GPA, risk level, trajectory, and recommendations from completed semesters and planned courses.",
+    parameters=glm.Schema(
+        type=glm.Type.OBJECT,
+        properties={
+            "program": glm.Schema(type=glm.Type.STRING, description="e.g. Computer Science"),
+            "school": glm.Schema(type=glm.Type.STRING, description="e.g. Engineering"),
+            "entry_year": glm.Schema(type=glm.Type.INTEGER),
+            "semesters": glm.Schema(type=glm.Type.ARRAY, description="Completed semesters",
+                items=glm.Schema(type=glm.Type.OBJECT, properties={
+                    "term_name": glm.Schema(type=glm.Type.STRING, description="e.g. 2023 Fall"),
+                    "courses": glm.Schema(type=glm.Type.ARRAY,
+                        items=glm.Schema(type=glm.Type.OBJECT, properties={
+                            "course_id": glm.Schema(type=glm.Type.STRING),
+                            "grade": glm.Schema(type=glm.Type.STRING),
+                            "credits": glm.Schema(type=glm.Type.INTEGER),
+                        })),
+                    "term_gpa": glm.Schema(type=glm.Type.NUMBER),
+                    "earned_credits": glm.Schema(type=glm.Type.INTEGER),
+                    "attempted_credits": glm.Schema(type=glm.Type.INTEGER),
+                    "cumulative_gpa": glm.Schema(type=glm.Type.NUMBER),
+                }, required=["term_name", "courses"])),
+            "study_plan": glm.Schema(type=glm.Type.ARRAY, description="Planned next-semester courses",
+                items=glm.Schema(type=glm.Type.OBJECT, properties={
+                    "course_id": glm.Schema(type=glm.Type.STRING),
+                    "credits": glm.Schema(type=glm.Type.INTEGER),
+                    "title": glm.Schema(type=glm.Type.STRING),
+                })),
+        },
+        required=["semesters"],
+    ),
+)
+
 TOOL_DECLARATIONS = [glm.Tool(function_declarations=[
     course_info_decl, course_catalog_decl,
     register_course_decl, create_petition_decl,
     check_holds_decl, student_records_decl, student_grades_decl,
     admission_application_decl, gpa_calculator_decl, semester_schedule_decl,
     notifications_decl, support_ticket_decl,
+    predict_grade_decl, predict_performance_decl,
 ])]
 
 TOOL_DISPATCH = {
@@ -268,6 +331,8 @@ TOOL_DISPATCH = {
     "semester_schedule": agent_tools.semester_schedule,
     "notifications": agent_tools.notifications,
     "support_ticket": agent_tools.support_ticket,
+    "predict_grade": agent_tools.predict_grade,
+    "predict_performance": agent_tools.predict_performance,
 }
 
 
