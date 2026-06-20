@@ -42,7 +42,7 @@ export default function AdmissionsPortalPage() {
   const [level, setLevel] = useState('All');
   const [track, setTrack] = useState(null);
 
-  const startApplication = () => navigate('/admissions/status');
+  const startApplication = () => navigate('/apply/personal-info');
 
   const rows = PROGRAMS.filter((p) =>
     (level === 'All' || p.level === level) &&
@@ -132,7 +132,7 @@ export default function AdmissionsPortalPage() {
               <StatusPill status={`${p.duration}`} variant="black" />
               <StatusPill status={`${p.seats} seats`} variant="yellow" />
             </div>
-            <button className={`${w.btn} ${w.btnPrimary} ${w.btnFull}`} onClick={() => navigate('/admissions/status')}>Apply Now →</button>
+            <button className={`${w.btn} ${w.btnPrimary} ${w.btnFull}`} onClick={() => navigate('/apply/personal-info')}>Apply Now →</button>
           </div>
         ))}
       </div>
