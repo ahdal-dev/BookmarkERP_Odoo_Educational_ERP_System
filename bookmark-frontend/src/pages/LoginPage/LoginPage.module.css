@@ -73,8 +73,8 @@
 /* ===== LOGIN CARD ===== */
 .loginCard {
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
   animation: cardIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
@@ -407,44 +407,3 @@
   }
 }
 
-/* ── Demo Login Section ────────────────────────────────────── */
-.demoSection {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px dashed var(--color-border-light);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.demoLabel {
-  font-size: 0.68rem;
-  color: var(--color-text-muted);
-  text-align: center;
-  letter-spacing: 0.03em;
-}
-
-.demoBtns {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.demoBtn {
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1.5px solid var(--color-lime);
-  background: transparent;
-  color: var(--color-lime-dark);
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.demoBtn:hover {
-  background: var(--color-lime);
-  color: #fff;
-}

@@ -1,0 +1,216 @@
+/* Shared styles for all 4 apply-wizard steps */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg-warm, #f9f8f3);
+}
+
+/* ── Top Nav ───────────────────────────────────────────── */
+.topNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 40px;
+  background: var(--color-bg-warm, #f9f8f3);
+  border-bottom: 1px solid #e5e3db;
+  position: relative;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoWrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #4caf27;
+  padding: 3px;
+  overflow: hidden;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brandName {
+  font-family: 'Caveat', cursive;
+  font-size: 1.4rem;
+  color: #0d0d0d;
+}
+
+.navLinks {
+  display: flex;
+  gap: 28px;
+}
+
+.navLink {
+  font-size: 0.85rem;
+  color: #7a7a72;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.navLink:hover {
+  color: #0d0d0d;
+}
+
+/* ── Content area ─────────────────────────────────────── */
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+
+.stepTitle {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0d0d0d;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.stepSub {
+  font-size: 14px;
+  color: #7a7a72;
+  margin-bottom: 32px;
+}
+
+/* ── Form ─────────────────────────────────────────────── */
+.formCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 36px;
+  border: 1px solid #e5e3db;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldGroupFull {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0d0d0d;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.input {
+  padding: 12px 14px;
+  border: 1.5px solid #e5e3db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0d0d0d;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  border-color: #4caf27;
+  box-shadow: 0 0 0 3px rgba(76, 175, 39, 0.1);
+}
+
+.select {
+  padding: 12px 14px;
+  border: 1.5px solid #e5e3db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0d0d0d;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7a72' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.select:focus {
+  border-color: #4caf27;
+}
+
+/* ── Actions ──────────────────────────────────────────── */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+}
+
+.btnPrimary {
+  padding: 13px 32px;
+  background: #0d0d0d;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #4caf27;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(76, 175, 39, 0.3);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnBack {
+  padding: 12px 24px;
+  background: transparent;
+  color: #7a7a72;
+  border: 1.5px solid #e5e3db;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btnBack:hover {
+  border-color: #0d0d0d;
+  color: #0d0d0d;
+}
+
+@media (max-width: 640px) {
+  .topNav { padding: 12px 20px; }
+  .content { padding: 24px 16px 40px; }
+  .formCard { padding: 24px 18px; }
+  .grid2 { grid-template-columns: 1fr; }
+}

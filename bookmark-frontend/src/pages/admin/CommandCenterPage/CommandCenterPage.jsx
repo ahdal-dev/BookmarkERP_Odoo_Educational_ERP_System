@@ -91,7 +91,7 @@ export default function CommandCenterPage() {
     activeTodayPct: statsData?.activeTodayPct || '0%',
     aiRequests: statsData?.aiRequests || 0,
     aiRequestsDelta: statsData?.aiRequestsDelta || '+0%',
-    openTickets: statsData?.pendingPetitions || 0,
+    openTickets: statsData?.openTickets ?? statsData?.pendingPetitions ?? 0,
     criticalTickets: statsData?.criticalTickets || 0,
     systemUptime: statsData?.systemUptime || 0,
   };

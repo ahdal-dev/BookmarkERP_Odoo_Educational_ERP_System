@@ -135,7 +135,7 @@ export const supportNav = [
 
 export const admissionsOfficerNav = [
   { icon: 'dashboard', label: 'Dashboard', path: '/admissions/officer' },
-  { icon: 'documents', label: 'Documents', path: '/apply/documents' },
+  { icon: 'documents', label: 'Documents', path: '/admissions/officer/documents' },
 ];
 
 export const adminNav = [

@@ -105,3 +105,28 @@ RabbitMQ already runs in `api_gateway/docker-compose.yml` (`rabbitmq:3-managemen
 2. Add a gateway/worker consumer service in `docker-compose.yml` (mirror `academic-agent-worker`) that performs the Odoo writes/sends.
 3. Keep the synchronous fallback when `ENABLE_MQ` is off or the broker is down.
 4. Add Prometheus metrics for queue depth / consumer lag; set `ENABLE_MQ=true` + `AMQP_URL` in `.env`.
+
+## Remaining / Next Tasks
+
+### Recently Completed (V03.03 finish pass)
+- **Landing page** at `/` — animated brand hero + feature grid + demo role picker (`LandingPage/`). `RoleRouter` moved to `/dashboard`.
+- **Login page** — demo buttons removed (moved to landing page); "Apply Now" now routes to `/admissions`; card shadow polished.
+- **Apply workflow** — full 4-step form: `/apply/personal-info` → `/apply/academic-history` → `/apply/documents` → `/apply/review`. `ApplicationContext` (`context/ApplicationContext.jsx`) carries state across steps. Step 4 submits to `POST /api/v1/admissions/submit-with-document`.
+- **OCR wired** — `DocumentVerificationPage` stores extracted data and file in `ApplicationContext`; review page sends all fields in final submission.
+- **Officer documents** — `/admissions/officer/documents` → `OfficerDocumentsPage` lists applications with document status; new gateway endpoint `GET /api/v1/admin/admissions/documents`.
+- **Admin stats** — `admin.py /admin/stats` now wraps each Odoo call in isolated try/except with `logger.error`; `res.users` filter changed to `share=False` (internal users only).
+
+### Recently Completed (V03.03 audit pass — this round)
+- **Landing page polish** — bolder animated hero headline (staggered word entrance + lime/yellow gradient accent), drifting ambient glow on the dark panel, sheen on the primary CTA, and richer feature-card hover (top accent bar + icon pop). `prefers-reduced-motion` respected. `LandingPage.jsx` / `LandingPage.module.css`.
+- **Login logo** — removed the redundant outer green CSS rim (`RoughCircle`) so the SVG's own brush-circle shows cleanly; `BookmarkLogo` now cross-fades between the book+plus mark (`bookark_logo.svg`) and the `Bookmark` wordmark (rendered as a white silhouette on the dark panel) with a pulsing glow. `BookmarkLogo.jsx` / `.module.css`.
+- **Apply-flow upload crash (fixed)** — root cause was the public apply flow hitting JWT-guarded `/api/v1/extract-document` + `/api/v1/admissions/submit-with-document`, returning 401/403 and the axios interceptor force-redirecting to `/login`. Both endpoints now use a new **`optional_user`** dependency (`main.py`, `HTTPBearer(auto_error=False)`) so guests can OCR + submit; OCR→application mapping hardened (safe date/int/float parsing). Frontend interceptor no longer redirects on `/apply*` or `/admissions*`. Removed the duplicate "Cumulative GPA" card in `DocumentVerificationPage`.
+- **Admin dashboard live data** — `/admin/stats` now returns the previously-missing fields (`aiRequests`, `aiRequestsDelta`, `criticalTickets`, `totalUsersDelta`, `activeTodayPct`, `openTickets`). `openTickets`/`criticalTickets` read from `support.ticket`, `aiRequests` from `audit.log`. A `_STATS_DEMO` fallback fills any metric the live DB can't supply so the dashboard is never blank. `CommandCenterPage` now prefers `openTickets`.
+- **Officer documents resilience** — `/admin/admissions/documents` wraps the Odoo query in try/except (returns `{"documents": []}` instead of 500) and guards the `program_id` many2one via `_m2o_label`. The page now shows an empty-state row, not "Failed to load documents".
+
+### Next Up
+- **Admission e-mail confirmation** — send confirmation email on `school.admission` creation; wire through `admission.email` MQ queue (scaffold in `mq.py`).
+- **Real AI-request metric** — `aiRequests` currently proxies `audit.log` count (with demo fallback); wire to an actual chatbot request log for a true figure. Likewise `totalUsersDelta` / `aiRequestsDelta` are static placeholders — compute from period-over-period history.
+- **Officer documents detail** — add inline document preview (PDF iframe / image) in `ApplicationReviewPage` when `transcript_document` binary is available.
+- **OpenEduCat GPA alternative** — optional: swap GPA source from `edu_mang_academic` grades to `op.result.line` / `op.marksheet.line` from OpenEduCat.
+- **RabbitMQ migration** — see "Next Phase" section above.
+- **Landing page analytics** — track CTA clicks (Log In / Try Demo / Apply Now) via `POST /api/v1/audit/record` to `audit.log`.
