@@ -1,0 +1,135 @@
+.sectionHead {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #7a7a72;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0ede4;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid #f9f8f3;
+}
+
+.rowLabel {
+  font-size: 13px;
+  color: #7a7a72;
+  flex-shrink: 0;
+  width: 40%;
+}
+
+.rowValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0d0d0d;
+  text-align: right;
+}
+
+.docRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #16a34a;
+}
+
+.missingDoc {
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #c05621;
+}
+
+.warningBanner {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #c05621;
+}
+
+.errorBanner {
+  padding: 12px 16px;
+  background: #fff0ed;
+  border: 1px solid #fcddd6;
+  border-radius: 10px;
+  color: #c0392b;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Success screen */
+.successCard {
+  max-width: 520px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  text-align: center;
+  border: 1px solid #e5e3db;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.06);
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #4caf27;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.successTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0d0d0d;
+  margin-bottom: 10px;
+}
+
+.successSub {
+  font-size: 14px;
+  color: #7a7a72;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.refBox {
+  display: inline-block;
+  padding: 10px 28px;
+  background: #f0fdf4;
+  border: 1.5px solid #4caf27;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: monospace;
+  color: #16a34a;
+  letter-spacing: 2px;
+  margin-bottom: 28px;
+}
+
+.successActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}

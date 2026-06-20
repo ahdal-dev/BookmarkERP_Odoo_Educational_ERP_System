@@ -1,0 +1,391 @@
+.page {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* ═══════════════ HERO ═══════════════ */
+.hero {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Left dark panel ─────────────────── */
+.heroLeft {
+  width: 48%;
+  background:
+    radial-gradient(140% 120% at 0% 0%, rgba(76, 175, 39, 0.10), transparent 45%),
+    #0d0d0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 60px 48px;
+}
+
+/* Slow-drifting ambient glow behind the brand content */
+.bgGlow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  top: -120px;
+  left: -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(76, 175, 39, 0.28), rgba(232, 97, 58, 0.12) 45%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+  pointer-events: none;
+  animation: glowDrift 14s ease-in-out infinite;
+}
+
+.heroLeftContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 420px;
+  width: 100%;
+}
+
+.logoBadge {
+  margin-bottom: 32px;
+  animation: fadeSlideDown 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.wordmark {
+  margin-bottom: 20px;
+  animation: fadeSlideDown 0.7s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.brandName {
+  font-family: 'Caveat', cursive;
+  font-size: 72px;
+  font-weight: 700;
+  color: #4caf27;
+  line-height: 1;
+  margin: 0 0 6px;
+  letter-spacing: -1px;
+}
+
+.brandSub {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 7px;
+  text-transform: uppercase;
+}
+
+/* ── Punchy hero headline ───────────── */
+.headline {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -1.2px;
+  color: #ffffff;
+  margin: 0 0 18px;
+}
+
+.headlineWord {
+  display: inline-block;
+  animation: fadeSlideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.headlineAccent {
+  background: linear-gradient(100deg, #5ecb38 0%, #4caf27 55%, #f5c842 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+
+.tagline {
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 36px;
+  animation: fadeSlideDown 0.7s 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── CTAs ───────────────────────────── */
+.heroCtas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  animation: fadeSlideDown 0.7s 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.ctaPrimary {
+  padding: 14px 32px;
+  background: linear-gradient(100deg, #4caf27, #5ecb38);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(76, 175, 39, 0.28);
+}
+
+/* Sheen that sweeps across the button */
+.ctaPrimary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  animation: sheen 3.4s ease-in-out infinite;
+}
+
+.ctaPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(76, 175, 39, 0.45);
+}
+
+.ctaSecondary {
+  padding: 14px 28px;
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.ctaSecondary:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Demo picker ────────────────────── */
+.demoPanel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.25s ease both;
+}
+
+.demoPanelLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.demoBtns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.demoBtn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid #4caf27;
+  background: transparent;
+  color: #4caf27;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.demoBtn:hover {
+  background: #4caf27;
+  color: #fff;
+}
+
+/* ── Apply nudge ────────────────────── */
+.applyNudge {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 8px;
+  animation: fadeSlideDown 0.7s 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.applyLink {
+  color: #4caf27;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.applyLink:hover {
+  color: #5ecb38;
+}
+
+/* ── Right panel ─────────────────────── */
+.heroRight {
+  flex: 1;
+  background: #f9f8f3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.featureCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  border: 1.5px solid #e5e3db;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Lime accent bar slides in along the top on hover */
+.featureCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4caf27, #f5c842);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.featureCard:hover {
+  border-color: #4caf27;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(76, 175, 39, 0.16);
+}
+
+.featureCard:hover::before {
+  transform: scaleX(1);
+}
+
+.featureIcon {
+  color: #4caf27;
+  margin-bottom: 12px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.featureCard:hover .featureIcon {
+  transform: scale(1.15) rotate(-4deg);
+}
+
+.featureTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0d0d0d;
+  margin-bottom: 8px;
+  letter-spacing: -0.2px;
+}
+
+.featureDesc {
+  font-size: 13px;
+  color: #7a7a72;
+  line-height: 1.6;
+}
+
+/* ── Trust row ───────────────────────── */
+.trustRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.trustBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fff;
+  border: 1px solid #e5e3db;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a7a72;
+}
+
+/* ════════════ ANIMATIONS ════════════ */
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glowDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(60px, 40px) scale(1.12); }
+  66%      { transform: translate(20px, 80px) scale(0.95); }
+}
+
+@keyframes sheen {
+  0%, 60%  { left: -120%; }
+  100%     { left: 140%; }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bgGlow,
+  .ctaPrimary::after { animation: none; }
+  .headlineWord { animation: none; opacity: 1; transform: none; }
+}
+
+/* ════════════ RESPONSIVE ════════════ */
+@media (max-width: 900px) {
+  .hero { flex-direction: column; }
+  .heroLeft { width: 100%; min-height: 60vh; padding: 48px 28px; }
+  .heroRight { padding: 40px 28px; }
+  .featureGrid { grid-template-columns: 1fr 1fr; }
+  .brandName { font-size: 56px; }
+  .headline { font-size: 38px; }
+}
+
+@media (max-width: 520px) {
+  .featureGrid { grid-template-columns: 1fr; }
+  .brandName { font-size: 44px; }
+  .headline { font-size: 30px; }
+  .heroCtas { flex-direction: column; }
+  .ctaPrimary, .ctaSecondary { text-align: center; justify-content: center; }
+}

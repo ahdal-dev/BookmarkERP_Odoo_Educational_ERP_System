@@ -35,8 +35,13 @@ api.interceptors.response.use(
       localStorage.removeItem('bookmark_token');
       localStorage.removeItem('bookmark_user');
 
-      // Don't redirect if already on login page
-      if (window.location.pathname !== '/login') {
+      // Public/guest flows (prospective-student application, admissions) must
+      // surface errors inline instead of being yanked to the login page.
+      const path = window.location.pathname;
+      const isPublicFlow = path.startsWith('/apply') || path.startsWith('/admissions');
+
+      // Don't redirect if already on login page or inside a public flow
+      if (path !== '/login' && !isPublicFlow) {
         window.location.href = '/login';
       }
     }
@@ -418,6 +423,12 @@ export const admissionsAPI = {
     return response.data;
   },
 
+  /** Document submissions list for officer review */
+  getDocuments: async () => {
+    const response = await api.get('/api/v1/admin/admissions/documents');
+    return response.data;
+  },
+
   /** Move an application to a new stage */
   updateStage: async (id, stage) => {
     const response = await api.patch(`/api/v1/admin/admissions/${id}/stage`, { stage });
@@ -445,6 +456,20 @@ export const applicationAPI = {
   /** Extract fields from an uploaded document via OCR */
   uploadDocument: async (formData) => {
     const response = await api.post('/api/v1/extract-document', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  /** Full orchestrated submission: OCR + ERP record creation */
+  submitApplication: async ({ file, email, phone, desired_program, application_type = 'regular' }) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('email', email);
+    form.append('phone', phone);
+    form.append('desired_program', desired_program);
+    form.append('application_type', application_type);
+    const response = await api.post('/api/v1/admissions/submit-with-document', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
