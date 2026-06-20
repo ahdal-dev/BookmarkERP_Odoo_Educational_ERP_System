@@ -348,6 +348,38 @@ class RBACChecker:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+
+# Optional bearer — does NOT raise when the header is missing, so public
+# (guest) endpoints like the prospective-student apply flow can be used
+# without a token while still honoring one when present.
+optional_security = HTTPBearer(auto_error=False)
+
+
+async def optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+) -> Optional[TokenData]:
+    """Resolve the current user if a valid token is supplied, else None.
+
+    Never raises on missing/invalid credentials — guests are allowed through.
+    """
+    if not credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        token_data = TokenData(
+            user_id  = payload["user_id"],
+            username = payload.get("username", ""),
+            email    = payload.get("email", ""),
+            role     = UserRole(payload["role"]),
+            exp      = datetime.fromtimestamp(payload["exp"]),
+            jti      = payload.get("jti"),
+        )
+        if token_data.exp < datetime.utcnow():
+            return None
+        return token_data
+    except Exception:
+        return None
+
 # ============================================================================
 # Odoo helpers
 # ============================================================================
@@ -772,10 +804,10 @@ _MAX_UPLOAD   = 10 * 1024 * 1024  # 10 MB
 async def extract_document(
     request: Request,
     file: UploadFile = File(...),
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
-    ])),
+    user: Optional[TokenData] = Depends(optional_user),
 ):
+    # Guests (prospective applicants without an account) may extract documents.
+    username = user.username if user else "guest"
     if _ocr_breaker.is_open:
         raise HTTPException(status_code=503, detail="OCR service temporarily unavailable")
 
@@ -790,7 +822,7 @@ async def extract_document(
         raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
 
     t0 = datetime.utcnow()
-    logger.info({"msg": "OCR request", "user": user.username, "size": len(content)})
+    logger.info({"msg": "OCR request", "user": username, "size": len(content)})
 
     try:
         async with httpx.AsyncClient(timeout=90.0) as c:
@@ -930,17 +962,16 @@ async def submit_with_document(
     phone: str = Form(...),
     desired_program: str = Form(...),
     application_type: str = Form("regular"),
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
-    ])),
+    user: Optional[TokenData] = Depends(optional_user),
 ):
     t0            = datetime.utcnow()
     errors: List[str] = []
     ocr_result    = None
     adm_result    = None
+    username      = user.username if user else "guest"
 
     try:
-        logger.info({"msg": "Orchestrated workflow", "user": user.username})
+        logger.info({"msg": "Orchestrated workflow", "user": username})
 
         # Step 1 — OCR
         try:
@@ -962,23 +993,40 @@ async def submit_with_document(
             errors.append("OCR extraction failed")
             raise
 
-        # Step 2 — map
+        # Step 2 — map (tolerate malformed/partial OCR output with safe defaults)
         try:
-            ex = ocr_result.extracted_data
+            ex = ocr_result.extracted_data or {}
+
+            def _parse_date(value: Any) -> datetime:
+                try:
+                    return datetime.strptime(str(value), "%Y-%m-%d")
+                except (ValueError, TypeError):
+                    return datetime(2000, 1, 1)
+
+            def _parse_int(value: Any, default: int) -> int:
+                try:
+                    return int(float(str(value)))
+                except (ValueError, TypeError):
+                    return default
+
+            def _parse_float(value: Any, default: float) -> float:
+                try:
+                    return float(str(value))
+                except (ValueError, TypeError):
+                    return default
+
             app_data = AdmissionApplicationData(
-                full_name              = ex.get("name", "Unknown"),
-                national_id            = ex.get("nid", "00000000000000"),
+                full_name              = ex.get("name") or "Unknown",
+                national_id            = ex.get("nid") or "00000000000000",
                 email                  = email,
                 phone                  = phone,
-                date_of_birth          = datetime.strptime(
-                    ex.get("date_of_birth", "2000-01-01"), "%Y-%m-%d"
-                ),
-                address                = ex.get("address", "Not provided"),
-                city                   = ex.get("city", "Cairo"),
+                date_of_birth          = _parse_date(ex.get("date_of_birth", "2000-01-01")),
+                address                = ex.get("address") or "Not provided",
+                city                   = ex.get("city") or "Cairo",
                 country                = "Egypt",
-                previous_qualification = ex.get("qualification", "High School"),
-                graduation_year        = int(ex.get("graduation_year", 2020)),
-                gpa                    = float(ex.get("gpa", 3.0)),
+                previous_qualification = ex.get("qualification") or "High School",
+                graduation_year        = _parse_int(ex.get("graduation_year"), 2020),
+                gpa                    = _parse_float(ex.get("gpa"), 3.0),
                 desired_program        = desired_program,
                 application_type       = application_type,
             )

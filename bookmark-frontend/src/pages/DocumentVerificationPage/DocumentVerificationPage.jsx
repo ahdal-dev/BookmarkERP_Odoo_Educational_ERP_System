@@ -5,13 +5,9 @@ import FileDropzone from '../../components/FileDropzone/FileDropzone';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { SplatterDot } from '../../styles/brand';
 import { applicationAPI } from '../../api/apiGateway';
+import { useApplication } from '../../context/ApplicationContext';
 import styles from './DocumentVerificationPage.module.css';
 import logoUrl from '../../assets/logos/bookark_logo.svg';
-
-/* ============================================================
-   DOCUMENT VERIFICATION PAGE — Step 3 of admission wizard
-   Light top nav, stepper, upload + OCR results, no sidebar.
-   ============================================================ */
 
 const STEPS = [
   { label: 'PERSONAL INFO', status: 'completed' },
@@ -22,6 +18,7 @@ const STEPS = [
 
 export default function DocumentVerificationPage() {
   const navigate = useNavigate();
+  const { setOcrData: saveOcrData, setDocument } = useApplication();
   const [files, setFiles] = useState([]);
   const [ocrData, setOcrData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,26 +27,32 @@ export default function DocumentVerificationPage() {
   const handleFileSelect = async (newFiles) => {
     setFiles(newFiles);
     if (!newFiles?.length) return;
+    const rawFile = newFiles[0].file || newFiles[0];
+    setDocument(rawFile, rawFile.name);
     setIsProcessing(true);
     setOcrError('');
     try {
       const form = new FormData();
-      form.append('file', newFiles[0].file || newFiles[0]);
+      form.append('file', rawFile);
       const result = await applicationAPI.uploadDocument(form);
-      // Normalize known fields with snake_case / camelCase fallbacks.
-      setOcrData({
-        fullName: result.full_name || result.fullName || result.name || '—',
-        cumulativeGpa: result.gpa || result.cumulative_gpa || result.cumulativeGpa || '—',
-        institution: result.institution || result.previous_school || '—',
-        degreeProgram: result.degree || result.degree_program || result.degreeProgram || '—',
-        raw: result,
-      });
+      const extracted = result.extracted_data ?? result;
+      const normalized = {
+        fullName: extracted.full_name || extracted.fullName || extracted.name || '—',
+        cumulativeGpa: extracted.gpa || extracted.cumulative_gpa || extracted.cumulativeGpa || '—',
+        institution: extracted.institution || extracted.previous_school || '—',
+        degreeProgram: extracted.degree || extracted.degree_program || extracted.degreeProgram || '—',
+        raw: extracted,
+      };
+      setOcrData(normalized);
+      saveOcrData(normalized);
     } catch (err) {
       setOcrError(err?.response?.data?.detail || 'Could not extract document data. Please try another file.');
     } finally {
       setIsProcessing(false);
     }
   };
+
+  const handleProceed = () => navigate('/apply/review');
 
   return (
     <div className={styles.page}>
@@ -131,10 +134,6 @@ export default function DocumentVerificationPage() {
               </div>
               <div className={styles.fieldCard}>
                 <span className={styles.fieldLabel}>CUMULATIVE GPA:</span>
-                <span className={styles.fieldValue}>{ocrData.cumulativeGpa}</span>
-              </div>
-              <div className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>CUMULATIVE GPA:</span>
                 <div className={styles.fieldValueRow}>
                   <span className={styles.fieldValue}>{ocrData.cumulativeGpa}</span>
                   {ocrData.gpaDistinction && (
@@ -157,10 +156,10 @@ export default function DocumentVerificationPage() {
             </div>
           )}
 
-          <button className={styles.proceedBtn} disabled={!ocrData} onClick={() => navigate('/admissions/status')}>
+          <button className={styles.proceedBtn} disabled={!ocrData} onClick={handleProceed}>
             Confirm & Proceed →
           </button>
-          <a href="/admissions" className={styles.backLink}>← Back to Admissions</a>
+          <a href="/apply/academic-history" className={styles.backLink}>← Back</a>
         </div>
       </div>
 
