@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ~7 years: keep graduated/inactive student records, then archive -->
+        <record id="policy_student_record" model="data.retention.policy">
+            <field name="name">Student Records — 7y archive</field>
+            <field name="record_type">student_record</field>
+            <field name="retention_days">2555</field>
+            <field name="action">archive</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- 5 years: anonymize old admission applications (PII minimization) -->
+        <record id="policy_admission" model="data.retention.policy">
+            <field name="name">Admissions — 5y anonymize</field>
+            <field name="record_type">admission</field>
+            <field name="retention_days">1825</field>
+            <field name="action">anonymize</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- 3 years: delete resolved petitions -->
+        <record id="policy_petition" model="data.retention.policy">
+            <field name="name">Petitions — 3y delete</field>
+            <field name="record_type">petition</field>
+            <field name="retention_days">1095</field>
+            <field name="action">delete</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- 1 year: delete resolved support tickets -->
+        <record id="policy_support_ticket" model="data.retention.policy">
+            <field name="name">Support Tickets — 1y delete</field>
+            <field name="record_type">support_ticket</field>
+            <field name="retention_days">365</field>
+            <field name="action">delete</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- 5 years: delete old audit logs -->
+        <record id="policy_audit_log" model="data.retention.policy">
+            <field name="name">Audit Logs — 5y delete</field>
+            <field name="record_type">audit_log</field>
+            <field name="retention_days">1825</field>
+            <field name="action">delete</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

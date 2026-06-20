@@ -73,6 +73,11 @@ import { ApplicationProvider } from './context/ApplicationContext';
 // Admin legacy
 import AuditLogPage from './pages/admin/AuditLogPage';
 import SystemSettingsPage from './pages/admin/SystemSettingsPage';
+// Security hardening
+import DataRetentionPage from './pages/admin/security/DataRetentionPage';
+import BackupsPage from './pages/admin/security/BackupsPage';
+import ServiceAccountsPage from './pages/admin/security/ServiceAccountsPage';
+import MFASecurityPage from './pages/settings/MFASecurityPage';
 
 const FACULTY_ROLES = [ROLES.INSTRUCTOR, ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMENT_CHAIR];
 
@@ -159,6 +164,13 @@ export default function App() {
           <Route path="/admin/settings/registration-rules" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR]}><InstitutionalRulesetPage /></RoleProtectedRoute>} />
           <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
+
+          {/* Security hardening — admin */}
+          <Route path="/admin/data-retention" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><DataRetentionPage /></RoleProtectedRoute>} />
+          <Route path="/admin/backups" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><BackupsPage /></RoleProtectedRoute>} />
+          <Route path="/admin/service-accounts" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><ServiceAccountsPage /></RoleProtectedRoute>} />
+          {/* MFA setup — public route (also serves enforced first-login setup, which has no session yet) */}
+          <Route path="/settings/security/mfa" element={<MFASecurityPage />} />
 
           {/* Student */}
           <Route path="/student/dashboard" element={<RoleProtectedRoute allowedRoles={[ROLES.STUDENT]}><StudentDashboardPage /></RoleProtectedRoute>} />

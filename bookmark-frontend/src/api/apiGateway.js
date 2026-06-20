@@ -81,11 +81,55 @@ export const authAPI = {
     return response.data;
   },
 
-  /** Change the authenticated user's password */
-  changePassword: async (currentPassword, newPassword) => {
+  /** Change the authenticated user's password. Pass an explicit token to use a
+   *  short-lived reset token during the expiry-forced flow (no stored session). */
+  changePassword: async (currentPassword, newPassword, token) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
     const response = await api.post('/api/v1/auth/change-password', {
       current_password: currentPassword,
       new_password: newPassword,
+    }, config);
+    return response.data;
+  },
+
+  /* ---- Multi-Factor Authentication (TOTP) ---- */
+
+  /** Current user's MFA status */
+  mfaStatus: async () => {
+    const response = await api.get('/api/v1/auth/mfa/status');
+    return response.data;
+  },
+
+  /** Begin enrolment — returns { otpauth_uri, qr_png_base64, secret }.
+   *  Pass an explicit token (the setup/mfa token from login) when the user
+   *  isn't fully authenticated yet. */
+  mfaSetup: async (token) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+    const response = await api.post('/api/v1/auth/mfa/setup', {}, config);
+    return response.data;
+  },
+
+  /** Confirm enrolment — returns { backup_codes } */
+  mfaVerifySetup: async (code, token) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+    const response = await api.post('/api/v1/auth/mfa/verify-setup', { code }, config);
+    return response.data;
+  },
+
+  /** Complete the login challenge — returns full tokens */
+  mfaVerify: async (mfaToken, code) => {
+    const response = await api.post('/api/v1/auth/mfa/verify', {
+      mfa_token: mfaToken,
+      code,
+    });
+    return response.data;
+  },
+
+  /** Disable MFA (requires current password + a valid code) */
+  mfaDisable: async (currentPassword, code) => {
+    const response = await api.post('/api/v1/auth/mfa/disable', {
+      current_password: currentPassword,
+      code,
     });
     return response.data;
   },
@@ -408,6 +452,59 @@ export const adminAPI = {
   },
   runTest: async (target) => {
     const response = await api.post(`/api/v1/admin/maintenance/test/${target}`);
+    return response.data;
+  },
+
+  /* ---- Data retention policies ---- */
+  getDataRetention: async () => {
+    const response = await api.get('/api/v1/admin/data-retention');
+    return response.data;
+  },
+  createDataRetention: async (policy) => {
+    const response = await api.post('/api/v1/admin/data-retention', policy);
+    return response.data;
+  },
+  updateDataRetention: async (id, policy) => {
+    const response = await api.put(`/api/v1/admin/data-retention/${id}`, policy);
+    return response.data;
+  },
+  deleteDataRetention: async (id) => {
+    const response = await api.delete(`/api/v1/admin/data-retention/${id}`);
+    return response.data;
+  },
+  runDataRetention: async () => {
+    const response = await api.post('/api/v1/admin/data-retention/run');
+    return response.data;
+  },
+
+  /* ---- Encrypted backups ---- */
+  getBackups: async () => {
+    const response = await api.get('/api/v1/admin/backups');
+    return response.data;
+  },
+  createBackup: async () => {
+    const response = await api.post('/api/v1/admin/backup');
+    return response.data;
+  },
+  restoreBackup: async (filename, confirmToken) => {
+    const response = await api.post('/api/v1/admin/restore', {
+      filename,
+      confirm_token: confirmToken,
+    });
+    return response.data;
+  },
+
+  /* ---- Service-account credential rotation ---- */
+  getServiceAccounts: async () => {
+    const response = await api.get('/api/v1/admin/service-accounts');
+    return response.data;
+  },
+  createServiceAccount: async (data) => {
+    const response = await api.post('/api/v1/admin/service-accounts', data);
+    return response.data;
+  },
+  rotateServiceAccount: async (id) => {
+    const response = await api.post(`/api/v1/admin/service-accounts/${id}/rotate`);
     return response.data;
   },
 };

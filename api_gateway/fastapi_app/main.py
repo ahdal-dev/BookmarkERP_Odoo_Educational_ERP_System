@@ -39,6 +39,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 import redis.asyncio as aioredis
 
+import tokens
+
 # ============================================================================
 # Configuration
 # ============================================================================
@@ -633,6 +635,25 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning({"msg": "Odoo not reachable on startup", "err": str(exc)})
 
+    # Field-encryption key — if FIELD_ENCRYPTION_KEY env isn't set, fetch the
+    # shared key from Odoo's ir.config_parameter so MFA secrets / service-account
+    # keys encrypt/decrypt identically on both sides.
+    try:
+        import crypto_utils
+        if not crypto_utils.field_key_available():
+            from routers.deps import odoo_session, call_kw
+            async with odoo_session() as _c:
+                key = await call_kw(
+                    _c, "ir.config_parameter", "get_param",
+                    ["security.field_encryption_key", False])
+            if key:
+                crypto_utils.set_field_key(key)
+                logger.info("Field-encryption key loaded from Odoo config")
+            else:
+                logger.warning("No field-encryption key available — MFA enrolment disabled")
+    except Exception as exc:
+        logger.warning("Could not load field-encryption key: %s", exc)
+
     # MQ + SSE setup
     import mq as _mq_module
     app.state.sse_queues = {}  # {user_id: [asyncio.Queue, ...]}
@@ -733,6 +754,21 @@ from routers import support as support_router
 app.include_router(support_router.router)
 from routers import audit as audit_router
 app.include_router(audit_router.router)
+
+# Strong authentication — TOTP MFA
+from routers import mfa as mfa_router
+app.include_router(mfa_router.router)
+# Data retention + service-account rotation (admin)
+from routers import security_admin as security_admin_router
+app.include_router(security_admin_router.router)
+# Encrypted backups (admin)
+from routers import backup as backup_router
+app.include_router(backup_router.router)
+
+# Network-segmentation / ACL middleware (IP allowlist, per-role rate limit,
+# origin validation, coarse RBAC). Registered after CORS so pre-flight works.
+from middleware import register_security_middleware
+register_security_middleware(app)
 
 # ============================================================================
 # Middleware — observability and audit logging
@@ -1115,6 +1151,26 @@ async def _track_active_session(redis_conn, uid: int, access_token: str) -> None
         pass  # session tracking is best-effort, never block auth
 
 
+def _password_expired(changed_at, expiry_days) -> bool:
+    """True when the stored password_changed_at is older than the configured
+    expiry window. Empty stamp → not expired (avoids locking out un-stamped users)."""
+    try:
+        days = int(expiry_days or 90)
+    except (ValueError, TypeError):
+        days = 90
+    if days <= 0 or not changed_at:
+        return False
+    try:
+        dt = datetime.strptime(changed_at, "%Y-%m-%d %H:%M:%S")
+    except (ValueError, TypeError):
+        return False
+    return datetime.utcnow() > dt + timedelta(days=days)
+
+
+# Roles that must have MFA before reaching a full session.
+_MFA_ENFORCED_ROLES = {"super_admin", "registrar"}
+
+
 @app.post("/api/v1/auth/login", summary="Authenticate and receive JWT access + refresh tokens")
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
@@ -1141,15 +1197,50 @@ async def login(request: Request, body: LoginRequest):
         uid   = result["result"]["uid"]
         name  = result["result"].get("name", body.login)
         role  = await resolve_user_role(uid, redis_conn)
-        tokens = _make_tokens(uid, body.login, body.login, role)
-        await _track_active_session(redis_conn, uid, tokens["access_token"])
+
+        # --- Strong-auth gates: password expiry, MFA challenge / enforcement ---
+        mfa_enabled, pwd_changed_at, expiry_days = False, None, "90"
+        try:
+            from routers.deps import odoo_session, call_kw
+            async with odoo_session() as _c:
+                rows = await call_kw(_c, "res.users", "read",
+                                     [[uid], ["mfa_enabled", "password_changed_at"]])
+                expiry_days = await call_kw(_c, "ir.config_parameter", "get_param",
+                                            ["auth.password_expiry_days", "90"]) or "90"
+            if rows:
+                mfa_enabled = bool(rows[0].get("mfa_enabled"))
+                pwd_changed_at = rows[0].get("password_changed_at")
+        except Exception:
+            logger.warning("Strong-auth lookup failed; proceeding without gates", exc_info=True)
+
+        # 1. Expired password → force a change before issuing a session.
+        if _password_expired(pwd_changed_at, expiry_days):
+            reset_token = tokens.make_short_token(uid, body.login, body.login, role.value, "pwreset", minutes=15)
+            audit_logger.info(json.dumps({"event": "login_password_expired", "user_id": uid}))
+            return {"password_expired": True, "reset_token": reset_token, "user_id": uid}
+
+        # 2. MFA enabled → return a challenge instead of a full session.
+        if mfa_enabled:
+            mfa_token = tokens.make_short_token(uid, body.login, body.login, role.value, "mfa", minutes=5)
+            audit_logger.info(json.dumps({"event": "login_mfa_required", "user_id": uid}))
+            return {"mfa_required": True, "mfa_token": mfa_token, "user_id": uid}
+
+        # 3. Privileged role without MFA → force enrolment first.
+        if role.value in _MFA_ENFORCED_ROLES:
+            setup_token = tokens.make_short_token(uid, body.login, body.login, role.value, "mfa_setup", minutes=15)
+            audit_logger.info(json.dumps({"event": "login_mfa_setup_required", "user_id": uid}))
+            return {"mfa_setup_required": True, "mfa_token": setup_token,
+                    "user_id": uid, "role": role.value}
+
+        issued = _make_tokens(uid, body.login, body.login, role)
+        await _track_active_session(redis_conn, uid, issued["access_token"])
 
         AUTH_COUNTER.labels(outcome="success").inc()
         audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
         await audit_router.record_audit_event(
             "login_success", "info", user_id=uid, actor_login=body.login,
             ip=request.client.host if request.client else None, detail=f"role={role.value}")
-        return {**tokens, "user_id": uid, "user_name": name, "role": role.value}
+        return {**issued, "user_id": uid, "user_name": name, "role": role.value}
 
     except HTTPException:
         raise

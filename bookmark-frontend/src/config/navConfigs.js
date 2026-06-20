@@ -181,5 +181,8 @@ export const adminDashboardNav = [
   { icon: 'security', label: 'Security Center', path: '/admin/security' },
   { icon: 'management', label: 'Content & Config', path: '/admin/content' },
   { icon: 'chat', label: 'Support', path: '/admin/support' },
+  { icon: 'documents', label: 'Data Retention', path: '/admin/data-retention' },
+  { icon: 'security', label: 'Backups', path: '/admin/backups' },
+  { icon: 'admin', label: 'Service Accounts', path: '/admin/service-accounts' },
   { icon: 'settings', label: 'System', path: '/admin/system' },
 ];

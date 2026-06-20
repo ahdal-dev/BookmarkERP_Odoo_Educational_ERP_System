@@ -101,7 +101,10 @@ export default function SettingsPage() {
                 <div className={w.field}><span className={w.fieldLabel}>New Password</span><input className={w.input} type="password" placeholder="••••••••" /></div>
                 <div className={w.field}><span className={w.fieldLabel}>Confirm New Password</span><input className={w.input} type="password" placeholder="••••••••" /></div>
               </div>
-              <button className={`${w.btn} ${w.btnPrimary} ${w.btnSm}`} onClick={() => navigate('/change-password')}>Change Password</button>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button className={`${w.btn} ${w.btnPrimary} ${w.btnSm}`} onClick={() => navigate('/change-password')}>Change Password</button>
+                <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} onClick={() => navigate('/settings/security/mfa')}>Manage Two-Factor Auth</button>
+              </div>
             </>
           )}
 

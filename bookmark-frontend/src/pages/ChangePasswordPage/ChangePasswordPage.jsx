@@ -1,17 +1,24 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BookmarkLogo from '../../components/BookmarkLogo/BookmarkLogo';
 import { SplatterDot } from '../../styles/brand';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/apiGateway';
 import w from '../_shared/workflow.module.css';
 
-/* Change Password — reachable from the Login page ("Change Password" link)
-   and from Settings → Account & Security. Self-contained branded card. */
+/* Change Password — reachable from the Login page ("Change Password" link),
+   from Settings → Account & Security, and from the password-expiry flow (which
+   passes a short-lived reset token in location.state). Self-contained card. */
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
+
+  // Password-expiry flow: no session yet, but a one-time reset token is supplied.
+  const resetToken = location.state?.token;
+  const expired = Boolean(location.state?.expired);
+  const canSubmit = isAuthenticated || Boolean(resetToken);
 
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -23,18 +30,17 @@ export default function ChangePasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (next.length < 8) { setError('New password must be at least 8 characters.'); return; }
+    if (next.length < 12) { setError('New password must be at least 12 characters.'); return; }
     if (next !== confirm) { setError('New password and confirmation do not match.'); return; }
 
-    // Changing a password requires an authenticated session.
-    if (!isAuthenticated) {
+    if (!canSubmit) {
       setError('Please log in first to change your password.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await authAPI.changePassword(current, next);
+      await authAPI.changePassword(current, next, resetToken);
       setDone(true);
     } catch (err) {
       setError(err?.response?.data?.detail || err?.message || 'Could not change password. Please try again.');
@@ -53,7 +59,9 @@ export default function ChangePasswordPage() {
           <BookmarkLogo size="small" />
           <h2 style={{ fontFamily: 'var(--font-brand)', fontSize: '1.5rem' }}>Change Password</h2>
           <p className={w.cardSub} style={{ textAlign: 'center', marginBottom: 0 }}>
-            Choose a strong password you don't use elsewhere.
+            {expired
+              ? 'Your password has expired. Please set a new one to continue.'
+              : "Choose a strong password you don't use elsewhere."}
           </p>
         </div>
 

@@ -83,30 +83,44 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Finalize a session from a full token response (used by normal login and by
+  // the MFA challenge once it returns access_token).
+  const completeLogin = useCallback((data, loginId) => {
+    const user = {
+      id: data.user_id,
+      name: data.user_name || loginId,
+      email: data.email || loginId,
+      role: data.role || 'student',
+      roles: data.roles || {},
+    };
+    localStorage.setItem('bookmark_token', data.access_token);
+    localStorage.setItem('bookmark_user', JSON.stringify(user));
+    dispatch({ type: 'AUTH_SUCCESS', payload: { user, token: data.access_token } });
+    return { success: true, user };
+  }, []);
+
   // --- Login ---
   const login = useCallback(async (loginId, password) => {
     dispatch({ type: 'AUTH_START' });
     try {
       const data = await authAPI.login(loginId, password);
 
+      // Strong-auth interstitials — do NOT store a token; let the page branch.
+      if (data.mfa_required) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { mfaRequired: true, mfaToken: data.mfa_token };
+      }
+      if (data.mfa_setup_required) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { mfaSetupRequired: true, mfaToken: data.mfa_token, role: data.role };
+      }
+      if (data.password_expired) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return { passwordExpired: true, resetToken: data.reset_token };
+      }
+
       if (data.access_token) {
-        const user = {
-          id: data.user_id,
-          name: data.user_name || loginId,
-          email: data.email || loginId,
-          role: data.role || 'student',
-          roles: data.roles || {},
-        };
-
-        localStorage.setItem('bookmark_token', data.access_token);
-        localStorage.setItem('bookmark_user', JSON.stringify(user));
-
-        dispatch({
-          type: 'AUTH_SUCCESS',
-          payload: { user, token: data.access_token },
-        });
-
-        return { success: true, user };
+        return completeLogin(data, loginId);
       }
 
       throw new Error(data.message || 'Authentication failed');
@@ -118,7 +132,15 @@ export function AuthProvider({ children }) {
       dispatch({ type: 'AUTH_FAILURE', payload: message });
       return { success: false, error: message };
     }
-  }, []);
+  }, [completeLogin]);
+
+  // --- Complete an MFA challenge (modal calls authAPI.mfaVerify, passes result here) ---
+  const completeMfaLogin = useCallback((data) => {
+    if (!data?.access_token) {
+      return { success: false, error: 'MFA verification failed' };
+    }
+    return completeLogin(data, data.user_name);
+  }, [completeLogin]);
 
   // --- Logout ---
   const logout = useCallback(async () => {
@@ -140,6 +162,7 @@ export function AuthProvider({ children }) {
   const value = {
     ...state,
     login,
+    completeMfaLogin,
     logout,
     clearError,
   };

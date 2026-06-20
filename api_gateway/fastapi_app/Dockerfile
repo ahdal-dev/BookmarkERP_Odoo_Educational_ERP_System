@@ -19,12 +19,14 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
+#   postgresql-client provides pg_dump/psql used by the encrypted backup router
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     curl \
     libmagic1 \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for better caching)

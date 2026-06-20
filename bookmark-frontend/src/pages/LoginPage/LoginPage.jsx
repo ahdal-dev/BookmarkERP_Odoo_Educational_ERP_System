@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BookmarkLogo from '../../components/BookmarkLogo/BookmarkLogo';
 import { SplatterDot } from '../../styles/brand';
+import MfaChallengeModal from './MfaChallengeModal';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
@@ -10,8 +11,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mfaToken, setMfaToken] = useState(null);
 
-  const { login, error, clearError } = useAuth();
+  const { login, completeMfaLogin, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,6 +24,32 @@ export default function LoginPage() {
     const result = await login(loginId.trim(), password);
     setIsSubmitting(false);
 
+    if (result.mfaRequired) {
+      setMfaToken(result.mfaToken);
+      return;
+    }
+    if (result.mfaSetupRequired) {
+      navigate('/settings/security/mfa', {
+        replace: true,
+        state: { setup: true, token: result.mfaToken, role: result.role },
+      });
+      return;
+    }
+    if (result.passwordExpired) {
+      navigate('/change-password', {
+        replace: true,
+        state: { expired: true, token: result.resetToken },
+      });
+      return;
+    }
+    if (result.success) {
+      navigate('/dashboard', { replace: true });
+    }
+  };
+
+  const handleMfaSuccess = (data) => {
+    const result = completeMfaLogin(data);
+    setMfaToken(null);
     if (result.success) {
       navigate('/dashboard', { replace: true });
     }
@@ -185,6 +213,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {mfaToken && (
+        <MfaChallengeModal
+          mfaToken={mfaToken}
+          onSuccess={handleMfaSuccess}
+          onCancel={() => setMfaToken(null)}
+        />
+      )}
     </div>
   );
 }

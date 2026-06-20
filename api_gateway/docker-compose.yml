@@ -6,20 +6,40 @@
 # ============================================================================
 
 # ============================================================================
-# Networks Configuration
+# Networks Configuration — 3-tier segmentation
+# ----------------------------------------------------------------------------
+# Only ADJACENT tiers may communicate:
+#
+#   frontend-net  <->  api-net  <->  data-net
+#
+#   * frontend-net : public edge (NGINX only).
+#   * api-net      : application tier (FastAPI, Redis, RabbitMQ, OCR, chatbot,
+#                    Prometheus, Grafana). NGINX bridges frontend-net + api-net.
+#   * data-net     : data tier (PostgreSQL, Odoo). FastAPI bridges api-net +
+#                    data-net so it can run pg_dump backups; nothing on
+#                    frontend-net can reach the data tier directly.
+#
+# NOTE: the production Odoo runs on the Windows host and is reached via
+# host.docker.internal:8081, so this segmentation does not affect that path.
 # ============================================================================
 networks:
-  frontend:
+  frontend-net:
     driver: bridge
     ipam:
       config:
         - subnet: 172.20.0.0/24
-  
-  backend:
+
+  api-net:
     driver: bridge
     ipam:
       config:
         - subnet: 172.21.0.0/24
+
+  data-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
 
 # ============================================================================
 # Volumes Configuration
@@ -66,8 +86,8 @@ services:
       # Custom error pages (optional)
       # - ./nginx/error_pages:/usr/share/nginx/error_pages:ro
     networks:
-      - frontend
-      - backend
+      - frontend-net
+      - api-net
     depends_on:
       - fastapi_gateway
     healthcheck:
@@ -115,6 +135,20 @@ services:
       - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/
       - AMQP_TIMEOUT=5
 
+      # Security hardening — encrypted backups, field encryption, ACLs
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY:-change-this-backup-key}
+      - BACKUP_DIR=/app/backups
+      - ALLOW_DB_RESTORE=${ALLOW_DB_RESTORE:-false}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:-}
+      - ADMIN_IP_ALLOWLIST=${ADMIN_IP_ALLOWLIST:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173}
+      # pg_dump target — the live DB is in the HOST PostgreSQL (Odoo runs on the
+      # Windows host), reached via host.docker.internal.
+      - BACKUP_PG_HOST=${BACKUP_PG_HOST:-host.docker.internal}
+      - BACKUP_PG_PORT=${BACKUP_PG_PORT:-5432}
+      - BACKUP_PG_USER=${BACKUP_PG_USER:-odoo}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-Admin123}
+
       # Python Environment
       - PYTHONUNBUFFERED=1
       - TZ=Africa/Cairo
@@ -122,10 +156,14 @@ services:
       # Mount application code for development (comment out in production)
       - ./fastapi_app:/app
 
+      # Encrypted backups (persisted)
+      - ./backups:/app/backups
+
       # Logs
       - ./logs/fastapi:/app/logs
     networks:
-      - backend
+      - api-net
+      - data-net
     depends_on:
       - ocr_microservice
       - odoo
@@ -165,7 +203,7 @@ services:
       # Logs
       - ./logs/ocr:/app/logs
     networks:
-      - backend
+      - api-net
     deploy:
       resources:
         limits:
@@ -202,7 +240,7 @@ services:
       # Custom PostgreSQL configuration (optional)
       # - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     networks:
-      - backend
+      - data-net
     expose:
       - "5432"
     healthcheck:
@@ -245,7 +283,7 @@ services:
       # Logs
       - ./logs/odoo:/var/log/odoo
     networks:
-      - backend
+      - data-net
     depends_on:
       - postgres
     healthcheck:
@@ -274,7 +312,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - backend
+      - api-net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 15s
@@ -315,7 +353,7 @@ services:
       - PYTHONUNBUFFERED=1
       - TZ=Africa/Cairo
     networks:
-      - backend
+      - api-net
     depends_on:
       - rabbitmq
     healthcheck:
@@ -348,7 +386,7 @@ services:
       - PYTHONUNBUFFERED=1
       - TZ=Africa/Cairo
     networks:
-      - backend
+      - api-net
     depends_on:
       - rabbitmq
     labels:
@@ -367,7 +405,7 @@ services:
     volumes:
       - ./redis/data:/data
     networks:
-      - backend
+      - api-net
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -391,7 +429,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/data:/prometheus
     networks:
-      - backend
+      - api-net
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -417,7 +455,7 @@ services:
       - ./grafana/data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     networks:
-      - backend
+      - api-net
     depends_on:
       - prometheus
     labels:

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_data_retention" model="ir.cron">
+        <field name="name">Data Retention: purge obsolete records</field>
+        <field name="model_id" ref="model_data_retention_policy"/>
+        <field name="state">code</field>
+        <field name="code">model.run_retention()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 02:00:00')"/>
+        <field name="priority">110</field>
+    </record>
+</odoo>

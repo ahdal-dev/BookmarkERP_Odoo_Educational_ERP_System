@@ -224,6 +224,12 @@ async def create_user(
     if body.email:
         vals["email"] = body.email
     if body.password:
+        # Enforce the same password policy used by change-password.
+        from password_policy import validate_password_strength
+        ok, errors = validate_password_strength(
+            body.password, body.name, body.email or body.login)
+        if not ok:
+            raise HTTPException(status_code=400, detail="; ".join(errors))
         vals["password"] = body.password
     async with odoo_session() as client:
         user_id = await call_kw(client, "res.users", "create", [vals])
