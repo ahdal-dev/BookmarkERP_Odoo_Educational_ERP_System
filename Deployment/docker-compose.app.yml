@@ -1,0 +1,173 @@
+# ============================================================================
+# docker-compose.app.yml  ->  runs on the App VM (e2-standard-2)
+# ----------------------------------------------------------------------------
+# Services: postgres, redis, rabbitmq, odoo (custom addons), fastapi_gateway.
+# Run from the repo's Deployment/ directory:
+#   docker compose -f docker-compose.app.yml --env-file .env up -d
+#
+# Cross-VM: the FastAPI gateway reaches the AI services on the AI VM via
+# ${AI_SERVER_IP}. Postgres/Redis stay private to this host; RabbitMQ and Odoo
+# publish on the host so the AI VM can reach them over the VPC (firewall blocks
+# external access).
+# ============================================================================
+
+networks:
+  edu_backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  odoo_data:
+  odoo_filestore:
+  rabbitmq_data:
+  redis_data:
+
+services:
+
+  # --------------------------------------------------------------------------
+  # PostgreSQL - Odoo database (private to this host)
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: edu_erp_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set in .env}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [edu_backend]
+    expose: ["5432"]   # internal only - never published to the host
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Redis - sessions / active-user tracking (private to this host)
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: edu_erp_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?set in .env}
+    volumes:
+      - redis_data:/data
+    networks: [edu_backend]
+    expose: ["6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # RabbitMQ - async messaging (published so the AI VM worker can connect)
+  # --------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: edu_erp_rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-erp}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:?set in .env}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [edu_backend]
+    ports:
+      - "5672:5672"    # AMQP (reached by the AI VM via ${APP_SERVER_IP})
+      - "15672:15672"  # management UI (VPC-internal only via firewall)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Odoo 19 - headless ERP core with the custom addon directories mounted
+  # --------------------------------------------------------------------------
+  odoo:
+    image: odoo:19.0
+    container_name: edu_erp_odoo
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # The official image fills DB connection from these when absent in the conf
+      - HOST=postgres
+      - PORT=5432
+      - USER=odoo
+      - PASSWORD=${POSTGRES_PASSWORD:?set in .env}
+      - TZ=Africa/Cairo
+    volumes:
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      # Custom addons (THE critical mounts) - one path per module directory
+      - ../addons/edu_mangment:/mnt/extra-addons/edu_mangment:ro
+      - ../addons/open_edu_cat:/mnt/extra-addons/open_edu_cat:ro
+      - odoo_data:/var/lib/odoo
+      - odoo_filestore:/var/lib/odoo/filestore
+    networks: [edu_backend]
+    ports:
+      - "8081:8081"   # HTTP/JSON-RPC (reached by gateway + proxy /web)
+      - "8072:8072"   # gevent / longpolling / websocket
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8081/web/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # --------------------------------------------------------------------------
+  # FastAPI Gateway - public API surface (proxied by nginx on the proxy VM)
+  # --------------------------------------------------------------------------
+  fastapi_gateway:
+    build:
+      context: ../api_gateway/fastapi_app
+      dockerfile: Dockerfile
+    container_name: edu_erp_fastapi_gateway
+    restart: unless-stopped
+    depends_on:
+      - odoo
+      - rabbitmq
+      - redis
+    environment:
+      # Odoo (same host, container network)
+      - ODOO_URL=http://odoo:8081
+      - ODOO_DB=${ODOO_DB:-edu_demo_new}
+      - ODOO_USERNAME=${ODOO_USERNAME:-admin}
+      - ODOO_PASSWORD=${ODOO_PASSWORD:?set in .env}
+      # AI services on the AI VM (reached over the VPC)
+      - OCR_SERVICE_URL=http://${AI_SERVER_IP:?set in .env}:5000
+      - RAG_CHATBOT_URL=http://${AI_SERVER_IP}:8001
+      # JWT
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?set in .env}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION_HOURS=24
+      # Chatbot trust boundary
+      - CHATBOT_SHARED_SECRET=${CHATBOT_SHARED_SECRET:?set in .env}
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?set in .env}
+      - REDIS_DB=0
+      # Messaging
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-erp}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+      - AMQP_TIMEOUT=5
+      # CORS - restrict to the public origin
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks: [edu_backend]
+    ports:
+      - "8000:8000"   # reached by nginx on the proxy VM via ${APP_SERVER_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
