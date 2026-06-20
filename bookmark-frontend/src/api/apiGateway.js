@@ -383,9 +383,6 @@ export const adminAPI = {
       current_password: currentPassword,
       new_password: newPassword,
     });
-  /** Deactivate a user */
-  deleteUser: async (id) => {
-    const response = await api.delete(`/api/v1/admin/users/${id}`);
     return response.data;
   },
 
