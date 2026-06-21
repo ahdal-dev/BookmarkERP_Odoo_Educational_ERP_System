@@ -337,4 +337,4 @@ CI: 4 GitHub Actions workflows run on every push and PR.
 
 ## License
 
-This project is submitted as a graduation project at [University Name]. All rights reserved by the project team.
+This project is submitted as a graduation project at Zewail City of Science and Technology — School of Computational Sciences and Artificial Intelligence (CSAI). All rights reserved by the project team.

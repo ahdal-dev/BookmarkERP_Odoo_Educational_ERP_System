@@ -78,6 +78,10 @@ coverage_odoo.xml
 # AI assistant context (internal only)
 CLAUDE.md
 
+# Local thesis/defense files (not part of the codebase)
+"FOr thesis/"
+FOr thesis/
+
 # Coverage artifacts at root
 coverage_ocr.xml
 
