@@ -1,6 +1,6 @@
 # Bookmark Academic ERP
 
-A production-grade Educational ERP system built on Odoo 19 with a fully decoupled React frontend, FastAPI API gateway, and three integrated AI/ML microservices.
+We built Bookmark ERP because the tools universities currently use — including standard Odoo — weren't designed with students in mind. This project replaces Odoo's default UI with a custom React frontend, routes everything through a FastAPI gateway, and adds three AI services we trained ourselves: a grade predictor, a performance forecaster, and an OCR pipeline for ID documents.
 
 ---
 
@@ -21,7 +21,9 @@ A production-grade Educational ERP system built on Odoo 19 with a fully decouple
 
 ## Problem Statement
 
-Egyptian universities rely on fragmented, manual processes for admissions, course registration, grading, and student advising. Existing systems (including standard Odoo) do not provide a modern student-facing experience, AI-powered insights, or the scalability needed for large institutions. This project replaces the Odoo monolithic frontend with a decoupled microservices architecture that integrates real AI predictions and an LLM-powered academic advisor.
+Most university software was built for administrators, not students. At Zewail City, students deal with slow portals, manual registration processes, and no visibility into their own academic standing until it's too late. Staff handle admissions through email and spreadsheets.
+
+We wanted to fix that. Bookmark ERP keeps Odoo as the backend engine (it handles the data model and business rules well) but replaces everything the student or staff member actually sees and interacts with. On top of that, we added AI services that didn't exist anywhere in the existing system: a model that predicts grade outcomes, one that forecasts performance trends with confidence intervals, and an OCR pipeline that reads National ID cards and fills in admission forms automatically.
 
 ---
 
@@ -223,25 +225,21 @@ Key endpoint groups:
 ## AI/ML Services
 
 ### Grade Predictor (port 8000)
-Predicts grade distribution (A/B/C/D/F) for a student's enrolled courses.
+Takes a student's transcript and enrolled courses, then estimates the most likely grade outcome (A/B/C/D/F) for each.
 
-- Model: XGBClassifier with **isotonic calibration**
-- Selection criterion: maximize `Exact Accuracy − ECE (calibration error)`
-- Final metrics: Accuracy = 0.511, ECE = 0.070
-- A/B comparison: [notebooks/Model_AB_Testing.pdf](notebooks/Model_AB_Testing.pdf)
+We tried three calibration approaches and picked isotonic calibration because it gave us the best trade-off between accuracy and how well the model's confidence scores actually matched reality (ECE). Final numbers: Accuracy = 0.511, ECE = 0.070.
+
+Full comparison: [notebooks/Model_AB_Testing.pdf](notebooks/Model_AB_Testing.pdf)
 
 ### Student Performance Predictor (port 5002)
-Predicts performance trend with uncertainty quantification.
+Goes beyond a single grade — this service predicts whether a student's overall performance is trending up or down, and gives a confidence interval around that prediction.
 
-- Architecture: **Triple XGBoost + Conformal Quantile Regression (CQR)**
-- Metrics: R² = 0.767, ROC-AUC = 0.952, Brier = 0.083, CQR coverage = 91%
+We used three XGBoost models stacked together, then added Conformal Quantile Regression (CQR) to generate honest uncertainty bands instead of point estimates. Results: R² = 0.767, ROC-AUC = 0.952, Brier score = 0.083, coverage = 91%.
 
 ### OCR Service (port 5000)
-Extracts student data from National ID card images.
+When a student uploads their National ID card during the admission process, this service reads the image and fills in their name, address, and ID number automatically.
 
-- Pipeline: **YOLOv8** (field detection) + **Tesseract** (text extraction)
-- Accuracy: 93% (vs. EasyOCR 71%, Gemini Vision 89%)
-- Fallback: Mistral Vision API for low-confidence cases
+EasyOCR was the first thing we tried — it topped out at 71% on Arabic ID cards. We then tested Gemini Vision (89%) before landing on YOLOv8 for field detection combined with Tesseract for text extraction, which got us to 93%. Mistral Vision kicks in as a fallback for cases where confidence is low.
 
 ---
 
