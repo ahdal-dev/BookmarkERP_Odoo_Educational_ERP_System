@@ -113,8 +113,8 @@ Full architecture diagram: [Docs/ARC/platform_architecture.drawio.png](Docs/ARC/
 
 ### 1. Clone and configure environment
 ```bash
-git clone https://github.com/Noureqo1/Odoo_Educational_ERP_System.git
-cd Odoo_Educational_ERP_System
+git clone https://github.com/Noureqo1/BookmarkERP_Odoo_Educational_ERP_System.git
+cd BookmarkERP_Odoo_Educational_ERP_System
 cp .env.example .env
 # Edit .env with your values (JWT_SECRET_KEY, OPENROUTER_API_KEY, etc.)
 ```
