@@ -6,15 +6,14 @@ A production-grade Educational ERP system built on Odoo 19 with a fully decouple
 
 ## Team Members
 
-| Name | ID | Program | Role |
+| Name | Student ID | Program | Role |
 |---|---|---|---|
-| Noureqo Mohamed (Nour) | 202201638 | CSAI | Team Lead, Backend & API Gateway |
-| Ziad M. Al-Sawy | — | CSAI | Infrastructure, Kubernetes & DevOps |
-| NourEldin Mohamed | 202201638 | CSAI | Frontend & Odoo Addons |
-| Raneem Adam (Raneem) | — | CSAI | AI/ML Services (Grade Predictor, Student Performance) |
-| Ahmed Abouelela | 202202070 | CSAI | OCR Service & Integration |
+| Nour Eldin Mohamed | 202201310 | SWD | Team Lead, Backend, API Gateway & Frontend |
+| Ziad Moutaz | 202201252 | DSAI | Infrastructure, Kubernetes & DevOps |
+| Raneem Mousa | 202200389 | DSAI | AI/ML Services (Grade Predictor, Student Performance) |
+| Ahmed Mohamed | 202202070 | DSAI | OCR Service & Integration |
 
-**Supervisor:** Dr. Doaa Shawky (Main) · Dr. Yousry Abdul Azeem (Joint)
+**Supervisor:** Prof. Dr. Doaa Shawky
 
 **Institution:** Zewail City of Science and Technology — School of Computational Sciences and Artificial Intelligence (CSAI)
 
@@ -400,14 +399,14 @@ venv\Scripts\python.exe odoo\odoo-bin -c config\odoo.conf -u edu_mang_academic -
 
 ## Contact
 
-| Member | Email |
-|---|---|
-| Noureqo Mohamed | s-nour.saber@zewailcity.edu.eg |
-| Ziad M. Al-Sawy | s-ziad.sawy@zewailcity.edu.eg |
-| Raneem Adam | s-raneem.adam@zewailcity.edu.eg |
-| Ahmed Abouelela | s-ahmed.abopuelela@zewailcity.edu.eg |
+| Member | Student ID | Email |
+|---|---|---|
+| Nour Eldin Mohamed | 202201310 | s-nour.saber@zewailcity.edu.eg |
+| Ziad Moutaz | 202201252 | s-ziad.sawy@zewailcity.edu.eg |
+| Raneem Mousa | 202200389 | s-raneem.adam@zewailcity.edu.eg |
+| Ahmed Mohamed | 202202070 | s-ahmed.abopuelela@zewailcity.edu.eg |
 
-**Supervisor:** Dr. Doaa Shawky — Zewail City of Science and Technology
+**Supervisor:** Prof. Dr. Doaa Shawky — Zewail City of Science and Technology
 
 Repository: [github.com/Noureqo1/BookmarkERP_Odoo_Educational_ERP_System](https://github.com/Noureqo1/BookmarkERP_Odoo_Educational_ERP_System)
 
