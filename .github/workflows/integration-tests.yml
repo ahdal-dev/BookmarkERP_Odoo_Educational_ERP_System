@@ -6,7 +6,7 @@
 # Also runs Odoo module tests against a real PostgreSQL database.
 # ============================================================================
 
-name: "🔗 Integration Tests"
+name: "Integration Tests"
 
 on:
   push:
@@ -93,7 +93,7 @@ jobs:
         with:
           pytest-xml-coverage-path: reports/integration-coverage.xml
           junitxml-path: reports/integration-test-results.xml
-          title: "📊 Integration Test Coverage"
+          title: "Integration Test Coverage"
 
   # ════════════════════════════════════════════════════════════════════════════
   # Job 2: Odoo Module Tests (requires PostgreSQL)
@@ -201,19 +201,19 @@ jobs:
         run: |
           echo "=== Admission Module Tests ==="
           if grep -q "ERROR" reports/odoo-admission-tests.log 2>/dev/null; then
-            echo "❌ Admission tests had errors"
+            echo "FAILED: Admission tests had errors"
             grep "ERROR" reports/odoo-admission-tests.log | tail -20
           else
-            echo "✅ Admission tests passed"
+            echo "PASSED: Admission tests passed"
           fi
 
           echo ""
           echo "=== Registration Module Tests ==="
           if grep -q "ERROR" reports/odoo-registration-tests.log 2>/dev/null; then
-            echo "❌ Registration tests had errors"
+            echo "FAILED: Registration tests had errors"
             grep "ERROR" reports/odoo-registration-tests.log | tail -20
           else
-            echo "✅ Registration tests passed"
+            echo "PASSED: Registration tests passed"
           fi
 
       - name: Upload Odoo test logs
