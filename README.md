@@ -282,16 +282,23 @@ CI: 4 GitHub Actions workflows run on every push and PR.
 
 ## Screenshots
 
-### Admission Portal
+### React Frontend (Student Portal)
+![Login](Tests/Screenshots/UI_Login.jpeg)
+![Course Registration](Tests/Screenshots/UI_Course_Registration.jpeg)
+![Student Petition Form](Tests/Screenshots/UI_Student_Petition_Form.jpeg)
+
+### React Frontend (Admin & Registrar)
+![Admission Pipeline](Tests/Screenshots/UI_Admin_Admission_Pipeline.jpeg)
+![Petition Tracking Board](Tests/Screenshots/UI_Petition_Tracking_Board.jpeg)
+![Institutional Ruleset](Tests/Screenshots/UI_Institutional_Ruleset.jpeg)
+
+### Admission Portal (Odoo)
 ![Admission Form](Tests/Screenshots/Admission_Form.png)
 ![OCR Processing](Tests/Screenshots/Admission_OCR.png)
 ![Application Status](Tests/Screenshots/Application_Status.png)
 
-### Backend Administration
+### Backend & Services Health
 ![Applications List](Tests/Screenshots/Aplecations.png)
-![Administrator View](Tests/Screenshots/Adminstrator_admition.png)
-
-### Services Health
 ![Services Test](Tests/Screenshots/Test_servivces.png)
 ![API Gateway](Tests/Screenshots/API%20gateway..png)
 
