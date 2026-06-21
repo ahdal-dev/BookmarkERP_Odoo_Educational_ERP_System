@@ -6,15 +6,17 @@ A production-grade Educational ERP system built on Odoo 19 with a fully decouple
 
 ## Team Members
 
-| Name | ID | Role |
-|---|---|---|
-| Noureqo (Nour) | — | Team Lead, Backend & API Gateway |
-| ZiadMAlsawy | — | Infrastructure, Kubernetes & DevOps |
-| NourEldin Mohamed | — | Frontend & Odoo Addons |
-| RaneeMousAdam (Raneem) | — | AI/ML Services (Grade Predictor, Student Performance) |
-| Ahmed Abouelela | — | OCR Service & Integration |
+| Name | ID | Program | Role |
+|---|---|---|---|
+| Noureqo Mohamed (Nour) | 202201638 | CSAI | Team Lead, Backend & API Gateway |
+| Ziad M. Al-Sawy | — | CSAI | Infrastructure, Kubernetes & DevOps |
+| NourEldin Mohamed | 202201638 | CSAI | Frontend & Odoo Addons |
+| Raneem Adam (Raneem) | — | CSAI | AI/ML Services (Grade Predictor, Student Performance) |
+| Ahmed Abouelela | 202202070 | CSAI | OCR Service & Integration |
 
 **Supervisor:** Dr. Doaa Shawky (Main) · Dr. Yousry Abdul Azeem (Joint)
+
+**Institution:** Zewail City of Science and Technology — School of Computational Sciences and Artificial Intelligence (CSAI)
 
 ---
 
@@ -304,6 +306,60 @@ CI: 4 GitHub Actions workflows run on every push and PR.
 
 ---
 
+## Usage Guide
+
+### Student
+1. Log in at `http://localhost:5173` with student credentials
+2. View your dashboard — GPA, enrolled courses, upcoming deadlines
+3. Browse the course catalog under **Registration** and add courses (prerequisite check is enforced automatically)
+4. Check your grades and transcript under **Grades**
+5. Submit a petition (late drop, grade appeal) under **Petitions** and track its status
+
+### Faculty
+1. Log in and navigate to **Faculty → My Courses** to view rosters
+2. Review and approve/deny student petitions from **Petitions**
+
+### Admin / Registrar
+1. Log in and open the **Admin Dashboard** for system-wide stats
+2. Manage the admissions pipeline under **Admissions** (Kanban drag-and-drop)
+3. Configure registration tier windows and prerequisites under **Settings → Institutional Ruleset**
+4. Manage users and roles under **Admin → Users**
+
+### Chatbot
+- Click the chatbot icon from any page to open the AI academic advisor
+- Ask about course requirements, GPA, petition status, or registration deadlines
+
+---
+
+## Demo
+
+Live screenshots of the running system are in the [Screenshots](#screenshots) section below.
+
+Architecture walkthrough: [Docs/ARC/Bookmark_Academic_ERP_Architecture.md](Docs/ARC/Bookmark_Academic_ERP_Architecture.md)
+
+AI model selection methodology: [notebooks/Model_AB_Testing.pdf](notebooks/Model_AB_Testing.pdf)
+
+---
+
+## Troubleshooting
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Odoo crashes on Windows startup | Thread monitor timeout | Check `limit_time_real = 99999` is set in `config/odoo.conf` |
+| FastAPI returns 401 on all requests | Missing or expired JWT | Re-login or check `JWT_SECRET_KEY` in `.env` matches the gateway |
+| OCR returns empty fields | Tesseract not installed | Ensure Docker image built with `tesseract-ocr` layer |
+| Frontend shows "Network Error" | Gateway not running | Run `cd api_gateway && docker-compose up -d` |
+| Redis connection refused | Redis container stopped | Run `docker-compose restart redis` inside `api_gateway/` |
+| Chatbot not responding | RabbitMQ or OpenRouter key missing | Check `OPENROUTER_API_KEY` and `RABBITMQ_*` vars in `.env` |
+| Grade Predictor returns 503 | Service not started | Run `make grade-run` to start the service on port 8000 |
+
+For Odoo module issues run:
+```bash
+venv\Scripts\python.exe odoo\odoo-bin -c config\odoo.conf -u edu_mang_academic -d edu_demo_new --stop-after-init
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -339,6 +395,21 @@ CI: 4 GitHub Actions workflows run on every push and PR.
 - [User Story Workflows](Docs/Workflows/)
 - [Architecture Decision Records](Docs/ADR/)
 - [RBAC Design](Docs/RBAC/)
+
+---
+
+## Contact
+
+| Member | Email |
+|---|---|
+| Noureqo Mohamed | s-nour.saber@zewailcity.edu.eg |
+| Ziad M. Al-Sawy | s-ziad.sawy@zewailcity.edu.eg |
+| Raneem Adam | s-raneem.adam@zewailcity.edu.eg |
+| Ahmed Abouelela | s-ahmed.abopuelela@zewailcity.edu.eg |
+
+**Supervisor:** Dr. Doaa Shawky — Zewail City of Science and Technology
+
+Repository: [github.com/Noureqo1/BookmarkERP_Odoo_Educational_ERP_System](https://github.com/Noureqo1/BookmarkERP_Odoo_Educational_ERP_System)
 
 ---
 
