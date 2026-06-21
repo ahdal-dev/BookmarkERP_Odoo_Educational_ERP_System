@@ -110,6 +110,11 @@ services:
       - RAG_CHATBOT_URL=http://academic-agent:8001
       - CHATBOT_SHARED_SECRET=${CHATBOT_SHARED_SECRET:-change-me}
 
+      # Messaging (RabbitMQ)
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/
+      - AMQP_TIMEOUT=5
+
       # Python Environment
       - PYTHONUNBUFFERED=1
       - TZ=Africa/Cairo
@@ -125,6 +130,7 @@ services:
       - ocr_microservice
       - odoo
       - academic-agent
+      - rabbitmq
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

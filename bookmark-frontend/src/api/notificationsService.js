@@ -48,3 +48,16 @@ export function groupByCategory(items) {
   });
   return groups;
 }
+
+/**
+ * Open a Server-Sent Events stream for real-time notification delivery.
+ * Returns the EventSource instance — call .close() to disconnect.
+ * Reusable from AppShell for a global unread-count badge if needed.
+ */
+export function openNotificationStream(onNotification) {
+  const token = localStorage.getItem('bookmark_token');
+  if (!token) return null;
+  const es = new EventSource(`/api/v1/notifications/stream?token=${encodeURIComponent(token)}`);
+  es.addEventListener('notification', (e) => onNotification?.(JSON.parse(e.data)));
+  return es;
+}

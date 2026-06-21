@@ -134,10 +134,8 @@ export const supportNav = [
 ];
 
 export const admissionsOfficerNav = [
-  { icon: 'dashboard', label: 'Dashboard', path: '/apps' },
-  { icon: 'admission', label: 'Pipeline', path: '/admissions/officer' },
-  { icon: 'documents', label: 'Documents', path: '/apply/documents' },
-  { icon: 'reports', label: 'Reports', path: '/admin/reports' },
+  { icon: 'dashboard', label: 'Dashboard', path: '/admissions/officer' },
+  { icon: 'documents', label: 'Documents', path: '/admissions/officer/documents' },
 ];
 
 export const adminNav = [
@@ -173,7 +171,8 @@ export function navForRole(role) {
 
 // Admin dashboard nav
 export const adminDashboardNav = [
-  { icon: 'dashboard', label: 'Command Center', path: '/admin' },
+  { icon: 'dashboard', label: 'Apps', path: '/apps' },
+  { icon: 'admin', label: 'Command Center', path: '/admin' },
   { icon: 'students', label: 'User Management', path: '/admin/users' },
   { icon: 'admin', label: 'Roles & Permissions', path: '/admin/roles' },
   { icon: 'ai', label: 'AI Services', path: '/admin/ai' },

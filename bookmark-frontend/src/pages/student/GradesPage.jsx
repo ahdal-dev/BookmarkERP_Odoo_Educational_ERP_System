@@ -91,7 +91,7 @@ export default function GradesPage() {
             </div>
           ))}
 
-          <button className={`${w.btn} ${w.btnOutline}`} style={{ marginTop: 12 }}>Export as PDF</button>
+          <button className={`${w.btn} ${w.btnOutline}`} style={{ marginTop: 12 }} onClick={() => window.print()}>Export as PDF</button>
         </>
       )}
     </AppShell>

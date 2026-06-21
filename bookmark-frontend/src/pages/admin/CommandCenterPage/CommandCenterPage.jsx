@@ -5,15 +5,15 @@ import TopBar from '../../../components/TopBar/TopBar';
 import StatCard from '../../../components/StatCard/StatCard';
 import CircularGauge from '../../../components/CircularGauge/CircularGauge';
 import StatusPill from '../../../components/StatusPill/StatusPill';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI, auditAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import {
-  mockCommandKPIs,
-  mockAIServiceSummary,
   mockRecentSecurityEvents,
+  openTicketCount,
   mockAdmissionSummary,
   mockUserGrowth,
   mockUserGrowth90d,
-  openTicketCount,
 } from '../../../mocks/adminMocks';
 import styles from './CommandCenterPage.module.css';
 
@@ -51,20 +51,78 @@ function exportSummaryReport(kpis, growth) {
   URL.revokeObjectURL(url);
 }
 
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseGrowthData(analyticsData) {
+  if (!analyticsData?.data?.length) return null;
+  return analyticsData.data.map((d) => {
+    const [, month] = (d.month || '').split('-');
+    const label = month ? (MONTH_ABBR[parseInt(month, 10) - 1] || d.month) : d.month;
+    return { label, value: d.users };
+  });
+}
+
+const SEVERITY_MAP = { high: 'high', warning: 'medium', info: 'low', error: 'high' };
+
+function parseAuditEvents(auditData) {
+  if (!auditData?.events?.length) return null;
+  return auditData.events.slice(0, 5).map((e, i) => ({
+    id: i + 1,
+    severity: SEVERITY_MAP[e.severity] || 'low',
+    message: e.detail || `${e.event_type} — ${e.actor}`,
+    time: e.date ? new Date(e.date).toLocaleString() : '',
+  }));
+}
+
 export default function CommandCenterPage() {
   const navigate = useNavigate();
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [chartPeriod, setChartPeriod] = useState('30d');
 
-  const degraded = mockAIServiceSummary.filter((s) => s.status === 'Degraded');
-  const chartData = chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d;
+  const { data: statsData } = useAsync(adminAPI.getStats);
+  const { data: healthData } = useAsync(adminAPI.getHealth);
+  const { data: analyticsData } = useAsync(adminAPI.getAnalytics);
+  const { data: auditData } = useAsync(() => auditAPI.getLog({ limit: 5 }));
+
+  const kpis = {
+    totalUsers: statsData?.totalUsers || 0,
+    totalUsersDelta: statsData?.totalUsersDelta || '+0%',
+    activeToday: statsData?.activeUsers || 0,
+    activeTodayPct: statsData?.activeTodayPct || '0%',
+    aiRequests: statsData?.aiRequests || 0,
+    aiRequestsDelta: statsData?.aiRequestsDelta || '+0%',
+    openTickets: statsData?.openTickets ?? statsData?.pendingPetitions ?? 0,
+    criticalTickets: statsData?.criticalTickets || 0,
+    systemUptime: statsData?.systemUptime || 0,
+  };
+
+  const aiSummary = healthData?.services?.map((s) => ({
+    slug: s.name.toLowerCase().replace(/\s+/g, '-'),
+    name: s.name,
+    status: s.status === 'Healthy' ? 'Online' : s.status,
+    requests: s.latency || 0,
+  })) || [];
+  const degraded = aiSummary.filter((s) => s.status === 'Degraded' || s.status === 'Offline');
+
+  const liveAdmission = {
+    newApplications: statsData?.totalApplications || 0,
+    inReview: statsData?.inReviewApplications || 0,
+    missingDocs: statsData?.missingDocs || 0,
+    approvedToday: statsData?.admittedApplications || 0,
+  };
+
+  const liveGrowth = parseGrowthData(analyticsData);
+  const chartData = liveGrowth ?? (chartPeriod === '30d' ? mockUserGrowth : mockUserGrowth90d);
+
+  const liveSecurityEvents = parseAuditEvents(auditData);
+  const securityEvents = liveSecurityEvents ?? mockRecentSecurityEvents;
 
   return (
     <AppShell
       navItems={navWithActive}
       logoVariant="icon-text"
       sidebarLabel="ADMIN PANEL"
-      topBar={<TopBar searchPlaceholder="Search users, pages, settings..." notificationCount={openTicketCount} />}
+      topBar={<TopBar searchPlaceholder="Search users, pages, settings..." notificationCount={kpis.openTickets} />}
     >
       {!alertDismissed && degraded.length > 0 && (
         <div className={styles.alertBanner}>
@@ -93,15 +151,15 @@ export default function CommandCenterPage() {
       </div>
 
       <div className={styles.kpiStrip}>
-        <StatCard label="TOTAL USERS" value={mockCommandKPIs.totalUsers} delta={mockCommandKPIs.totalUsersDelta} />
-        <StatCard label="ACTIVE TODAY" value={mockCommandKPIs.activeToday} delta={mockCommandKPIs.activeTodayPct} />
-        <StatCard label="AI REQUESTS / DAY" value={mockCommandKPIs.aiRequests} delta={mockCommandKPIs.aiRequestsDelta} />
+        <StatCard label="TOTAL USERS" value={kpis.totalUsers} delta={kpis.totalUsersDelta} />
+        <StatCard label="ACTIVE TODAY" value={kpis.activeToday} delta={kpis.activeTodayPct} />
+        <StatCard label="AI REQUESTS / DAY" value={kpis.aiRequests} delta={kpis.aiRequestsDelta} />
         <div className={styles.ticketKpiCard}>
           <div className={styles.ticketTop}>
             <span className={styles.ticketLabel}>OPEN TICKETS</span>
-            <span className={styles.ticketValue}>{mockCommandKPIs.openTickets}</span>
+            <span className={styles.ticketValue}>{kpis.openTickets}</span>
           </div>
-          <span className={styles.ticketSub}>{mockCommandKPIs.criticalTickets} critical</span>
+          <span className={styles.ticketSub}>{kpis.criticalTickets} critical</span>
         </div>
       </div>
 
@@ -142,14 +200,14 @@ export default function CommandCenterPage() {
             <button className={styles.viewAllBtn} onClick={() => navigate('/admin/ai')}>View All →</button>
           </div>
           <div className={styles.serviceList}>
-            {mockAIServiceSummary.map((svc) => (
+            {aiSummary.map((svc) => (
               <div key={svc.slug} className={styles.serviceRow}>
                 <span
                   className={styles.statusDot}
                   style={{ background: svc.status === 'Online' ? 'var(--color-lime)' : 'var(--color-coral)' }}
                 />
                 <span className={styles.serviceName}>{svc.name}</span>
-                <span className={styles.serviceReqs}>{svc.requests.toLocaleString()} req</span>
+                <span className={styles.serviceReqs}>{(svc.requests || 0).toLocaleString()} req</span>
                 <StatusPill status={svc.status} variant={SERVICE_STATUS_COLOR[svc.status] || 'black'} />
               </div>
             ))}
@@ -165,10 +223,10 @@ export default function CommandCenterPage() {
           </div>
           <div className={styles.admissionGrid}>
             {[
-              { label: 'New Applications', value: mockAdmissionSummary.newApplications, color: 'var(--color-lime)' },
-              { label: 'In Review', value: mockAdmissionSummary.inReview, color: 'var(--color-yellow)' },
-              { label: 'Missing Docs', value: mockAdmissionSummary.missingDocs, color: 'var(--color-coral)' },
-              { label: 'Approved Today', value: mockAdmissionSummary.approvedToday, color: 'var(--color-lime)' },
+              { label: 'New Applications', value: liveAdmission.newApplications, color: 'var(--color-lime)' },
+              { label: 'In Review', value: liveAdmission.inReview, color: 'var(--color-yellow)' },
+              { label: 'Missing Docs', value: liveAdmission.missingDocs, color: 'var(--color-coral)' },
+              { label: 'Approved Today', value: liveAdmission.approvedToday, color: 'var(--color-lime)' },
             ].map((item) => (
               <div key={item.label} className={styles.admissionItem} style={{ '--accent-color': item.color }}>
                 <span className={styles.admissionValue}>{item.value}</span>
@@ -184,7 +242,7 @@ export default function CommandCenterPage() {
             <button className={styles.viewAllBtn} onClick={() => navigate('/admin/security')}>View All →</button>
           </div>
           <div className={styles.securityList}>
-            {mockRecentSecurityEvents.map((ev) => (
+            {securityEvents.map((ev) => (
               <div key={ev.id} className={styles.securityRow}>
                 <span
                   className={styles.severityDot}
@@ -200,7 +258,7 @@ export default function CommandCenterPage() {
         </div>
 
         <CircularGauge
-          value={parseFloat(mockCommandKPIs.systemUptime)}
+          value={typeof kpis.systemUptime === 'number' ? kpis.systemUptime : parseFloat(kpis.systemUptime)}
           caption="ACTIVE CYCLE INSIGHT"
           label="System Uptime"
         />
@@ -223,7 +281,7 @@ export default function CommandCenterPage() {
               onClick={() =>
                 action.path
                   ? navigate(action.path)
-                  : exportSummaryReport(mockCommandKPIs, chartData)
+                  : exportSummaryReport(kpis, chartData)
               }
             >
               {action.label}

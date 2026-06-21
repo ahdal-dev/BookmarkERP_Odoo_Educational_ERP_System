@@ -8,6 +8,7 @@ Observability: Prometheus metrics, structured JSON logs, X-Request-ID headers
 ============================================================================
 """
 
+import asyncio
 import os
 import json
 import uuid
@@ -347,6 +348,38 @@ class RBACChecker:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+
+# Optional bearer — does NOT raise when the header is missing, so public
+# (guest) endpoints like the prospective-student apply flow can be used
+# without a token while still honoring one when present.
+optional_security = HTTPBearer(auto_error=False)
+
+
+async def optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+) -> Optional[TokenData]:
+    """Resolve the current user if a valid token is supplied, else None.
+
+    Never raises on missing/invalid credentials — guests are allowed through.
+    """
+    if not credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        token_data = TokenData(
+            user_id  = payload["user_id"],
+            username = payload.get("username", ""),
+            email    = payload.get("email", ""),
+            role     = UserRole(payload["role"]),
+            exp      = datetime.fromtimestamp(payload["exp"]),
+            jti      = payload.get("jti"),
+        )
+        if token_data.exp < datetime.utcnow():
+            return None
+        return token_data
+    except Exception:
+        return None
+
 # ============================================================================
 # Odoo helpers
 # ============================================================================
@@ -545,6 +578,36 @@ odoo_client = OdooClient()
 # FastAPI Lifespan
 # ============================================================================
 
+async def _run_notification_consumer(app: FastAPI) -> None:
+    """Background task: consume notification.created and fan out to SSE queues."""
+    import mq as _mq_module
+    while True:
+        try:
+            conn = _mq_module._mq_connection
+            if conn is None:
+                await asyncio.sleep(5)
+                continue
+            async with conn.channel() as channel:
+                await channel.set_qos(prefetch_count=10)
+                queue = await channel.declare_queue(_mq_module.QUEUE_NOTIFICATION, durable=True)
+                async with queue.iterator() as q_iter:
+                    async for message in q_iter:
+                        async with message.process():
+                            try:
+                                payload = json.loads(message.body.decode())
+                                user_id = payload.get("user_id")
+                                if user_id is not None:
+                                    for q in list(app.state.sse_queues.get(user_id, [])):
+                                        await q.put(payload)
+                            except Exception as exc:
+                                logger.warning("SSE fanout error: %s", exc)
+        except asyncio.CancelledError:
+            break
+        except Exception as exc:
+            logger.error("MQ consumer crashed, restarting in 5s: %s", exc)
+            await asyncio.sleep(5)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _http_client
@@ -570,9 +633,35 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning({"msg": "Odoo not reachable on startup", "err": str(exc)})
 
+    # MQ + SSE setup
+    import mq as _mq_module
+    app.state.sse_queues = {}  # {user_id: [asyncio.Queue, ...]}
+    if _mq_module.mq_enabled():
+        try:
+            _mq_module._mq_connection = await _mq_module.connect_mq()
+            logger.info("RabbitMQ connected")
+            app.state.mq_consumer_task = asyncio.create_task(
+                _run_notification_consumer(app)
+            )
+        except Exception as exc:
+            logger.warning("RabbitMQ unavailable on startup: %s", exc)
+            app.state.mq_consumer_task = None
+    else:
+        app.state.mq_consumer_task = None
+
     yield
 
     logger.info("Shutting down API Gateway...")
+
+    if getattr(app.state, "mq_consumer_task", None):
+        app.state.mq_consumer_task.cancel()
+        try:
+            await app.state.mq_consumer_task
+        except asyncio.CancelledError:
+            pass
+    if _mq_module._mq_connection is not None:
+        await _mq_module._mq_connection.close()
+
     await _http_client.aclose()
     _http_client = None
     if getattr(app.state, "redis", None):
@@ -636,8 +725,14 @@ from routers import registration_tiers as registration_tiers_router
 app.include_router(registration_tiers_router.router)
 from routers import faculty as faculty_router
 app.include_router(faculty_router.router)
+from routers import advising as advising_router
+app.include_router(advising_router.router)
 from routers import admin as admin_router
 app.include_router(admin_router.router)
+from routers import support as support_router
+app.include_router(support_router.router)
+from routers import audit as audit_router
+app.include_router(audit_router.router)
 
 # ============================================================================
 # Middleware — observability and audit logging
@@ -709,10 +804,10 @@ _MAX_UPLOAD   = 10 * 1024 * 1024  # 10 MB
 async def extract_document(
     request: Request,
     file: UploadFile = File(...),
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
-    ])),
+    user: Optional[TokenData] = Depends(optional_user),
 ):
+    # Guests (prospective applicants without an account) may extract documents.
+    username = user.username if user else "guest"
     if _ocr_breaker.is_open:
         raise HTTPException(status_code=503, detail="OCR service temporarily unavailable")
 
@@ -727,7 +822,7 @@ async def extract_document(
         raise HTTPException(status_code=413, detail="File exceeds 10 MB limit")
 
     t0 = datetime.utcnow()
-    logger.info({"msg": "OCR request", "user": user.username, "size": len(content)})
+    logger.info({"msg": "OCR request", "user": username, "size": len(content)})
 
     try:
         async with httpx.AsyncClient(timeout=90.0) as c:
@@ -867,17 +962,16 @@ async def submit_with_document(
     phone: str = Form(...),
     desired_program: str = Form(...),
     application_type: str = Form("regular"),
-    user: TokenData = Depends(RBACChecker([
-        UserRole.PROSPECTIVE_STUDENT, UserRole.ADMISSION_OFFICER, UserRole.SUPER_ADMIN,
-    ])),
+    user: Optional[TokenData] = Depends(optional_user),
 ):
     t0            = datetime.utcnow()
     errors: List[str] = []
     ocr_result    = None
     adm_result    = None
+    username      = user.username if user else "guest"
 
     try:
-        logger.info({"msg": "Orchestrated workflow", "user": user.username})
+        logger.info({"msg": "Orchestrated workflow", "user": username})
 
         # Step 1 — OCR
         try:
@@ -899,23 +993,40 @@ async def submit_with_document(
             errors.append("OCR extraction failed")
             raise
 
-        # Step 2 — map
+        # Step 2 — map (tolerate malformed/partial OCR output with safe defaults)
         try:
-            ex = ocr_result.extracted_data
+            ex = ocr_result.extracted_data or {}
+
+            def _parse_date(value: Any) -> datetime:
+                try:
+                    return datetime.strptime(str(value), "%Y-%m-%d")
+                except (ValueError, TypeError):
+                    return datetime(2000, 1, 1)
+
+            def _parse_int(value: Any, default: int) -> int:
+                try:
+                    return int(float(str(value)))
+                except (ValueError, TypeError):
+                    return default
+
+            def _parse_float(value: Any, default: float) -> float:
+                try:
+                    return float(str(value))
+                except (ValueError, TypeError):
+                    return default
+
             app_data = AdmissionApplicationData(
-                full_name              = ex.get("name", "Unknown"),
-                national_id            = ex.get("nid", "00000000000000"),
+                full_name              = ex.get("name") or "Unknown",
+                national_id            = ex.get("nid") or "00000000000000",
                 email                  = email,
                 phone                  = phone,
-                date_of_birth          = datetime.strptime(
-                    ex.get("date_of_birth", "2000-01-01"), "%Y-%m-%d"
-                ),
-                address                = ex.get("address", "Not provided"),
-                city                   = ex.get("city", "Cairo"),
+                date_of_birth          = _parse_date(ex.get("date_of_birth", "2000-01-01")),
+                address                = ex.get("address") or "Not provided",
+                city                   = ex.get("city") or "Cairo",
                 country                = "Egypt",
-                previous_qualification = ex.get("qualification", "High School"),
-                graduation_year        = int(ex.get("graduation_year", 2020)),
-                gpa                    = float(ex.get("gpa", 3.0)),
+                previous_qualification = ex.get("qualification") or "High School",
+                graduation_year        = _parse_int(ex.get("graduation_year"), 2020),
+                gpa                    = _parse_float(ex.get("gpa"), 3.0),
                 desired_program        = desired_program,
                 application_type       = application_type,
             )
@@ -1035,6 +1146,9 @@ async def login(request: Request, body: LoginRequest):
 
         AUTH_COUNTER.labels(outcome="success").inc()
         audit_logger.info(json.dumps({"event": "login_success", "user_id": uid, "role": role.value}))
+        await audit_router.record_audit_event(
+            "login_success", "info", user_id=uid, actor_login=body.login,
+            ip=request.client.host if request.client else None, detail=f"role={role.value}")
         return {**tokens, "user_id": uid, "user_name": name, "role": role.value}
 
     except HTTPException:

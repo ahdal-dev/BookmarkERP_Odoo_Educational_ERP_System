@@ -148,6 +148,12 @@
       .mic-btn.recording { background: linear-gradient(135deg, #dc3545, #c82333); animation: pulse 1s infinite; }
       @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
 
+      .attach-btn { background: linear-gradient(135deg, #8a2be2, #5b19a6); color: white; border: none; padding: 0.75rem; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+      .attach-btn:hover { transform: scale(1.1); }
+      .attached-file { display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:rgba(177,140,255,0.15); border:1px solid rgba(177,140,255,0.4); border-radius:20px; color:#d8c7ff; font-size:0.85rem; }
+      .attached-file .remove-file { cursor:pointer; color:#f37e7e; font-size:1.1rem; font-weight:bold; line-height:1; }
+      #attachedFileBar { padding:0.25rem 1rem 0; }
+
       /* Messages (alerts) */
       .message { padding:1rem; border-radius:8px; margin-bottom:1rem; text-align:center; font-weight:500; }
       .message.success { background: rgba(40, 167, 69, 0.2); color: #47d27e; border: 1px solid rgba(40, 167, 69, 0.3); }
@@ -443,23 +449,41 @@
                 <div class="timestamp">Just now</div>
               </div>
             </div>
-            <div class="chat-input-container">
-              <input
-                type="text"
-                class="chat-input"
-                id="chatInput"
-                placeholder="Type your question here..."
-                onkeypress="handleKeyPress(event)"
-              />
-              <button class="mic-btn" id="micBtn" title="Record voice" aria-label="Record voice" onclick="toggleRecording()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10a7 7 0 0 1-14 0"></path>
-                  <path d="M12 17v4"></path>
-                  <path d="M9 21h6"></path>
-                </svg>
-              </button>
-              <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+            <div class="chat-input-wrapper">
+              <div id="attachedFileBar" style="display:none;">
+                <span class="attached-file">
+                  <span id="attachedFileName"></span>
+                  <span class="remove-file" onclick="removeAttachedFile()" title="Remove file">×</span>
+                </span>
+              </div>
+              <div class="chat-input-container">
+                <input type="file" id="fileAttachInput" style="display:none"
+                       accept=".pdf,.docx,.txt,.csv,.xlsx,.xls"
+                       onchange="handleFileSelected(this)" />
+                <button class="attach-btn" id="attachBtn" title="Attach file"
+                        aria-label="Attach file" onclick="document.getElementById('fileAttachInput').click()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                  </svg>
+                </button>
+                <input
+                  type="text"
+                  class="chat-input"
+                  id="chatInput"
+                  placeholder="Type your question here..."
+                  onkeypress="handleKeyPress(event)"
+                />
+                <button class="mic-btn" id="micBtn" title="Record voice" aria-label="Record voice" onclick="toggleRecording()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10a7 7 0 0 1-14 0"></path>
+                    <path d="M12 17v4"></path>
+                    <path d="M9 21h6"></path>
+                  </svg>
+                </button>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+              </div>
             </div>
           </div>
         </div>
@@ -734,21 +758,88 @@
         }
       }
 
+      // ---------- File Attachment ----------
+      let _pendingFile = null;
+
+      function handleFileSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+        _pendingFile = file;
+        document.getElementById('attachedFileName').textContent = file.name;
+        document.getElementById('attachedFileBar').style.display = 'block';
+        input.value = '';
+      }
+
+      function removeAttachedFile() {
+        _pendingFile = null;
+        document.getElementById('attachedFileBar').style.display = 'none';
+        document.getElementById('attachedFileName').textContent = '';
+      }
+
+      async function uploadPendingFile(chatId) {
+        if (!_pendingFile) return null;
+        const fd = new FormData();
+        fd.append('user_id', user.id);
+        fd.append('file', _pendingFile, _pendingFile.name);
+        try {
+          const res = await fetch(`/chats/${chatId}/attach`, { method: 'POST', body: fd });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            showMessage(err.detail || 'File upload failed', 'error');
+            return null;
+          }
+          const data = await res.json();
+          removeAttachedFile();
+          return data;
+        } catch (e) {
+          showMessage('File upload error: ' + e.message, 'error');
+          return null;
+        }
+      }
+      // ---------- End File Attachment ----------
+
       async function sendMessage() {
         const input = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
         const question = input.value.trim();
-        if (!question) return;
+        if (!question && !_pendingFile) return;
         if (!user) { showMessage("Session expired. Please log in again.", "error"); return; }
 
         const orgId = user.organization_id;
         const userId = user.id;
         if (!orgId || !userId) { showMessage("Missing user information. Please log in again.", "error"); return; }
 
-        addMessage(question, "user");
+        if (question) addMessage(question, "user");
         input.value = "";
         sendBtn.disabled = true;
         sendBtn.textContent = "Sending...";
+
+        // Upload any pending file as a context message before the question.
+        // If no chat exists yet, create one first so we have an ID to attach to.
+        if (_pendingFile) {
+          if (!currentChatId) {
+            try {
+              const chatRes = await fetch("/chats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: user.id }),
+              });
+              if (chatRes.ok) {
+                const chatData = await chatRes.json();
+                currentChatId = chatData.chat_id;
+              }
+            } catch (_) {}
+          }
+          if (currentChatId) {
+            await uploadPendingFile(currentChatId);
+          }
+        }
+
+        if (!question) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+          return;
+        }
 
         const loadingDiv = document.createElement("div");
         loadingDiv.className = "loading-indicator";

@@ -5,6 +5,8 @@ import PageHeader from '../../../components/PageHeader/PageHeader';
 import DataTable from '../../../components/DataTable/DataTable';
 import StatusPill from '../../../components/StatusPill/StatusPill';
 import Pagination from '../../../components/Pagination/Pagination';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import { mockKBStats, mockKBCollections, mockKBDocuments, openTicketCount } from '../../../mocks/adminMocks';
 import styles from './KnowledgeBasePage.module.css';
@@ -22,10 +24,24 @@ export default function KnowledgeBasePage() {
   const [activeCollection, setActiveCollection] = useState(1);
   const [showUpload, setShowUpload] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [docs, setDocs] = useState(mockKBDocuments);
   const [editingDoc, setEditingDoc] = useState(null);
   const [reindexingAll, setReindexingAll] = useState(false);
-  const fileInputRef = useState(null);
+  const [localDocs, setLocalDocs] = useState(null);
+
+  const { data: kbData } = useAsync(adminAPI.getKBDocuments);
+
+  const liveDocs = kbData?.documents?.map((d) => ({
+    id: d.id,
+    name: d.title,
+    collection: d.type || 'General',
+    status: d.status || 'Indexed',
+    chunks: null,
+    size: '—',
+    indexedAt: d.lastUpdated || '—',
+  }));
+
+  const docs = localDocs ?? liveDocs ?? mockKBDocuments;
+  const setDocs = setLocalDocs;
 
   const deleteDoc = (id) => setDocs((prev) => prev.filter((d) => d.id !== id));
 
@@ -89,12 +105,18 @@ export default function KnowledgeBasePage() {
 
       {/* Stats Strip */}
       <div className={styles.statsStrip}>
-        {[
-          { label: 'TOTAL DOCS', value: mockKBStats.totalDocs.toLocaleString(), sub: '+12 this week' },
-          { label: 'INDEXED', value: `${mockKBStats.indexed.toLocaleString()} (${mockKBStats.indexedPct}%)`, sub: `${mockKBStats.pending} pending` },
-          { label: 'AVG TOP-K', value: mockKBStats.avgTopK, sub: `Relevance: ${mockKBStats.retrievalRelevance}%` },
-          { label: 'KB COVERAGE', value: `${mockKBStats.coverage}%`, sub: 'of FAQ topics answered' },
-        ].map((s) => (
+        {(() => {
+          const total = kbData?.count ?? mockKBStats.totalDocs;
+          const indexed = docs.filter((d) => d.status === 'Indexed').length;
+          const pending = docs.filter((d) => d.status === 'Pending').length;
+          const indexedPct = total > 0 ? Math.round((indexed / Math.max(docs.length, 1)) * 100) : mockKBStats.indexedPct;
+          return [
+            { label: 'TOTAL DOCS', value: total.toLocaleString(), sub: `${docs.length} loaded` },
+            { label: 'INDEXED', value: `${indexed} (${indexedPct}%)`, sub: `${pending} pending` },
+            { label: 'AVG TOP-K', value: mockKBStats.avgTopK, sub: `Relevance: ${mockKBStats.retrievalRelevance}%` },
+            { label: 'KB COVERAGE', value: `${mockKBStats.coverage}%`, sub: 'of FAQ topics answered' },
+          ];
+        })().map((s) => (
           <div key={s.label} className={styles.statItem}>
             <span className={styles.statLabel}>{s.label}</span>
             <span className={styles.statValue}>{s.value}</span>
@@ -137,7 +159,7 @@ export default function KnowledgeBasePage() {
           </div>
 
           <div className={styles.tableFooter}>
-            <span className={styles.showing}>Showing 1–{mockKBDocuments.length} of {mockKBStats.totalDocs.toLocaleString()} documents</span>
+            <span className={styles.showing}>Showing 1–{docs.length} of {(kbData?.count ?? mockKBStats.totalDocs).toLocaleString()} documents</span>
             <Pagination currentPage={page} totalPages={60} onPageChange={setPage} />
           </div>
         </div>

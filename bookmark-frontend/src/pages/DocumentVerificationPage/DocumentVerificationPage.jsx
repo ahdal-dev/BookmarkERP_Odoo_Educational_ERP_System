@@ -1,16 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Stepper from '../../components/Stepper/Stepper';
 import FileDropzone from '../../components/FileDropzone/FileDropzone';
 import StatusPill from '../../components/StatusPill/StatusPill';
 import { SplatterDot } from '../../styles/brand';
-import { mockOcrResult } from '../../mocks/documentMocks';
+import { applicationAPI } from '../../api/apiGateway';
+import { useApplication } from '../../context/ApplicationContext';
 import styles from './DocumentVerificationPage.module.css';
 import logoUrl from '../../assets/logos/bookark_logo.svg';
-
-/* ============================================================
-   DOCUMENT VERIFICATION PAGE — Step 3 of admission wizard
-   Light top nav, stepper, upload + OCR results, no sidebar.
-   ============================================================ */
 
 const STEPS = [
   { label: 'PERSONAL INFO', status: 'completed' },
@@ -20,19 +17,42 @@ const STEPS = [
 ];
 
 export default function DocumentVerificationPage() {
+  const navigate = useNavigate();
+  const { setOcrData: saveOcrData, setDocument } = useApplication();
   const [files, setFiles] = useState([]);
   const [ocrData, setOcrData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [ocrError, setOcrError] = useState('');
 
-  const handleFileSelect = (newFiles) => {
+  const handleFileSelect = async (newFiles) => {
     setFiles(newFiles);
+    if (!newFiles?.length) return;
+    const rawFile = newFiles[0].file || newFiles[0];
+    setDocument(rawFile, rawFile.name);
     setIsProcessing(true);
-    // Simulate OCR processing
-    setTimeout(() => {
-      setOcrData(mockOcrResult);
+    setOcrError('');
+    try {
+      const form = new FormData();
+      form.append('file', rawFile);
+      const result = await applicationAPI.uploadDocument(form);
+      const extracted = result.extracted_data ?? result;
+      const normalized = {
+        fullName: extracted.full_name || extracted.fullName || extracted.name || '—',
+        cumulativeGpa: extracted.gpa || extracted.cumulative_gpa || extracted.cumulativeGpa || '—',
+        institution: extracted.institution || extracted.previous_school || '—',
+        degreeProgram: extracted.degree || extracted.degree_program || extracted.degreeProgram || '—',
+        raw: extracted,
+      };
+      setOcrData(normalized);
+      saveOcrData(normalized);
+    } catch (err) {
+      setOcrError(err?.response?.data?.detail || 'Could not extract document data. Please try another file.');
+    } finally {
       setIsProcessing(false);
-    }, 2500);
+    }
   };
+
+  const handleProceed = () => navigate('/apply/review');
 
   return (
     <div className={styles.page}>
@@ -104,15 +124,13 @@ export default function DocumentVerificationPage() {
             {ocrData && <StatusPill status="OCR Verified" variant="green" />}
           </div>
 
+          {ocrError && <div style={{ background: '#fdecea', color: '#842029', border: '1px solid #f5c6cb', borderRadius: 10, padding: 12, marginBottom: 12, fontSize: '0.85rem' }}>{ocrError}</div>}
+
           {ocrData ? (
             <div className={styles.fieldGrid}>
               <div className={styles.fieldCard}>
                 <span className={styles.fieldLabel}>FULL NAME:</span>
                 <span className={styles.fieldValue}>{ocrData.fullName}</span>
-              </div>
-              <div className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>CUMULATIVE GPA:</span>
-                <span className={styles.fieldValue}>{ocrData.cumulativeGpa}</span>
               </div>
               <div className={styles.fieldCard}>
                 <span className={styles.fieldLabel}>CUMULATIVE GPA:</span>
@@ -138,10 +156,10 @@ export default function DocumentVerificationPage() {
             </div>
           )}
 
-          <button className={styles.proceedBtn} disabled={!ocrData}>
+          <button className={styles.proceedBtn} disabled={!ocrData} onClick={handleProceed}>
             Confirm & Proceed →
           </button>
-          <a href="/apply/academic" className={styles.backLink}>← Back to Academic History</a>
+          <a href="/apply/academic-history" className={styles.backLink}>← Back</a>
         </div>
       </div>
 

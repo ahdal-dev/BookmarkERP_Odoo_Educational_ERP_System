@@ -1,0 +1,59 @@
+graph LR
+    classDef route fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
+    classDef preproc fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    classDef yolo fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000000;
+    classDef mistral fill:#f5f5f5,stroke:#757575,stroke-width:2px,color:#000000;
+    classDef post fill:#ffccff,stroke:#990099,stroke-width:2px,color:#000000;
+    classDef data fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000000;
+
+    subgraph OCRService ["OCR Microservice (FastAPI · Port 5000)"]
+        direction TB
+
+        subgraph Routes ["API Routes"]
+            R1["POST /ocr<br/>Auto-detect pipeline"]:::route
+            R2["POST /ocr/yolo<br/>YOLO-only pipeline"]:::route
+            R3["POST /ocr/mistral<br/>Mistral-only pipeline"]:::route
+            R4["GET /doc-types"]:::route
+        end
+
+        subgraph PreProc ["Image Preprocessing (OpenCV)"]
+            PP1["Grayscale Conversion"]:::preproc
+            PP2["Deskew<br/>minAreaRect rotation"]:::preproc
+            PP3["Denoise<br/>fastNlMeansDenoising"]:::preproc
+            PP4["Contrast Enhancement<br/>equalizeHist"]:::preproc
+            PP5["Upscale<br/>if max dim < 1500px"]:::preproc
+        end
+
+        subgraph EngineA ["Engine A: YOLOv8 Pipeline"]
+            Y1["ID Card Detector<br/>detect_id_card.pt"]:::yolo
+            Y2["Object/Field Detector<br/>detect_objects.pt"]:::yolo
+            Y3["Field Cropper<br/>Bounding box extraction"]:::yolo
+        end
+
+        subgraph EngineB ["Engine B: Mistral Vision Pipeline"]
+            M1["Mistral OCR<br/>Vision-based text extraction"]:::mistral
+            M2["Document Type Classifier<br/>Keyword heuristic + LLM fallback"]:::mistral
+            M3["Context-Aware Re-OCR<br/>Doc-specific prompt injection"]:::mistral
+            M4["Structured Extractor<br/>JSON schema enforcement"]:::mistral
+        end
+
+        subgraph PostProc ["Post-Processing"]
+            P1["Arabic Numeral Converter<br/>٠١٢٣٤٥٦٧٨٩ to 0123456789"]:::post
+            P2["JSON Sanitizer<br/>Noise removal + validation"]:::post
+        end
+
+        YOLO_MODELS[("YOLO Weights<br/>2x .pt files")]:::data
+        MISTRAL_KEY[("Mistral API Key<br/>Environment variable")]:::data
+    end
+
+    R1 --> PP1
+    PP1 --> PP2 --> PP3 --> PP4 --> PP5
+    PP5 --> Y1
+    Y1 -->|"ID Detected"| Y2 --> Y3 --> P1
+    Y1 -->|"No ID Found"| M1
+    R2 --> PP1
+    R3 --> M1
+    M1 --> M2 --> M3 --> M4 --> P1
+    P1 --> P2
+    YOLO_MODELS -.->|"Loaded at startup"| Y1 & Y2
+    MISTRAL_KEY -.->|"Auth"| M1

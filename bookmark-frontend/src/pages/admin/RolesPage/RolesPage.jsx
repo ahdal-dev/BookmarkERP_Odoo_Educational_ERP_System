@@ -3,6 +3,8 @@ import AppShell from '../../../components/AppShell/AppShell';
 import TopBar from '../../../components/TopBar/TopBar';
 import PageHeader from '../../../components/PageHeader/PageHeader';
 import StatusPill from '../../../components/StatusPill/StatusPill';
+import useAsync from '../../../hooks/useAsync';
+import { adminAPI } from '../../../api/apiGateway';
 import { adminDashboardNav } from '../../../config/navConfigs';
 import { mockRoles, mockPermissionMatrix, openTicketCount } from '../../../mocks/adminMocks';
 import styles from './RolesPage.module.css';
@@ -23,17 +25,37 @@ const ACCESS_COLOR = {
   'R*': styles.cellR, 'Sub': styles.cellSub, '—': styles.cellNone,
 };
 
+const ACCESS_LEVEL_MAP = {
+  super_admin: 'Full Access', registrar: 'High Access',
+  admission_officer: 'High Access', instructor: 'Scoped',
+  academic_advisor: 'Scoped', department_chair: 'Mid Access',
+  support_technician: 'Limited', student: 'Limited', staff: 'Limited',
+};
+
 export default function RolesPage() {
   const [activeTab, setActiveTab] = useState('roles');
   const [editingRole, setEditingRole] = useState(null);
-  const [roles, setRoles] = useState(mockRoles);
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [newRole, setNewRole] = useState({ name: '', description: '', accessLevel: 'Limited' });
 
-  const deleteRole = (id) => setRoles((prev) => prev.filter((r) => r.id !== id));
+  const { data: rolesSummary } = useAsync(adminAPI.getRolesSummary);
+
+  const liveRoles = rolesSummary?.roles?.map((r) => ({
+    id: r.id,
+    name: r.label,
+    slug: r.id,
+    userCount: r.userCount,
+    accessLevel: ACCESS_LEVEL_MAP[r.id] || 'Limited',
+    description: mockRoles.find((m) => m.slug === r.id)?.description || r.label,
+  }));
+
+  const [extraRoles, setExtraRoles] = useState([]);
+  const roles = [...(liveRoles ?? mockRoles), ...extraRoles];
+
+  const deleteRole = (id) => setExtraRoles((prev) => prev.filter((r) => r.id !== id));
   const createRole = () => {
     if (!newRole.name.trim()) return;
-    setRoles((prev) => [
+    setExtraRoles((prev) => [
       ...prev,
       { id: Date.now(), name: newRole.name, slug: newRole.name.toLowerCase().replace(/\s+/g, '_'), userCount: 0, accessLevel: newRole.accessLevel, description: newRole.description },
     ]);

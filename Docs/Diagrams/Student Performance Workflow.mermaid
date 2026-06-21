@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    participant UI as React Frontend
+    participant GW as FastAPI Gateway
+    participant SP as Student Performance Service
+    participant LLM as OpenRouter LLM API
+    participant DB as PostgreSQL
+
+    UI->>GW: POST /predict<br/>{student_id, semesters[],<br/>study_plan[], program, school}
+    GW->>GW: Validate JWT + RBAC
+    GW->>SP: Forward prediction request
+
+    SP->>SP: _to_student_dict(request)<br/>Convert API format → internal format
+    SP->>SP: Sort semesters by term order
+    SP->>SP: Validate >= 2 completed semesters
+
+    Note over SP: Historical Feature Extraction
+    SP->>SP: extract_features_up_to_semester()<br/>GPA slope, fail_count, withdrawal_count,<br/>consecutive_low_gpa, domain strengths
+
+    Note over SP: Plan Feature Extraction
+    SP->>SP: extract_plan_features()<br/>plan_credit_load, plan_difficulty_jump,<br/>plan_weak_domain_credits, plan_retake_risk
+
+    SP->>SP: Encode program + school (LabelEncoder)
+    SP->>SP: Build feature matrix + KNN impute
+
+    Note over SP: Triple XGBoost Inference
+    SP->>SP: DEPLOY_REG.predict(X) → predicted_gpa
+    SP->>SP: CQR_LO/HI.predict(X) ± Q → interval
+    SP->>SP: CLF.predict_proba(X) → at_risk_prob
+
+    SP->>SP: Compute graduation_gpa_estimate<br/>risk_level, trajectory, plan_analysis
+
+    SP->>SP: Generate rule-based recommendations<br/>(12 risk flags → 5 recommendation rules)
+
+    alt OpenRouter API Available
+        SP->>LLM: Send predictions + course IDs<br/>+ risk signals
+        LLM-->>SP: 3 personalized, course-specific tips
+        SP->>SP: Parse bullet points
+    else API Unavailable
+        SP->>SP: Use rule-based fallback
+    end
+
+    SP-->>GW: {predicted_gpa, interval, at_risk,<br/>risk_level, plan_analysis,<br/>recommendations, student_message}
+    GW-->>UI: JSON Response
+    UI->>UI: Render GPA gauge, risk badge,<br/>plan analysis cards, advisor tips

@@ -6,10 +6,12 @@ import RoleRouter from './components/RoleRouter/RoleRouter';
 import { ROLES } from './config/roles';
 
 import LoginPage from './pages/LoginPage/LoginPage';
+import LandingPage from './pages/LandingPage/LandingPage';
 import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage/UnauthorizedPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import SettingsPage from './pages/settings/SettingsPage';
+import HelpPage from './pages/HelpPage/HelpPage';
 
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import RegistrationPage from './pages/RegistrationPage/RegistrationPage';
@@ -62,6 +64,12 @@ import TicketListPage from './pages/support/TicketListPage';
 // Admissions
 import AdmissionsPortalPage from './pages/admissions/AdmissionsPortalPage';
 import ApplicationReviewPage from './pages/admissions/ApplicationReviewPage';
+import OfficerDocumentsPage from './pages/admissions/OfficerDocumentsPage';
+// Apply workflow
+import ApplyPersonalInfoPage from './pages/apply/ApplyPersonalInfoPage';
+import ApplyAcademicHistoryPage from './pages/apply/ApplyAcademicHistoryPage';
+import ApplyReviewPage from './pages/apply/ApplyReviewPage';
+import { ApplicationProvider } from './context/ApplicationContext';
 // Admin legacy
 import AuditLogPage from './pages/admin/AuditLogPage';
 import SystemSettingsPage from './pages/admin/SystemSettingsPage';
@@ -71,6 +79,7 @@ const FACULTY_ROLES = [ROLES.INSTRUCTOR, ROLES.ACADEMIC_ADVISOR, ROLES.DEPARTMEN
 export default function App() {
   return (
     <AuthProvider>
+      <ApplicationProvider>
       <BrowserRouter>
         <Routes>
           {/* Public */}
@@ -80,18 +89,44 @@ export default function App() {
           <Route path="/admissions" element={<AdmissionsPortalPage />} />
           <Route path="/admissions/status" element={<ApplicationStatusPage />} />
 
+          {/* Public landing */}
+          <Route path="/" element={<LandingPage />} />
+
           {/* Post-login dispatcher */}
-          <Route path="/" element={<RoleRouter />} />
+          <Route path="/dashboard" element={<RoleRouter />} />
 
           {/* Cross-role pages */}
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          {/* Cross-role pages — available to every authenticated user */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/handbook" element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/support" element={<Navigate to="/support/tickets" replace />} />
+          <Route path="/apply/academic" element={<Navigate to="/admissions/status" replace />} />
 
           {/* App Launcher */}
           <Route
             path="/apps"
             element={
-              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR, ROLES.ADMISSION_OFFICER]}>
+              <RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}>
                 <DashboardPage />
               </RoleProtectedRoute>
             }
@@ -100,7 +135,12 @@ export default function App() {
           {/* Shared protected */}
           <Route path="/registration" element={<ProtectedRoute><RegistrationPage /></ProtectedRoute>} />
           <Route path="/petitions/new" element={<ProtectedRoute><PetitionFormPage /></ProtectedRoute>} />
-          <Route path="/apply/documents" element={<ProtectedRoute><DocumentVerificationPage /></ProtectedRoute>} />
+
+          {/* Apply workflow — public, ApplicationProvider lives above BrowserRouter */}
+          <Route path="/apply/personal-info" element={<ApplyPersonalInfoPage />} />
+          <Route path="/apply/academic-history" element={<ApplyAcademicHistoryPage />} />
+          <Route path="/apply/documents" element={<DocumentVerificationPage />} />
+          <Route path="/apply/review" element={<ApplyReviewPage />} />
 
           {/* Admin Dashboard */}
           <Route path="/admin" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><CommandCenterPage /></RoleProtectedRoute>} />
@@ -116,7 +156,7 @@ export default function App() {
           <Route path="/admin/users/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN]}><UserDetailPage /></RoleProtectedRoute>} />
           <Route path="/admin/admissions" element={<ProtectedRoute roles={['admin', 'officer', 'super_admin']}><AdmissionPipelinePage /></ProtectedRoute>} />
           <Route path="/admin/petitions" element={<ProtectedRoute roles={['admin', 'officer']}><PetitionTrackingPage /></ProtectedRoute>} />
-          <Route path="/admin/settings/registration-rules" element={<ProtectedRoute roles={['admin']}><InstitutionalRulesetPage /></ProtectedRoute>} />
+          <Route path="/admin/settings/registration-rules" element={<RoleProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.REGISTRAR]}><InstitutionalRulesetPage /></RoleProtectedRoute>} />
           <Route path="/admin/audit-log" element={<ProtectedRoute roles={['admin']}><AuditLogPage /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><SystemSettingsPage /></ProtectedRoute>} />
 
@@ -152,11 +192,13 @@ export default function App() {
           {/* Admissions Officer */}
           <Route path="/admissions/officer" element={<RoleProtectedRoute allowedRoles={[ROLES.ADMISSION_OFFICER, ROLES.SUPER_ADMIN]}><AdmissionPipelinePage /></RoleProtectedRoute>} />
           <Route path="/admissions/officer/application/:id" element={<RoleProtectedRoute allowedRoles={[ROLES.ADMISSION_OFFICER, ROLES.SUPER_ADMIN]}><ApplicationReviewPage /></RoleProtectedRoute>} />
+          <Route path="/admissions/officer/documents" element={<RoleProtectedRoute allowedRoles={[ROLES.ADMISSION_OFFICER, ROLES.SUPER_ADMIN]}><OfficerDocumentsPage /></RoleProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ApplicationProvider>
     </AuthProvider>
   );
 }

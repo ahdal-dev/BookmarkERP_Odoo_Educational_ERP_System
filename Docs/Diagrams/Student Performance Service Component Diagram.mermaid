@@ -1,0 +1,47 @@
+graph LR
+    classDef route fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000000;
+    classDef module fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    classDef model fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#000000;
+    classDef llm fill:#f5f5f5,stroke:#757575,stroke-width:2px,color:#000000;
+    classDef data fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#000000;
+
+    subgraph StudentPerf ["Student Performance Service (FastAPI · Port 5002)"]
+        direction TB
+
+        subgraph Routes ["API Routes"]
+            R1["POST /predict"]:::route
+            R2["GET /health"]:::route
+            R3["GET / (UI)"]:::route
+        end
+
+        subgraph FeatureEng ["Feature Extraction Pipeline"]
+            TP["Temporal Panel Generator<br/>extract_features_up_to_semester()"]:::module
+            SP["Study Plan Analyzer<br/>extract_plan_features()"]:::module
+            ENC["Label Encoders<br/>program_enc, school_enc"]:::module
+            IMP["KNN Imputer<br/>Handle missing features"]:::module
+        end
+
+        subgraph MLEngine ["XGBoost Inference Engine"]
+            REG["XGBoost Regressor<br/>Tail-Weighted Point Prediction"]:::model
+            CLF["XGBoost Classifier<br/>P(GPA < 2.0) At-Risk"]:::model
+            CQR_LO["CQR Lower Bound<br/>Quantile XGB"]:::model
+            CQR_HI["CQR Upper Bound<br/>Quantile XGB"]:::model
+        end
+
+        subgraph Advisor ["Recommendation Engine"]
+            RULES["Rule-Based Engine<br/>12 risk flags + 5 rules"]:::module
+            LLM["LLM Advisor<br/>OpenRouter GPT-oss-120b"]:::llm
+            FALLBACK{"LLM Available?"}:::module
+        end
+
+        MODELS[("Model Bundle<br/>5 Joblib artifacts")]:::data
+    end
+
+    R1 --> TP
+    TP --> SP --> ENC --> IMP
+    IMP --> REG & CLF & CQR_LO & CQR_HI
+    REG & CLF & CQR_LO & CQR_HI --> RULES
+    RULES --> FALLBACK
+    FALLBACK -->|"Yes"| LLM
+    FALLBACK -->|"No / Failure"| RULES
+    MODELS -.->|"Loaded at startup"| REG & CLF & CQR_LO & CQR_HI

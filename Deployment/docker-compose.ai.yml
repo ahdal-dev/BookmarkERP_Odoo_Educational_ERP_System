@@ -1,0 +1,152 @@
+# ============================================================================
+# docker-compose.ai.yml  ->  runs on the AI VM (e2-medium)
+# ----------------------------------------------------------------------------
+# Services: ocr_microservice, grade_predictor, student_performance,
+#           academic-agent (LLM API), academic-agent-worker (RabbitMQ consumer).
+# Run from the repo's Deployment/ directory:
+#   docker compose -f docker-compose.ai.yml --env-file .env up -d
+#
+# Cross-VM: services that need Odoo / RabbitMQ reach the App VM via
+# ${APP_SERVER_IP}. The gateway on the App VM reaches OCR (5000) and the agent
+# (8001) here via ${AI_SERVER_IP}; those ports are published on the host.
+# ============================================================================
+
+networks:
+  edu_ai:
+    driver: bridge
+
+services:
+
+  # --------------------------------------------------------------------------
+  # OCR Microservice - document extraction (Tesseract + YOLO + Mistral)
+  # --------------------------------------------------------------------------
+  ocr_microservice:
+    build:
+      context: ../services/ocr
+      dockerfile: Dockerfile
+    container_name: edu_erp_ocr_service
+    restart: unless-stopped
+    environment:
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - TZ=Africa/Cairo
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../services/ocr/models:/app/models:ro
+      - ./temp/ocr_uploads:/app/uploads
+    networks: [edu_ai]
+    ports:
+      - "5000:5000"   # reached by the gateway via ${AI_SERVER_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--timeout=5", "-O", "/dev/null", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # --------------------------------------------------------------------------
+  # Grade Predictor - XGBoost regression/classification API (port 8000)
+  # --------------------------------------------------------------------------
+  grade_predictor:
+    build:
+      context: ../services/grade_predictor_service
+      dockerfile: dockerfile   # lowercase in the repo
+    container_name: edu_erp_grade_predictor
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks: [edu_ai]
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # --------------------------------------------------------------------------
+  # Student Performance - risk + next-GPA models (port 5002)
+  # --------------------------------------------------------------------------
+  student_performance:
+    build:
+      context: ../services/student_performance_service
+      dockerfile: dockerfile   # lowercase in the repo
+    container_name: edu_erp_student_performance
+    restart: unless-stopped
+    # Override the API key baked into the image's dockerfile with the secret.
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks: [edu_ai]
+    ports:
+      - "5002:5002"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5002/health')\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # --------------------------------------------------------------------------
+  # Academic Agent - LLM chatbot API (port 8001). Talks to Odoo on the App VM.
+  # --------------------------------------------------------------------------
+  academic-agent:
+    build:
+      context: ../services/RAG-Chatbot
+      dockerfile: Dockerfile
+    container_name: edu_erp_academic_agent
+    restart: unless-stopped
+    environment:
+      - ODOO_URL=http://${APP_SERVER_IP:?set in .env}:8081
+      - ODOO_DB=${ODOO_DB:-edu_demo_new}
+      - ODOO_USERNAME=${ODOO_USERNAME:-admin}
+      - ODOO_PASSWORD=${ODOO_PASSWORD:?set in .env}
+      - CHATBOT_ADMIN_TOKEN=${CHATBOT_SHARED_SECRET:?set in .env}
+      - LLM_PROVIDER=openrouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-erp}:${RABBITMQ_PASSWORD}@${APP_SERVER_IP}:5672/
+      - ENABLE_RAG=false
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks: [edu_ai]
+    ports:
+      - "8001:8001"   # reached by the gateway via ${AI_SERVER_IP}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8001/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # --------------------------------------------------------------------------
+  # Academic Agent Worker - consumes queued registration/petition writes
+  # --------------------------------------------------------------------------
+  academic-agent-worker:
+    build:
+      context: ../services/RAG-Chatbot
+      dockerfile: Dockerfile
+    container_name: edu_erp_academic_agent_worker
+    restart: unless-stopped
+    command: ["python", "Backend/worker.py"]
+    environment:
+      - ODOO_URL=http://${APP_SERVER_IP}:8081
+      - ODOO_DB=${ODOO_DB:-edu_demo_new}
+      - ODOO_USERNAME=${ODOO_USERNAME:-admin}
+      - ODOO_PASSWORD=${ODOO_PASSWORD:?set in .env}
+      - ENABLE_MQ=true
+      - AMQP_URL=amqp://${RABBITMQ_USER:-erp}:${RABBITMQ_PASSWORD}@${APP_SERVER_IP}:5672/
+      - PYTHONUNBUFFERED=1
+      - TZ=Africa/Cairo
+    networks: [edu_ai]
+    depends_on:
+      - academic-agent

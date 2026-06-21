@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/AppShell/AppShell';
 import TopBar from '../../components/TopBar/TopBar';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import KanbanBoard from '../../components/KanbanBoard/KanbanBoard';
 import KanbanColumn from '../../components/KanbanBoard/KanbanColumn';
 import KanbanCard from '../../components/KanbanBoard/KanbanCard';
-import { admissionsNav } from '../../config/navConfigs';
+import { admissionsOfficerNav } from '../../config/navConfigs';
 import { admissionsAPI } from '../../api/apiGateway';
 import useAsync from '../../hooks/useAsync';
 import w from '../_shared/workflow.module.css';
@@ -16,6 +17,7 @@ import styles from './AdmissionPipelinePage.module.css';
    ============================================================ */
 
 export default function AdmissionPipelinePage() {
+  const navigate = useNavigate();
   const { data, loading, error, reload } = useAsync(() => admissionsAPI.getPipeline(), []);
   const [columns, setColumns] = useState([]);
   const [dragItem, setDragItem] = useState(null);
@@ -56,7 +58,7 @@ export default function AdmissionPipelinePage() {
 
   return (
     <AppShell
-      navItems={admissionsNav}
+      navItems={admissionsOfficerNav}
       logoVariant="icon-text"
       topBar={<TopBar searchPlaceholder="Search applicants..." />}
     >
@@ -66,15 +68,11 @@ export default function AdmissionPipelinePage() {
         useBrandFont
         actions={
           <div className={styles.actionBtns}>
-            <button className={styles.filterBtn}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-              Filters
+            <button className={styles.filterBtn} onClick={reload}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              Refresh
             </button>
-            <button className={styles.filterBtn}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              Group By
-            </button>
-            <button className={styles.createBtn}>+ Create</button>
+            <button className={styles.createBtn} onClick={() => navigate('/admissions')}>+ Create</button>
           </div>
         }
       />
@@ -109,6 +107,7 @@ export default function AdmissionPipelinePage() {
                 starred={card.starred}
                 onStarToggle={() => {}}
                 accentColor={card.accentColor}
+                onClick={() => navigate(`/admissions/officer/application/${card.id}`)}
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
                   handleDragStart(card.id, col.id);

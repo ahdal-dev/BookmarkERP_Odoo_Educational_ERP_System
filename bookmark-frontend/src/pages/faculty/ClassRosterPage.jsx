@@ -8,6 +8,7 @@ import SegmentedControl from '../../components/SegmentedControl/SegmentedControl
 import { facultyNav } from '../../config/navConfigs';
 import { facultyAPI } from '../../api/apiGateway';
 import useAsync from '../../hooks/useAsync';
+import { exportCsv } from '../../utils/exportCsv';
 import w from '../_shared/workflow.module.css';
 
 /* Enrolled student list for a course (also the /faculty/courses landing). */
@@ -76,7 +77,12 @@ export default function ClassRosterPage() {
               </div>
               <div className={w.toolbar}>
                 <input className={w.search} placeholder="Search by name..." value={q} onChange={(e) => setQ(e.target.value)} />
-                <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`}>Export CSV</button>
+                <button className={`${w.btn} ${w.btnOutline} ${w.btnSm}`} disabled={!roster.length}
+                        onClick={() => exportCsv(`${course.code}_roster.csv`, [
+                          { key: 'student_name', header: 'Student Name' },
+                          { key: 'registration_date', header: 'Enrollment Date' },
+                          { key: 'state', header: 'Status' },
+                        ], roster)}>Export CSV</button>
               </div>
               <div className={w.card} style={{ padding: 0 }}>
                 <DataTable columns={columns} data={roster} />

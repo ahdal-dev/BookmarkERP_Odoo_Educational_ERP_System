@@ -1,0 +1,105 @@
+erDiagram
+    res_users {
+        int id PK
+        string name
+        string email
+        string login
+        float cumulative_gpa
+        string academic_standing
+        int earned_credits
+        string class_year
+        boolean is_on_hold
+        int advisor_id FK
+    }
+
+    education_course {
+        int id PK
+        string name
+        string code
+        int credits
+        string domain
+        int department_id FK
+    }
+
+    education_course_prereq_rel {
+        int course_id FK
+        int prereq_id FK
+    }
+
+    education_registration {
+        int id PK
+        int student_id FK
+        int course_id FK
+        string state
+        string grade
+        float grade_points
+        boolean is_graded
+        string semester
+        string term_name
+    }
+
+    education_department {
+        int id PK
+        string name
+        int chair_id FK
+    }
+
+    student_petition {
+        int id PK
+        int student_id FK
+        string name
+        string subject
+        string state
+        date submitted_date
+        string petition_type
+    }
+
+    ocr_document {
+        int id PK
+        string filename
+        string doc_type
+        string file_path
+        string status
+        string detection_method
+        int pages_processed
+        datetime created_at
+    }
+
+    ocr_extracted_data {
+        int id PK
+        int document_id FK
+        string field_key
+        string field_value
+        float confidence
+    }
+
+    prediction_log {
+        int id PK
+        int student_id FK
+        string prediction_type
+        string target_course
+        float predicted_value
+        float confidence
+        string risk_level
+        string grade_interval
+        text reasoning_json
+        datetime created_at
+    }
+
+    grade_scale {
+        string letter_grade PK
+        float grade_points
+    }
+
+    %% === RELATIONSHIPS ===
+
+    res_users ||--o{ education_registration : "enrolls in"
+    education_course ||--o{ education_registration : "has enrollments"
+    education_course ||--o{ education_course_prereq_rel : "is prerequisite for"
+    education_course ||--o{ education_course_prereq_rel : "requires"
+    education_department ||--o{ education_course : "offers"
+    res_users ||--o{ student_petition : "submits"
+    res_users ||--o{ prediction_log : "receives predictions"
+    ocr_document ||--o{ ocr_extracted_data : "contains fields"
+    grade_scale ||--o{ education_registration : "maps grade to"
+    res_users ||--o{ res_users : "advises (advisor_id)"
