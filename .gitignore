@@ -74,3 +74,19 @@ coverage.xml
 coverage_odoo.xml
 .coverage
 .coverage.*
+
+# AI assistant context (internal only)
+CLAUDE.md
+
+# Local thesis/defense files (not part of the codebase)
+"FOr thesis/"
+FOr thesis/
+
+# Coverage artifacts at root
+coverage_ocr.xml
+
+# Root-level dev/debug scripts
+_fix_admin_group.py
+reset_admin.py
+test_auth.py
+test_login.py

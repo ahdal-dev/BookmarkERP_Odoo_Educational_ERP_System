@@ -15,15 +15,15 @@ Everything below is unbuilt unless explicitly noted.
 
 | Role | Landing Route | Lands on App Launcher? |
 |---|---|---|
-| System Administrator | `/apps` | ✅ Yes |
-| Registrar | `/apps` | ✅ Yes |
-| Admission Officer | `/apps` | ✅ Yes |
-| Student | `/student/dashboard` | ❌ Bypassed |
-| Instructor | `/faculty/dashboard` | ❌ Bypassed |
-| Academic Advisor | `/faculty/dashboard` | ❌ Bypassed |
-| Department Chair | `/faculty/dashboard` | ❌ Bypassed |
-| Support Technician | `/support/chat-queue` | ❌ Bypassed |
-| Prospective Student | `/admissions/status` | ❌ Bypassed |
+| System Administrator | `/apps` | Yes |
+| Registrar | `/apps` | Yes |
+| Admission Officer | `/apps` | Yes |
+| Student | `/student/dashboard` | No — Bypassed |
+| Instructor | `/faculty/dashboard` | No — Bypassed |
+| Academic Advisor | `/faculty/dashboard` | No — Bypassed |
+| Department Chair | `/faculty/dashboard` | No — Bypassed |
+| Support Technician | `/support/chat-queue` | No — Bypassed |
+| Prospective Student | `/admissions/status` | No — Bypassed |
 
 > **Note on the shared `/faculty/dashboard`:** Instructor, Advisor, and Chair share one landing route. The dashboard renders role-specific widgets based on `user.role`, but each still navigates to its own sub-views (below).
 

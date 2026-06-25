@@ -6,7 +6,7 @@
 # No database, no Docker, no network calls.
 # ============================================================================
 
-name: "🧪 Unit Tests"
+name: "Unit Tests"
 
 on:
   push:
@@ -102,4 +102,4 @@ jobs:
         with:
           pytest-xml-coverage-path: reports/unit-coverage.xml
           junitxml-path: reports/unit-test-results.xml
-          title: "📊 Unit Test Coverage"
+          title: "Unit Test Coverage"
