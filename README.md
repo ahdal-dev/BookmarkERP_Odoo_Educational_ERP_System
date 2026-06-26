@@ -10,8 +10,8 @@ We built Bookmark ERP because the tools universities currently use — including
 |---|---|---|---|
 | Nour Eldin Mohamed | 202201310 | SWD | Team Lead, Backend, API Gateway & Frontend, Infrastructure, Kubernetes & DevOps |
 | Ziad Moutaz | 202201252 | DSAI | OCR Service & Integration |
-| Raneem Mousa | 202200389 | DSAI | AI/ML Services (Grade Predictor, Student Performance), UI Disigner |
-| Ahmed Mohamed | 202202070 | DSAI | AI/ML Services (RAG chatbot, Grade Predictor, Student Performance)|
+| Raneem Mousa | 202200389 | DSAI | AI/ML Services (Grade Predictor, Student Performance), UI Disign |
+| Ahmed Mohamed | 202202070 | DSAI | AI/ML Services (RAG chatbot, Grade Predictor, Student Performance), System Security|
 
 **Supervisor:** Prof. Dr. Doaa Shawky
 
