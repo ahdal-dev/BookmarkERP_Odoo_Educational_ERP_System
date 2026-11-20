@@ -23,6 +23,7 @@ from fastapi import (
     FastAPI, HTTPException, Depends, UploadFile, File,
     status, Request, Form,
 )
+from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, EmailStr, validator
@@ -780,6 +781,16 @@ async def _audit(request: Request, call_next):
 # ============================================================================
 # Health
 # ============================================================================
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return {"service": "api_gateway", "docs": "/docs", "health": "/health"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
+
 
 @app.get("/health")
 async def health_check():
